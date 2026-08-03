@@ -1,7 +1,6 @@
 @echo off
 cd /d C:\Users\45313\Projects\tine-romantasy-db
 git add -A
-git status
-git commit -F .git\COMMIT_MSG.txt
+git commit -m "Remove temporary git helper script."
 git push origin master
 git status
