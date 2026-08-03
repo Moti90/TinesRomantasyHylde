@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tines Romantasy Liste</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Karla:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <nav class="app-nav" aria-label="Hovednavigation">
+      <button
+        type="button"
+        class="app-nav-btn is-active"
+        data-view="home"
+        aria-current="page"
+      >
+        Forside
+      </button>
+      <button type="button" class="app-nav-btn" data-view="library">
+        Bibliotek
+      </button>
+      <button type="button" class="app-nav-btn" data-view="discovery">
+        Opdag nye
+      </button>
+    </nav>
+
+    <!-- ========== FORSIDE ========== -->
+    <div id="view-home" class="app-view is-active" data-view-panel="home">
+      <header class="home-hero reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Romantasy efter din smag</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1>Tines Romantasy Liste</h1>
+        <p class="lede home-lede">
+          Sorter serier efter match — ikke efter popularitet.
+        </p>
+        <div class="home-cta">
+          <button type="button" class="btn primary" id="goto-library">
+            Åbn bibliotek
+          </button>
+        </div>
+        <p id="health-line-home" class="health"></p>
+      </header>
+    </div>
+
+    <!-- ========== BIBLIOTEK (nuværende søgning/liste) ========== -->
+    <div id="view-library" class="app-view" data-view-panel="library" hidden>
+      <div class="corner-bar">
+        <div class="corner-menu corner-left" data-menu="add">
+          <button
+            type="button"
+            class="corner-trigger"
+            id="add-trigger"
+            aria-expanded="false"
+            aria-controls="add-panel"
+          >
+            Tilføj serie
+            <span class="chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="corner-panel panel" id="add-panel" hidden>
+            <p class="panel-kicker">Ny kandidat</p>
+            <h2>Tilføj serie</h2>
+            <form id="analyze-form">
+              <label>
+                Serienavn eller bogtitel
+                <input
+                  id="query"
+                  name="query"
+                  type="text"
+                  placeholder="Fx Reign & Ruin eller Fourth Wing"
+                  autocomplete="off"
+                />
+              </label>
+              <label>
+                Forfatter (valgfrit)
+                <input
+                  id="author"
+                  name="author"
+                  type="text"
+                  placeholder="Fx hvis flere bøger har samme titel"
+                  autocomplete="off"
+                />
+              </label>
+              <label>
+                Link (valgfrit)
+                <input
+                  id="link"
+                  name="link"
+                  type="url"
+                  placeholder="Goodreads eller Mofibo-link"
+                />
+              </label>
+              <label>
+                Status
+                <select id="status" name="status">
+                  <option>Ikke læst</option>
+                  <option>Læser nu</option>
+                  <option>Sat på pause</option>
+                  <option>Læst</option>
+                  <option>Droppet</option>
+                </select>
+              </label>
+              <div class="actions">
+                <button type="submit" class="btn primary" id="analyze-btn">
+                  Analysér og tilføj
+                </button>
+              </div>
+            </form>
+            <div id="analyze-steps" class="analyze-steps" hidden></div>
+            <div id="candidate-pick" class="candidate-pick" hidden></div>
+            <p id="analyze-status" class="status-msg" role="status"></p>
+          </div>
+        </div>
+
+        <div class="corner-menu corner-right" data-menu="excel">
+          <button
+            type="button"
+            class="corner-trigger"
+            id="excel-trigger"
+            aria-expanded="false"
+            aria-controls="excel-panel"
+          >
+            Excel
+            <span class="chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="corner-panel panel" id="excel-panel" hidden>
+            <p class="panel-kicker">Arkiv</p>
+            <h2>Excel</h2>
+            <p class="hint">
+              Importer Tines eksisterende liste, eller eksporter den opdaterede
+              database.
+            </p>
+            <div class="actions">
+              <label class="btn ghost file-btn">
+                Importér Excel
+                <input id="import-file" type="file" accept=".xlsx,.xls" hidden />
+              </label>
+              <button type="button" class="btn ghost" id="export-btn">
+                Eksportér Excel
+              </button>
+            </div>
+            <label class="merge-toggle">
+              <input type="checkbox" id="merge-import" />
+              Flet ved import (behold eksisterende + tilføj nye)
+            </label>
+            <p id="io-status" class="status-msg" role="status"></p>
+          </div>
+        </div>
+      </div>
+
+      <header class="site-header reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Bibliotek</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1 class="library-title">Din bogliste</h1>
+        <p class="lede">Søg, tilføj og score serier.</p>
+        <p id="health-line" class="health"></p>
+        <div class="header-rule" aria-hidden="true"></div>
+      </header>
+
+      <main class="shell">
+        <section class="panel list-panel reveal delay-1">
+          <div class="panel-ornament" aria-hidden="true"></div>
+          <div class="list-head">
+            <div>
+              <p class="panel-kicker">Bibliotek</p>
+              <h2>Serier</h2>
+            </div>
+            <p id="list-count" class="hint list-count"></p>
+          </div>
+          <div class="table-wrap">
+            <table id="series-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Serie</th>
+                  <th>Forfatter</th>
+                  <th>Tine-score</th>
+                  <th>Rhysand</th>
+                  <th>Mofibo</th>
+                  <th>Tempo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="series-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside id="detail" class="panel detail-panel hidden">
+          <div class="detail-top-actions">
+            <button type="button" class="btn ghost" id="reanalyze-detail">
+              Genanalysér
+            </button>
+            <button
+              type="button"
+              class="btn ghost"
+              id="refresh-detail"
+              title="Henter nye oplysninger fra nettet"
+            >
+              Opdatér oplysninger
+            </button>
+            <button type="button" class="linkish danger" id="delete-detail">
+              Slet serie
+            </button>
+            <button type="button" class="close-detail" id="close-detail">
+              Luk
+            </button>
+          </div>
+          <p id="reanalyze-status" class="status-msg" role="status"></p>
+          <div class="detail-hero">
+            <div>
+              <p class="panel-kicker">Serieprofil</p>
+              <h2 id="detail-title"></h2>
+              <p id="detail-meta" class="hint detail-meta"></p>
+            </div>
+            <div id="detail-tine" class="tine-hero"></div>
+          </div>
+          <h3 class="detail-section-title">Scorer</h3>
+          <div id="detail-scores" class="score-bars"></div>
+          <div id="detail-why" class="detail-extras"></div>
+          <h3 class="detail-section-title">Tines egen vurdering</h3>
+          <div class="own-assessment">
+            <p class="hint">
+              Kun dig — AI udfylder ikke disse felter. Din score hjælper
+              programmet med at ramme din smag bedre næste gang.
+            </p>
+            <label class="own-score-label">
+              Din score (0–100)
+              <input
+                id="own-score"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="Fx 92"
+              />
+            </label>
+            <label>
+              Note (valgfri)
+              <textarea
+                id="own-assessment"
+                rows="4"
+                placeholder="Fx: Elskede worldbuilding, men tempoet var for langsomt…"
+              ></textarea>
+            </label>
+            <div class="actions">
+              <button type="button" class="btn primary" id="save-own-assessment">
+                Gem min vurdering
+              </button>
+            </div>
+            <p id="own-assessment-msg" class="status-msg" role="status"></p>
+          </div>
+          <h3 class="detail-section-title">Fakta & noter</h3>
+          <div id="detail-facts" class="facts-grid"></div>
+        </aside>
+      </main>
+    </div>
+
+    <!-- ========== OPDAG NYE (discovery) ========== -->
+    <div id="view-discovery" class="app-view" data-view-panel="discovery" hidden>
+      <header class="site-header discovery-header reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Discovery</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1 class="library-title">Opdag nye</h1>
+        <p class="lede">
+          Inspiration filtreret mod Tines PirateReads — både hylder og
+          hvad hun faktisk læser (adult romantasy, ikke børnebøger).
+        </p>
+        <div class="discovery-toolbar">
+          <button type="button" class="btn primary" id="discovery-run">
+            Kør søgning
+          </button>
+          <p id="discovery-meta" class="hint discovery-meta"></p>
+        </div>
+        <p id="discovery-status" class="status-msg" role="status"></p>
+        <div class="header-rule" aria-hidden="true"></div>
+      </header>
+
+      <main class="shell discovery-shell">
+        <section class="panel discovery-panel reveal delay-1">
+          <div class="list-head">
+            <div>
+              <p class="panel-kicker">Kandidater</p>
+              <h2>Forslag til dig</h2>
+            </div>
+            <p id="discovery-count" class="hint list-count"></p>
+          </div>
+          <div id="discovery-container">
+            <ul id="discovery-list" class="discovery-list"></ul>
+            <p id="discovery-empty" class="hint discovery-empty" hidden>
+              Ingen nye kandidater endnu. Tryk «Kør søgning» for at finde nogle.
+            </p>
+          </div>
+        </section>
+
+        <aside id="discovery-teaser-panel" class="panel discovery-teaser-panel" hidden>
+          <div class="detail-top-actions">
+            <button type="button" class="close-detail" id="teaser-close">
+              Luk
+            </button>
+          </div>
+          <p class="panel-kicker">Teaser</p>
+          <h2 id="teaser-title"></h2>
+          <p id="teaser-author" class="hint"></p>
+          <p id="teaser-vibe" class="teaser-vibe" hidden></p>
+          <p id="teaser-blurb" class="teaser-blurb"></p>
+          <p id="teaser-why" class="teaser-why hint" hidden></p>
+          <p id="teaser-caution" class="teaser-caution status-msg" hidden></p>
+          <p class="discovery-links">
+            <a
+              id="teaser-search"
+              class="discovery-search"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              hidden
+              >Søg på Google</a
+            >
+          </p>
+          <p class="hint teaser-footnote">
+            Discovery tilføjer ikke bøger til biblioteket — det er kun til inspiration.
+          </p>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>

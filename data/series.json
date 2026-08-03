@@ -1,0 +1,2416 @@
+[
+  {
+    "Status": "Læser nu",
+    "Seriens navn": "Mages of the Wheel",
+    "Første bog/titel": "Reign & Ruin",
+    "Forfatter": "J.D. Evans",
+    "Antal bøger i serien": null,
+    "Lydbog (ja/nej, ikke hele serien)": null,
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": null,
+    "Relation": "MF",
+    "Tine-score": 99,
+    "Goodreads-score": 4.18,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Elementmagi; mellemøstligt inspireret fantasy; hofintriger",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 5,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 3,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Overvejende ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, tortur, politiske magtkampe",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 45,
+    "Minder mest om": "ACOTAR; Daughter of No Worlds",
+    "Hvis du savner...": "Rhysand; Aelin; Tairen Soul",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.18,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "Tines score": null,
+    "_identity": {
+      "title": "Reign & Ruin",
+      "author": "J.D. Evans",
+      "series": "Mages of the Wheel",
+      "bookNumber": null,
+      "identityConfidence": "medium",
+      "mmc": "Makram",
+      "fmc": "Naime"
+    },
+    "_research": {
+      "identity": {
+        "title": "Reign & Ruin",
+        "author": "J.D. Evans",
+        "series": "Mages of the Wheel",
+        "bookNumber": 1,
+        "confidence": "medium"
+      },
+      "facts": {
+        "publishedBookCount": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "seriesStatus": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "audiobook": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "danishEdition": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "mofiboAvailability": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "sameMainCouple": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "officialDescription": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        }
+      },
+      "ratings": {
+        "goodreads": null
+      },
+      "reviewConsensus": {},
+      "sources": [
+        {
+          "title": "Reign & Ruin by J.D. Evans | Romance.io",
+          "url": "https://romance.io/books/6084072501991d0e29557c71/reign-ruin-jd-evans",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "",
+          "focus": "romanceprofil",
+          "id": "source-1"
+        },
+        {
+          "title": "Reign & Ruin by J.D. Evans | Swooon",
+          "url": "https://swooon.com/book/reign-ruin",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "",
+          "focus": "romanceprofil",
+          "id": "source-2"
+        },
+        {
+          "title": "romance.io",
+          "url": "https://romance.io/books/6084072501991d0e29557c71/reign-ruin-jd-evans?src=rdt&thr=1oi8dt0",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "",
+          "focus": "romanceprofil",
+          "id": "source-3"
+        },
+        {
+          "title": "thebookmatch.com",
+          "url": "https://thebookmatch.com/books/BK272",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "",
+          "focus": "helhed",
+          "id": "source-4"
+        },
+        {
+          "title": "bookclubs.com",
+          "url": "https://bookclubs.com/books/reign-ruin-mages-of-the-wheel-153707",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "",
+          "focus": "helhed",
+          "id": "source-5"
+        },
+        {
+          "title": "fanfiaddict.com",
+          "url": "https://fanfiaddict.com/spfbo-7-finalist-review-reign-ruin-mages-of-the-wheel-1-by-j-d-evans",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "",
+          "focus": "helhed",
+          "id": "source-6"
+        },
+        {
+          "title": "fanfiaddict.com",
+          "url": "https://fanfiaddict.com/review-reign-ruin-mages-of-the-wheel-1-by-j-d-evans",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "",
+          "focus": "helhed",
+          "id": "source-7"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "",
+          "focus": "helteprofil",
+          "id": "source-8"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "",
+          "focus": "helteprofil",
+          "id": "source-9"
+        },
+        {
+          "title": "Reign & Ruin (Mages of the Wheel) by J.D. Evans | Goodreads",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "romanceprofil",
+          "summary": "",
+          "focus": "romanceprofil",
+          "id": "source-10"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "romanceprofil",
+          "summary": "",
+          "focus": "romanceprofil",
+          "id": "source-11"
+        },
+        {
+          "title": "Reign & Ruin af J.D. Evans",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "",
+          "focus": "plotkarakter",
+          "id": "source-12"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/work/quotes/73107342-reign-ruin",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "",
+          "focus": "plotkarakter",
+          "id": "source-13"
+        },
+        {
+          "title": "Reign & Ruin (Mages of the Wheel, #1) af J.D. Evans | Goodreads",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "helhed",
+          "summary": "",
+          "focus": "helhed",
+          "id": "source-14"
+        }
+      ],
+      "researchedAt": "2026-08-02T16:13:45.563Z",
+      "meta": {
+        "promptVersion": "research-v11",
+        "model": "gpt-4o-2024-08-06",
+        "webSearchCalls": 4,
+        "inputTokens": 43290,
+        "outputTokens": 4462,
+        "estimatedCostUsd": 0.03362785,
+        "partial": false,
+        "warnings": [],
+        "searchPlan": [
+          "helteprofil",
+          "romanceprofil",
+          "plotkarakter",
+          "helhed"
+        ],
+        "foundation": {
+          "helteprofil": 2,
+          "romanceprofil": 5,
+          "plotkarakter": 2,
+          "helhed": 5,
+          "officialSources": 0,
+          "professionalReviews": 0,
+          "reviewsOrBlogs": 7,
+          "goodreadsPages": 7,
+          "readerDiscussions": 0,
+          "wikipedia": 0,
+          "catalog": 0,
+          "other": 0,
+          "factSources": 7,
+          "totalSources": 14,
+          "reviewLikeSources": 7,
+          "searchPlanVersion": "batch-v1"
+        },
+        "researchHash": "8415bbe1feefaf755e996116",
+        "sourceCount": 14
+      }
+    },
+    "_analysisMeta": {
+      "promptVersion": "analysis-v7",
+      "handbookVersion": "handbook-v2",
+      "model": "gpt-4o-mini-2024-07-18",
+      "analyzedAt": "2026-08-02T16:14:02.337Z",
+      "analysisHash": "8f30a78726da55bcee988425",
+      "researchHash": "8415bbe1feefaf755e996116",
+      "cacheHit": false,
+      "inputTokens": 7984,
+      "outputTokens": 1651,
+      "estimatedCostUsd": 0.0021881999999999995,
+      "webSearchCalls": 4,
+      "userMessage": null,
+      "assessments": {
+        "Book hangover (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Heltindens udvikling kan føre til en vis følelsesmæssig investering.",
+          "sourceBatch": "helhed",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Worldbuilding (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Der er indikationer på en interessant verden, men detaljer mangler.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Episk plot (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Plotset opbygger en vis skala, men mangler dybde.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Politiske intriger (0-5)": {
+          "score": 2,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Nogle politiske elementer er til stede, men ikke dominerende.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Krig/militær (0-5)": {
+          "score": 2,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Der er indikationer på militære konflikter, men de er ikke centrale.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Kvindelig udvikling (0-5)": {
+          "score": 4,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Heltinden ser ud til at have en betydelig udvikling.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Karakterudvikling (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Karaktererne udvikler sig, men dybden kan variere.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Beskyttende helt(e) (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Heltens beskyttende instinkter er til stede, men ikke dominerende.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Bodyguard-vibe (0-5)": {
+          "score": 2,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Der er en vis beskyttende dynamik, men ikke stærk.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Touch her and die-vibe (0-5)": {
+          "score": 2,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Der er indikationer på beskyttelse, men ikke intens.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Der er en vis mængde spice, men ikke overvældende.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik kvalitet (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Kvaliteten af spice er til stede, men ikke bemærkelsesværdig.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Rhysand-faktoren": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Heltens beskyttende natur er til stede, men mangler dybde.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Hvor hurtigt griber den? (0-100%)": {
+          "score": 60,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Serien fanger muligvis læseren tidligt, men ikke med det samme.",
+          "sourceBatch": "helhed",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Romance i fokus (0-100%)": {
+          "score": 70,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Romancen ser ud til at være central for plottet.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Tine-score": {
+          "score": 79,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Beregnet ud fra håndbogens vægte (episk plot, worldbuilding, udvikling, beskyttende vibes, Rhysand m.m.).",
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        }
+      },
+      "rhysand": {
+        "score": 3,
+        "confidence": "low",
+        "basis": "ai_inference",
+        "reason": "Heltens beskyttende natur er til stede, men mangler dybde.",
+        "sourceBatch": "helteprofil",
+        "sourceCount": 2,
+        "evidenceSourceIds": [],
+        "conflictingSourceIds": []
+      },
+      "foundation": {
+        "goodreads": null,
+        "helteprofil": 2,
+        "romanceprofil": 5,
+        "plotkarakter": 2,
+        "helhed": 5,
+        "officialSources": 0,
+        "professionalReviews": 0,
+        "reviewsOrBlogs": 7,
+        "goodreadsPages": 7,
+        "readerDiscussions": 0,
+        "wikipedia": 0,
+        "catalog": 0,
+        "other": 0,
+        "factSources": 7,
+        "totalSources": 14,
+        "reviewLikeSources": 7,
+        "searchPlanVersion": "batch-v1",
+        "researchedAt": "2026-08-02T16:13:45.563Z",
+        "disclaimer": "Kilder er batchet efter romantasy-felter (helteprofil, romance, plot/karakter, helhed). Appen har ikke læst alle anmeldelser — kun et systematisk udvalg."
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "title": "Reign & Ruin by J.D. Evans | Romance.io",
+          "url": "https://romance.io/books/6084072501991d0e29557c71/reign-ruin-jd-evans",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-2",
+          "title": "Reign & Ruin by J.D. Evans | Swooon",
+          "url": "https://swooon.com/book/reign-ruin",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-3",
+          "title": "romance.io",
+          "url": "https://romance.io/books/6084072501991d0e29557c71/reign-ruin-jd-evans?src=rdt&thr=1oi8dt0",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-4",
+          "title": "thebookmatch.com",
+          "url": "https://thebookmatch.com/books/BK272",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-5",
+          "title": "bookclubs.com",
+          "url": "https://bookclubs.com/books/reign-ruin-mages-of-the-wheel-153707",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-6",
+          "title": "fanfiaddict.com",
+          "url": "https://fanfiaddict.com/spfbo-7-finalist-review-reign-ruin-mages-of-the-wheel-1-by-j-d-evans",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-7",
+          "title": "fanfiaddict.com",
+          "url": "https://fanfiaddict.com/review-reign-ruin-mages-of-the-wheel-1-by-j-d-evans",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-8",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-9",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-10",
+          "title": "Reign & Ruin (Mages of the Wheel) by J.D. Evans | Goodreads",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-11",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-12",
+          "title": "Reign & Ruin af J.D. Evans",
+          "url": "https://goodreads.com/book/show/171685085",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-13",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/work/quotes/73107342-reign-ruin",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-14",
+          "title": "Reign & Ruin (Mages of the Wheel, #1) af J.D. Evans | Goodreads",
+          "url": "https://goodreads.com/book/show/50607309",
+          "type": "goodreads",
+          "batch": "helhed"
+        }
+      ],
+      "researchCacheHit": false,
+      "webSearchUsed": true
+    },
+    "_usage": {
+      "researchCacheHit": false,
+      "webSearchCalls": 4,
+      "webSearchUsed": true
+    },
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 99
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Hidden Legacy",
+    "Første bog/titel": "Burn for Me",
+    "Forfatter": "Ilona Andrews",
+    "Antal bøger i serien": null,
+    "Lydbog (ja/nej, ikke hele serien)": null,
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": null,
+    "Relation": "MF",
+    "Tine-score": 99,
+    "Goodreads-score": 4.28,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Urban fantasy; magiske huse; familiedynastier; elementmagi",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 3,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 5,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 3,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 10,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Vold, kidnapning, mord, tortur, magiske kampe",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 45,
+    "Minder mest om": "Mages of the Wheel; The Bridge Kingdom",
+    "Hvis du savner...": "Rhysands beskyttende natur",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.28,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "Tines score": null,
+    "_identity": {
+      "title": "Burn for Me",
+      "author": "Ilona Andrews",
+      "series": "Hidden Legacy",
+      "bookNumber": null,
+      "identityConfidence": "medium",
+      "mmc": "Nevada",
+      "fmc": "Rogan"
+    },
+    "_research": {
+      "identity": {
+        "title": "Burn for Me",
+        "author": "Ilona Andrews",
+        "series": "Hidden Legacy",
+        "bookNumber": 1,
+        "confidence": "medium"
+      },
+      "facts": {
+        "publishedBookCount": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "seriesStatus": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "audiobook": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "danishEdition": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "mofiboAvailability": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "sameMainCouple": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "officialDescription": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        }
+      },
+      "ratings": {
+        "goodreads": null
+      },
+      "reviewConsensus": {},
+      "sources": [
+        {
+          "title": "Burn for Me is the first book in a phenomenal urban fantasy romance series by Ilona Andrews (4.5/5 stars)",
+          "url": "https://rusereviews.com/2025/09/16/burn-for-me",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen roser verdensopbygningen og karakterudviklingen, især forholdet mellem Nevada og Rogan. Deres humoristiske og skarpe dialog skaber en dynamisk kemi. Spice-niveauet vurderes til 2 ud af 5, hvilket indikerer en moderat intensitet i romantikken.",
+          "focus": "romanceprofil",
+          "id": "source-1"
+        },
+        {
+          "title": "BURN FOR ME by Ilona Andrews",
+          "url": "https://dgreads.home.blog/2025/03/12/burn-for-me-by-ilona-andrews",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen beskriver bogens langsomme opbygning af romantikken mellem Nevada og Rogan, hvor deres forhold udvikler sig gradvist. Spice-niveauet vurderes til 2 ud af 5, hvilket antyder en lav til moderat intensitet i romantikken.",
+          "focus": "romanceprofil",
+          "id": "source-2"
+        },
+        {
+          "title": "Burn for Me by Ilona Andrews",
+          "url": "https://romanceataglance.com/podcast/burn-for-me",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Podcasten diskuterer bogens langsomme opbygning af romantikken mellem Nevada og Rogan, hvor spændingen stiger over tid. Spice-niveauet vurderes til 2 ud af 5, hvilket indikerer en moderat intensitet i romantikken.",
+          "focus": "romanceprofil",
+          "id": "source-3"
+        },
+        {
+          "title": "romance.io",
+          "url": "https://romance.io/books/545539998c7d2382e041433a/burn-for-me-ilona-andrews?src=rdt&thr=1gbsgzr",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Fundet via romanceprofil-søgning",
+          "focus": "romanceprofil",
+          "id": "source-4"
+        },
+        {
+          "title": "romance.io",
+          "url": "https://romance.io/books/545539998c7d2382e041433a/burn-for-me-ilona-andrews?src=rdt&thr=1mce58t",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Fundet via romanceprofil-søgning",
+          "focus": "romanceprofil",
+          "id": "source-5"
+        },
+        {
+          "title": "Burn for Me (Hidden Legacy #1) af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Anmeldelsen fremhæver, at Mad Rogan er en 'borderline sociopath' og beskriver ham som 'downright scary. Like Ted Bundy scary.'",
+          "focus": "helteprofil",
+          "id": "source-6"
+        },
+        {
+          "title": "Burn for Me (Hidden Legacy #1) af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/22220320",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Anmeldelsen bemærker, at Mad Rogan er en 'Prime med off-the-charts magical abilities' og beskriver ham som 'pure sex walking around on two legs.'",
+          "focus": "helteprofil",
+          "id": "source-7"
+        },
+        {
+          "title": "Burn for Me af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/20765985",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Anmeldelsen fremhæver bogens humoristiske elementer og karakterudvikling, især forholdet mellem hovedpersonerne. Anmelderen bemærker, at Mad Rogan er en 'kliché' karakter, men at han vokser i løbet af bogen.",
+          "focus": "plotkarakter",
+          "id": "source-8"
+        },
+        {
+          "title": "Burn for Me af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Anmeldelsen roser forfatterens evne til at skabe interessante karakterer og beskriver Nevada som 'snarky og fantastisk'. Anmelderen nævner også bogens pacing og plot, der ikke er for kompliceret eller for simpelt.",
+          "focus": "plotkarakter",
+          "id": "source-9"
+        },
+        {
+          "title": "Burn for Me (Hidden Legacy, #1) by Ilona Andrews | Goodreads",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "helhed",
+          "summary": "Anmeldelser fremhæver bogens evne til at fange læseren hurtigt og skabe en 'book hangover'. En læser bemærker: 'For those of you who ~~have been living under a rock~~ don’t already know, Ilona Andrews is my F-A-V-O-R-I-T-E.'",
+          "focus": "helhed",
+          "id": "source-10"
+        },
+        {
+          "title": "Burn for Me (Hidden Legacy, #1) by Ilona Andrews | Goodreads",
+          "url": "https://goodreads.com/book/show/22220320",
+          "type": "goodreads",
+          "batch": "helhed",
+          "summary": "Læserne roser seriens kvalitet og dens evne til at engagere. En kommentar lyder: 'I love their writing, but I'm embarrassed to hold these books in the street.'",
+          "focus": "helhed",
+          "id": "source-11"
+        }
+      ],
+      "researchedAt": "2026-08-02T15:23:23.683Z",
+      "meta": {
+        "promptVersion": "research-v11",
+        "model": "gpt-4o-2024-08-06",
+        "webSearchCalls": 4,
+        "inputTokens": 43136,
+        "outputTokens": 3732,
+        "estimatedCostUsd": 0.0385673,
+        "partial": false,
+        "warnings": [],
+        "searchPlan": [
+          "helteprofil",
+          "romanceprofil",
+          "plotkarakter",
+          "helhed"
+        ],
+        "foundation": {
+          "helteprofil": 2,
+          "romanceprofil": 5,
+          "plotkarakter": 2,
+          "helhed": 2,
+          "officialSources": 0,
+          "professionalReviews": 0,
+          "reviewsOrBlogs": 5,
+          "goodreadsPages": 6,
+          "readerDiscussions": 0,
+          "wikipedia": 0,
+          "catalog": 0,
+          "other": 0,
+          "factSources": 6,
+          "totalSources": 11,
+          "reviewLikeSources": 5,
+          "searchPlanVersion": "batch-v1"
+        },
+        "researchHash": "593afe2ec77c6dd3b254c8e9",
+        "sourceCount": 11
+      }
+    },
+    "_analysisMeta": {
+      "promptVersion": "analysis-v6",
+      "handbookVersion": "handbook-v1",
+      "model": "gpt-4o-mini-2024-07-18",
+      "analyzedAt": "2026-08-02T15:23:44.236Z",
+      "analysisHash": "9a705f95fbe689ec7afc2ce4",
+      "researchHash": "593afe2ec77c6dd3b254c8e9",
+      "cacheHit": false,
+      "inputTokens": 5459,
+      "outputTokens": 1446,
+      "estimatedCostUsd": 0.00168645,
+      "webSearchCalls": 4,
+      "userMessage": null,
+      "assessments": {
+        "Book hangover (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Bogen fanger læseren hurtigt og skaber en stærk tilknytning til karaktererne.",
+          "sourceBatch": "helhed",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Worldbuilding (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Verdensopbygningen er detaljeret og engagerende, med en unik magisk struktur.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Episk plot (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Plotretningen er interessant, men ikke overvældende episk.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Politiske intriger (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Der er elementer af politiske intriger, men de er ikke dominerende.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Krig/militær (0-5)": {
+          "score": 2,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Der er sporadiske militære elementer, men ikke en central del af historien.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Kvindelig udvikling (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Hovedpersonen gennemgår en betydelig udvikling i løbet af historien.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Karakterudvikling (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Karaktererne er dybtgående og udvikler sig gennem historien.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Beskyttende helt(e) (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Mad Rogan udviser beskyttende træk over for Nevada.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Bodyguard-vibe (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Der er en vis bodyguard-dynamik i deres forhold.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Touch her and die-vibe (0-5)": {
+          "score": 2,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Der er elementer af beskyttelse, men ikke en stærk THAD-vibe.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik (0-5)": {
+          "score": 2,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Romantikken er til stede, men med moderat intensitet.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik kvalitet (0-5)": {
+          "score": 2,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Kvaliteten af romantikken er god, men ikke overvældende.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Rhysand-faktoren": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Mad Rogan viser respekt og støtte til Nevada, hvilket er centralt for deres dynamik.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Hvor hurtigt griber den? (0-100%)": {
+          "score": 85,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Bogen fanger læseren hurtigt med sin spænding og karakterer.",
+          "sourceBatch": "helhed",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Romance i fokus (0-100%)": {
+          "score": 75,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Romantikken er en central del af historien, men der er også fokus på plot og karakterudvikling.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Tine-score": {
+          "score": 85,
+          "confidence": "medium",
+          "basis": "mixed_sources",
+          "reason": "Beregnet ud fra håndbogens vægte (episk plot, worldbuilding, udvikling, beskyttende vibes, Rhysand m.m.). Nuanceret med AI-helhedsvurdering (88).",
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        }
+      },
+      "rhysand": {
+        "score": 4,
+        "confidence": "medium",
+        "basis": "ai_inference",
+        "reason": "Mad Rogan viser respekt og støtte til Nevada, hvilket er centralt for deres dynamik.",
+        "sourceBatch": "helteprofil",
+        "sourceCount": 2,
+        "evidenceSourceIds": [],
+        "conflictingSourceIds": []
+      },
+      "foundation": {
+        "goodreads": null,
+        "helteprofil": 2,
+        "romanceprofil": 5,
+        "plotkarakter": 2,
+        "helhed": 2,
+        "officialSources": 0,
+        "professionalReviews": 0,
+        "reviewsOrBlogs": 5,
+        "goodreadsPages": 6,
+        "readerDiscussions": 0,
+        "wikipedia": 0,
+        "catalog": 0,
+        "other": 0,
+        "factSources": 6,
+        "totalSources": 11,
+        "reviewLikeSources": 5,
+        "searchPlanVersion": "batch-v1",
+        "researchedAt": "2026-08-02T15:23:23.683Z",
+        "disclaimer": "Kilder er batchet efter romantasy-felter (helteprofil, romance, plot/karakter, helhed). Appen har ikke læst alle anmeldelser — kun et systematisk udvalg."
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "title": "Burn for Me is the first book in a phenomenal urban fantasy romance series by Ilona Andrews (4.5/5 stars)",
+          "url": "https://rusereviews.com/2025/09/16/burn-for-me",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-2",
+          "title": "BURN FOR ME by Ilona Andrews",
+          "url": "https://dgreads.home.blog/2025/03/12/burn-for-me-by-ilona-andrews",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-3",
+          "title": "Burn for Me by Ilona Andrews",
+          "url": "https://romanceataglance.com/podcast/burn-for-me",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-4",
+          "title": "romance.io",
+          "url": "https://romance.io/books/545539998c7d2382e041433a/burn-for-me-ilona-andrews?src=rdt&thr=1gbsgzr",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-5",
+          "title": "romance.io",
+          "url": "https://romance.io/books/545539998c7d2382e041433a/burn-for-me-ilona-andrews?src=rdt&thr=1mce58t",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-6",
+          "title": "Burn for Me (Hidden Legacy #1) af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-7",
+          "title": "Burn for Me (Hidden Legacy #1) af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/22220320",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-8",
+          "title": "Burn for Me af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/20765985",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-9",
+          "title": "Burn for Me af Ilona Andrews",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-10",
+          "title": "Burn for Me (Hidden Legacy, #1) by Ilona Andrews | Goodreads",
+          "url": "https://goodreads.com/book/show/124128219",
+          "type": "goodreads",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-11",
+          "title": "Burn for Me (Hidden Legacy, #1) by Ilona Andrews | Goodreads",
+          "url": "https://goodreads.com/book/show/22220320",
+          "type": "goodreads",
+          "batch": "helhed"
+        }
+      ],
+      "researchCacheHit": false,
+      "webSearchUsed": true
+    },
+    "_usage": {
+      "researchCacheHit": false,
+      "webSearchCalls": 4,
+      "webSearchUsed": true
+    },
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 99
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Redemption Saga",
+    "Første bog/titel": "A Life of Shadows",
+    "Forfatter": "Kristen Banet",
+    "Antal bøger i serien": "5",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "RH",
+    "Tine-score": 98,
+    "Goodreads-score": 4.16,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Urban fantasy; shifters; vampyrer; dæmoner; magi",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 3,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 5,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 4,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 15,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Vold, tortur, PTSD, overgreb, grafisk vold",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "Age of the Andinna; Rise of the Iliri",
+    "Hvis du savner...": "Their Vampire Queen; Rise of the Iliri",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.16,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 98
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Bridge Kingdom",
+    "Første bog/titel": "The Bridge Kingdom",
+    "Forfatter": "Danielle L. Jensen",
+    "Antal bøger i serien": "6",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "MF",
+    "Tine-score": 98,
+    "Goodreads-score": 4.04,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Kongeriger; spionage; politisk fantasy; arrangeret ægteskab",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 4,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 3,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 10,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, tortur, manipulation",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "Mages of the Wheel; Radiance",
+    "Hvis du savner...": "Rhysand; Aelin",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.04,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 98
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "A Court of Thorns and Roses",
+    "Første bog/titel": "A Court of Mist and Fury",
+    "Forfatter": "Sarah J. Maas",
+    "Antal bøger i serien": null,
+    "Lydbog (ja/nej, ikke hele serien)": null,
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": null,
+    "Er serien færdigskrevet": null,
+    "Relation": "Tilføjet via Discovery (letvægtsscoring).",
+    "Tine-score": 98,
+    "Goodreads-score": null,
+    "Book hangover (0-5)": 5,
+    "Tempo": null,
+    "Worldbuilding (0-5)": null,
+    "Worldbuilding-tags": null,
+    "Episk plot (0-5)": null,
+    "Politiske intriger (0-5)": null,
+    "Krig/militær (0-5)": null,
+    "Chosen one eller vokser naturligt ind i rollen?": null,
+    "Kvindelig udvikling (0-5)": null,
+    "Karakterudvikling (0-5)": null,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": null,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": null,
+    "Spice/erotik (0-5)": null,
+    "Spice/erotik kvalitet (0-5)": null,
+    "FemDom (ja/nej)": null,
+    "Hvor hurtigt griber den? (0-100%)": null,
+    "Falder kvaliteten?": null,
+    "Happy ending?": null,
+    "Tilfredsstillende slutning?": null,
+    "Trigger warnings": null,
+    "Permanente dødsfald blandt hovedpersonerne?": null,
+    "Romance sekundær eller central?": null,
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "The Redemption Saga; Mages of the Wheel",
+    "Hvis du savner...": null,
+    "Rhysand-faktoren": 5,
+    "Tines score": null,
+    "Tines egen vurdering": null,
+    "_ratingMeta": {},
+    "schemaVersion": 3
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Order of Scorpions",
+    "Første bog/titel": "Order of Scorpions",
+    "Forfatter": "Ivy Asher",
+    "Antal bøger i serien": "1 (standalone)",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "RH",
+    "Tine-score": 97,
+    "Goodreads-score": 4.13,
+    "Book hangover (0-5)": 4.5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 4.5,
+    "Worldbuilding-tags": "Fae; assassiner; slaveri; magi",
+    "Episk plot (0-5)": 4,
+    "Politiske intriger (0-5)": 2,
+    "Krig/militær (0-5)": 3,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 5,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 4,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 10,
+    "Falder kvaliteten?": "Let",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Slaveri, tortur, grafisk vold, seksuel vold, eksplicit sex",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "Rise of the Iliri; Age of the Andinna",
+    "Hvis du savner...": "Their Vampire Queen; Rise of the Iliri",
+    "Rhysand-faktoren": 4,
+    "Tines egen vurdering": "1",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.13,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 97
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Villains & Virtues",
+    "Første bog/titel": "Throne in the Dark",
+    "Forfatter": "A.K. Caggiano",
+    "Antal bøger i serien": "3",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "MF",
+    "Tine-score": 97,
+    "Goodreads-score": 4.04,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 4.5,
+    "Worldbuilding-tags": "Fantasy; dæmoner; magi; quests; humor; slow burn",
+    "Episk plot (0-5)": 4,
+    "Politiske intriger (0-5)": 2,
+    "Krig/militær (0-5)": 2,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 4,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 2,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Vold, dæmoner, bortførelse, magi",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "Hidden Legacy; Radiance",
+    "Hvis du savner...": "Rhysands humor og respekt",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.04,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 97
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Kushiel's Legacy",
+    "Første bog/titel": "Kushiel's Dart",
+    "Forfatter": "Jacqueline Carey",
+    "Antal bøger i serien": "3 (Phèdre-trilogien)",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": "Hovedhistorien afsluttet / univers fortsætter",
+    "Relation": "MF",
+    "Tine-score": 96,
+    "Goodreads-score": 4.02,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Langsom",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Politisk fantasy; spionage; guder; hoffintriger",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 5,
+    "Touch her and die-vibe (0-5)": 4,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 5,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 30,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "BDSM, seksuel vold, tortur, krig",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 40,
+    "Minder mest om": "Mages of the Wheel; The Bridge Kingdom",
+    "Hvis du savner...": "En strategisk heltinde med loyal partner",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.02,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 96
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Wraith Kings",
+    "Første bog/titel": "Radiance",
+    "Forfatter": "Grace Draven",
+    "Antal bøger i serien": "4 romaner + noveller (ikke færdig)",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Ikke færdig",
+    "Relation": "MF",
+    "Tine-score": 95,
+    "Goodreads-score": 3.98,
+    "Book hangover (0-5)": 4.5,
+    "Tempo": "Langsom–moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Fantasy; arrangeret ægteskab; kongeriger; magi",
+    "Episk plot (0-5)": 4,
+    "Politiske intriger (0-5)": 4,
+    "Krig/militær (0-5)": 3,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 4,
+    "Touch her and die-vibe (0-5)": 4,
+    "Bully-risiko": "Meget lav",
+    "Spice/erotik (0-5)": 3,
+    "Spice/erotik kvalitet (0-5)": 5,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 15,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, arrangeret ægteskab, sorg",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 45,
+    "Minder mest om": "Mages of the Wheel; Tairen Soul",
+    "Hvis du savner...": "Rhysands respekt; Mages of the Wheel",
+    "Rhysand-faktoren": 5,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 3.98,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 95
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Daevabad Trilogy",
+    "Første bog/titel": "The City of Brass",
+    "Forfatter": "S. A. Chakraborty",
+    "Antal bøger i serien": "3",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": "Hovedhistorien afsluttet / univers fortsætter",
+    "Relation": "MF",
+    "Tine-score": 95,
+    "Goodreads-score": 4.14,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Djinn; mellemøstlig mytologi; magi; politisk fantasy",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 4,
+    "Bodyguard-vibe (0-5)": 3,
+    "Touch her and die-vibe (0-5)": 3,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 1,
+    "Spice/erotik kvalitet (0-5)": 4,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 15,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, tortur, slaveri, religiøse konflikter",
+    "Permanente dødsfald blandt hovedpersonerne?": "Ja",
+    "Romance sekundær eller central?": "Sekundær",
+    "Romance i fokus (0-100%)": 25,
+    "Minder mest om": "Mages of the Wheel; The Empire Trilogy",
+    "Hvis du savner...": "En stærk kvindelig hovedperson i en kompleks politisk verden",
+    "Rhysand-faktoren": 3,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.14,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 95
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Twelve Houses",
+    "Første bog/titel": "Mystic and Rider",
+    "Forfatter": "Sharon Shinn",
+    "Antal bøger i serien": "5",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Hovedhistorien afsluttet / univers fortsætter",
+    "Relation": "MF",
+    "Tine-score": 93,
+    "Goodreads-score": 4.11,
+    "Book hangover (0-5)": 4,
+    "Tempo": "Langsom–moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Klassisk fantasy; magikere; kongeriger; shapeshifters",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 4,
+    "Bodyguard-vibe (0-5)": 3,
+    "Touch her and die-vibe (0-5)": 2,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 2,
+    "Spice/erotik kvalitet (0-5)": 4,
+    "FemDom (ja/nej)": "",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, religiøs fanatisme, politiske sammensværgelser",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 35,
+    "Minder mest om": "Mages of the Wheel; Radiance",
+    "Hvis du savner...": "Den modne romance fra Radiance kombineret med politiske intriger",
+    "Rhysand-faktoren": 3,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.11,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 93
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Chronicles of the Wolf Queen",
+    "Første bog/titel": "The Wolf of Oren-Yaro",
+    "Forfatter": "K. S. Villoso",
+    "Antal bøger i serien": "3",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "MF",
+    "Tine-score": 91,
+    "Goodreads-score": 3.62,
+    "Book hangover (0-5)": 4.5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Episk fantasy; asiatisk inspireret; drager; dronning; politiske intriger",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Allerede dronning, udvikler sig som leder",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 2,
+    "Bodyguard-vibe (0-5)": 2,
+    "Touch her and die-vibe (0-5)": 1,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 1,
+    "Spice/erotik kvalitet (0-5)": 3,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, attentater, tortur, manipulation",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Sekundær",
+    "Romance i fokus (0-100%)": 20,
+    "Minder mest om": "The Empire Trilogy; The Bridge Kingdom",
+    "Hvis du savner...": "En stærk dronning som strateg",
+    "Rhysand-faktoren": 2,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 3.62,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 91
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Empire Trilogy",
+    "Første bog/titel": "Daughter of the Empire",
+    "Forfatter": "Raymond E. Feist & Janny Wurts",
+    "Antal bøger i serien": "3",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "MF",
+    "Tine-score": 89,
+    "Goodreads-score": 4.29,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Langsom",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Politisk fantasy; asiatisk inspireret imperium; magi",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 5,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 3,
+    "Bodyguard-vibe (0-5)": 2,
+    "Touch her and die-vibe (0-5)": 1,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 0,
+    "Spice/erotik kvalitet (0-5)": 0,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, mord, politiske attentater, slaveri, vold",
+    "Permanente dødsfald blandt hovedpersonerne?": "Ja",
+    "Romance sekundær eller central?": "Sekundær",
+    "Romance i fokus (0-100%)": 15,
+    "Minder mest om": "Mages of the Wheel; Game of Thrones",
+    "Hvis du savner...": "Aelin som strateg",
+    "Rhysand-faktoren": 2,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.29,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 89
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "The Winnowing Flame Trilogy",
+    "Første bog/titel": "The Ninth Rain",
+    "Forfatter": "Jen Williams",
+    "Antal bøger i serien": "3",
+    "Lydbog (ja/nej, ikke hele serien)": "Ja",
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
+    "Er serien færdigskrevet": "Færdig",
+    "Relation": "MF",
+    "Tine-score": 89,
+    "Goodreads-score": 4.08,
+    "Book hangover (0-5)": 5,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 5,
+    "Worldbuilding-tags": "Episk fantasy; hekse; eborans; drager; ældgammel fjende",
+    "Episk plot (0-5)": 5,
+    "Politiske intriger (0-5)": 4,
+    "Krig/militær (0-5)": 5,
+    "Chosen one eller vokser naturligt ind i rollen?": "Flere hovedpersoner udvikler sig naturligt ind i større roller",
+    "Kvindelig udvikling (0-5)": 5,
+    "Karakterudvikling (0-5)": 5,
+    "Beskyttende helt(e) (0-5)": 3,
+    "Bodyguard-vibe (0-5)": 2,
+    "Touch her and die-vibe (0-5)": 2,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 1,
+    "Spice/erotik kvalitet (0-5)": 3,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 20,
+    "Falder kvaliteten?": "Nej",
+    "Happy ending?": "Overvejende ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "Krig, vold, body horror, monstre og permanente dødsfald",
+    "Permanente dødsfald blandt hovedpersonerne?": "Ja",
+    "Romance sekundær eller central?": "Sekundær",
+    "Romance i fokus (0-100%)": 20,
+    "Minder mest om": "The Daevabad Trilogy; The Chronicles of the Wolf Queen",
+    "Hvis du savner...": "Original worldbuilding, stærke kvindelige karakterer og episk gruppeudvikling",
+    "Rhysand-faktoren": 2,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 4.08,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "schemaVersion": 3,
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 89
+    }
+  },
+  {
+    "Status": "Ikke læst",
+    "Seriens navn": "Dark Olympus",
+    "Første bog/titel": "Neon Gods",
+    "Forfatter": "Katee Robert",
+    "Antal bøger i serien": null,
+    "Lydbog (ja/nej, ikke hele serien)": null,
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": null,
+    "Relation": "MF",
+    "Tine-score": 81,
+    "Goodreads-score": 3.68,
+    "Book hangover (0-5)": 3,
+    "Tempo": "Hurtigt",
+    "Worldbuilding (0-5)": 2,
+    "Worldbuilding-tags": "Græsk mytologi; moderne; Hades & Persefone",
+    "Episk plot (0-5)": 2,
+    "Politiske intriger (0-5)": 3,
+    "Krig/militær (0-5)": 1,
+    "Chosen one eller vokser naturligt ind i rollen?": "Ingen af delene",
+    "Kvindelig udvikling (0-5)": 3,
+    "Karakterudvikling (0-5)": 3,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 4,
+    "Touch her and die-vibe (0-5)": 5,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 5,
+    "Spice/erotik kvalitet (0-5)": 4,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": 5,
+    "Falder kvaliteten?": "Varierer",
+    "Happy ending?": "Ja",
+    "Tilfredsstillende slutning?": "Ja",
+    "Trigger warnings": "BDSM, magtdynamikker",
+    "Permanente dødsfald blandt hovedpersonerne?": "Nej",
+    "Romance sekundær eller central?": "Central",
+    "Romance i fokus (0-100%)": 70,
+    "Minder mest om": "Hades & Persefone-retellings",
+    "Hvis du savner...": "Rhysands beskyttende side",
+    "Rhysand-faktoren": 4,
+    "Tines egen vurdering": "",
+    "_ratingMeta": {
+      "legacy": {
+        "value": 3.68,
+        "source": "legacy_unknown",
+        "matchConfidence": "low",
+        "fetchedAt": null
+      }
+    },
+    "_legacyFacts": {
+      "Er serien færdigskrevet": "Ikke verificeret"
+    },
+    "schemaVersion": 3,
+    "Tines score": null,
+    "_identity": {
+      "title": "Neon Gods",
+      "author": "Katee Robert",
+      "series": "Dark Olympus",
+      "bookNumber": null,
+      "identityConfidence": "medium"
+    },
+    "_research": {
+      "identity": {
+        "title": "Neon Gods",
+        "author": "Katee Robert",
+        "series": "Dark Olympus",
+        "bookNumber": null,
+        "confidence": "medium"
+      },
+      "facts": {
+        "publishedBookCount": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "seriesStatus": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "audiobook": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "danishEdition": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "mofiboAvailability": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "sameMainCouple": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "officialDescription": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        }
+      },
+      "ratings": {
+        "goodreads": null
+      },
+      "reviewConsensus": {},
+      "sources": [
+        {
+          "title": "Neon Gods by Katee Robert — Spice 5/5, Tropes & Review | The Otherworld",
+          "url": "https://otherworldtales.com/books/neon-gods",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen fremhæver den intense kemi mellem Hades og Persephone og beskriver bogen som en af de mest eksplosive Hades og Persephone-fortællinger i den moderne dark romance-genre. Fokus på samtykke og BDSM-elementer fremhæves som styrker, mens plottet kritiseres for at være tyndt og klimakset som antiklimaktisk.",
+          "focus": "romanceprofil",
+          "id": "source-1"
+        },
+        {
+          "title": "Neon Gods by Katee Robert — Steamy Mythology Remix | AudiobookSoul",
+          "url": "https://audiobooksoul.com/reviews/neon-gods",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen beskriver bogen som en eksplicit Hades og Persephone-romance med fokus på magtdynamikker og fjender-til-elskere-tema. Læseren roser den moderne dystopiske genfortælling af græsk mytologi, men bemærker, at plottet er tyndt, og klimakset er svagt.",
+          "focus": "romanceprofil",
+          "id": "source-2"
+        },
+        {
+          "title": "Neon Gods by Katee Robert | Summary, Audio, Analysis, FAQ | SoBrief",
+          "url": "https://sobrief.com/books/neon-gods?report_issues=true",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Sammenfatningen fremhæver bogens høje spice-niveau og den intense kemi mellem Hades og Persephone. Anmeldelsen bemærker, at bogen er underholdende, men mangler dybde i plot og verdensopbygning.",
+          "focus": "romanceprofil",
+          "id": "source-3"
+        },
+        {
+          "title": "Anmeldelse af \"Neon Gods\" af Katee Robert",
+          "url": "https://goodreads.com/book/show/54659771",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Anmelderen kritiserer Hades som en 'simpel' karakter og sammenligner ham med en 'kopi af Christian Grey'.",
+          "focus": "helteprofil",
+          "id": "source-4"
+        },
+        {
+          "title": "Anmeldelse af \"Neon Gods\" af Katee Robert",
+          "url": "https://goodreads.com/book/show/60218659",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Anmelderen udtrykker skuffelse over Hades' karakter og beskriver ham som en 'simpel' og 'slap' karakter, der viser Persephone sin 'legeplads' allerede i kapitel 7.",
+          "focus": "helteprofil",
+          "id": "source-5"
+        },
+        {
+          "title": "romance.io",
+          "url": "https://romance.io/books/60b5296e4599ae0eb0de1f07/neon-gods-katee-robert",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Fundet via romanceprofil-søgning",
+          "focus": "romanceprofil",
+          "id": "source-6"
+        },
+        {
+          "title": "romance.io",
+          "url": "https://romance.io/books/60b5296e4599ae0eb0de1f07/neon-gods-katee-robert?src=rdt&thr=1grcr3y",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Fundet via romanceprofil-søgning",
+          "focus": "romanceprofil",
+          "id": "source-7"
+        },
+        {
+          "title": "sobrief.com",
+          "url": "https://sobrief.com/books/magic-flame",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-8"
+        },
+        {
+          "title": "catherinethomswrites.com",
+          "url": "https://catherinethomswrites.com/lit-chat",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-9"
+        },
+        {
+          "title": "harrywalker.com",
+          "url": "https://harrywalker.com/types/women-speakers",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-10"
+        },
+        {
+          "title": "itemstoflip.com",
+          "url": "https://itemstoflip.com/blog/most-profitable-thrift-store-finds",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-11"
+        },
+        {
+          "title": "stacyalesi.com",
+          "url": "https://stacyalesi.com/2013/12/page/3",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-12"
+        },
+        {
+          "title": "Ruthless Redemption by Katee Robert | Goodreads",
+          "url": "https://goodreads.com/book/show/229621388",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Anmeldelsen fremhæver, hvordan Keira O'Malley, den yngste af O'Malley-søskende, kæmper med sorg og afhængighed efter sin brors død. Dmitri Romanov, en tidligere antagonist, tilbyder hende en vej ud af hendes selvdestruktive adfærd. Forholdet mellem Keira og Dmitri udvikler sig fra modstand til dyb kærlighed, og anmeldelsen roser karakterudviklingen og den følelsesmæssige dybde i historien.",
+          "focus": "plotkarakter",
+          "id": "source-13"
+        },
+        {
+          "title": "For the Gods' Sake (Tempt the Gods, #3) by Rory L. Scott | Goodreads",
+          "url": "https://goodreads.com/book/show/195460141",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Selvom denne anmeldelse primært omhandler en anden bog, trækker den paralleller til 'Neon Gods' ved at fremhæve, hvordan forfatteren væver græsk og romersk mytologi sammen i en urban fantasy-indstilling. Anmeldelsen roser forfatterens verdensopbygning og karakterudvikling, hvilket kan være relevant for dem, der er interesseret i 'Neon Gods'.",
+          "focus": "plotkarakter",
+          "id": "source-14"
+        }
+      ],
+      "researchedAt": "2026-08-02T14:39:09.202Z",
+      "meta": {
+        "promptVersion": "research-v9",
+        "model": "gpt-4o-2024-08-06",
+        "webSearchCalls": 4,
+        "inputTokens": 44149,
+        "outputTokens": 3641,
+        "estimatedCostUsd": 0.041310975,
+        "partial": false,
+        "warnings": [],
+        "searchPlan": [
+          "helteprofil",
+          "romanceprofil",
+          "plotkarakter",
+          "helhed"
+        ],
+        "foundation": {
+          "helteprofil": 2,
+          "romanceprofil": 5,
+          "plotkarakter": 2,
+          "helhed": 5,
+          "officialSources": 0,
+          "professionalReviews": 0,
+          "reviewsOrBlogs": 10,
+          "goodreadsPages": 4,
+          "readerDiscussions": 0,
+          "wikipedia": 0,
+          "catalog": 0,
+          "other": 0,
+          "factSources": 4,
+          "totalSources": 14,
+          "reviewLikeSources": 10,
+          "searchPlanVersion": "batch-v1"
+        },
+        "researchHash": "fada02619f97b85965429ac8",
+        "sourceCount": 14
+      }
+    },
+    "_analysisMeta": {
+      "promptVersion": "analysis-v6",
+      "handbookVersion": "handbook-v1",
+      "model": "gpt-4o-mini-2024-07-18",
+      "analyzedAt": "2026-08-02T14:39:22.998Z",
+      "analysisHash": "ed5496207927b6a83e218f71",
+      "researchHash": "fada02619f97b85965429ac8",
+      "cacheHit": false,
+      "inputTokens": 5804,
+      "outputTokens": 1446,
+      "estimatedCostUsd": 0.0017382,
+      "webSearchCalls": 4,
+      "userMessage": null,
+      "assessments": {
+        "Book hangover (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "helhed",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Worldbuilding (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Episk plot (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Politiske intriger (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Krig/militær (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Kvindelig udvikling (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Karakterudvikling (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Beskyttende helt(e) (0-5)": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Bodyguard-vibe (0-5)": {
+          "score": 1,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Bodyguard-dynamik ikke fremtrædende i researchgrundlaget; sat lavt frem for tomt.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Touch her and die-vibe (0-5)": {
+          "score": 1,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Ikke et centralt romantasy-trope i researchgrundlaget; sat lavt frem for tomt.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik (0-5)": {
+          "score": 5,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Høj spice-niveau og intens kemi mellem karaktererne.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik kvalitet (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Kvaliteten af spice er generelt høj, men plottet kritiseres.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Rhysand-faktoren": {
+          "score": 3,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Hvor hurtigt griber den? (0-100%)": {
+          "score": 30,
+          "confidence": "low",
+          "basis": "ai_inference",
+          "reason": "Estimeret ud fra serieidentitet; research havde ikke præcis %-konsensus.",
+          "sourceBatch": "helhed",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Romance i fokus (0-100%)": {
+          "score": 90,
+          "confidence": "medium",
+          "basis": "ai_inference",
+          "reason": "Romance er central for plottet og karakterernes interaktioner.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Tine-score": {
+          "score": 82,
+          "confidence": "medium",
+          "basis": "mixed_sources",
+          "reason": "Beregnet ud fra håndbogens vægte (episk plot, worldbuilding, udvikling, beskyttende vibes, Rhysand m.m.). Nuanceret med AI-helhedsvurdering (85).",
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        }
+      },
+      "rhysand": {
+        "score": 3,
+        "confidence": "low",
+        "basis": "ai_inference",
+        "reason": "Vurderet ud fra serieidentitet og tilgængelig research (ai_inference).",
+        "sourceBatch": "helteprofil",
+        "sourceCount": 2,
+        "evidenceSourceIds": [],
+        "conflictingSourceIds": []
+      },
+      "foundation": {
+        "goodreads": null,
+        "helteprofil": 2,
+        "romanceprofil": 5,
+        "plotkarakter": 2,
+        "helhed": 5,
+        "officialSources": 0,
+        "professionalReviews": 0,
+        "reviewsOrBlogs": 10,
+        "goodreadsPages": 4,
+        "readerDiscussions": 0,
+        "wikipedia": 0,
+        "catalog": 0,
+        "other": 0,
+        "factSources": 4,
+        "totalSources": 14,
+        "reviewLikeSources": 10,
+        "searchPlanVersion": "batch-v1",
+        "researchedAt": "2026-08-02T14:39:09.202Z",
+        "disclaimer": "Kilder er batchet efter romantasy-felter (helteprofil, romance, plot/karakter, helhed). Appen har ikke læst alle anmeldelser — kun et systematisk udvalg."
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "title": "Neon Gods by Katee Robert — Spice 5/5, Tropes & Review | The Otherworld",
+          "url": "https://otherworldtales.com/books/neon-gods",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-2",
+          "title": "Neon Gods by Katee Robert — Steamy Mythology Remix | AudiobookSoul",
+          "url": "https://audiobooksoul.com/reviews/neon-gods",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-3",
+          "title": "Neon Gods by Katee Robert | Summary, Audio, Analysis, FAQ | SoBrief",
+          "url": "https://sobrief.com/books/neon-gods?report_issues=true",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-4",
+          "title": "Anmeldelse af \"Neon Gods\" af Katee Robert",
+          "url": "https://goodreads.com/book/show/54659771",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-5",
+          "title": "Anmeldelse af \"Neon Gods\" af Katee Robert",
+          "url": "https://goodreads.com/book/show/60218659",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-6",
+          "title": "romance.io",
+          "url": "https://romance.io/books/60b5296e4599ae0eb0de1f07/neon-gods-katee-robert",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-7",
+          "title": "romance.io",
+          "url": "https://romance.io/books/60b5296e4599ae0eb0de1f07/neon-gods-katee-robert?src=rdt&thr=1grcr3y",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-8",
+          "title": "sobrief.com",
+          "url": "https://sobrief.com/books/magic-flame",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-9",
+          "title": "catherinethomswrites.com",
+          "url": "https://catherinethomswrites.com/lit-chat",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-10",
+          "title": "harrywalker.com",
+          "url": "https://harrywalker.com/types/women-speakers",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-11",
+          "title": "itemstoflip.com",
+          "url": "https://itemstoflip.com/blog/most-profitable-thrift-store-finds",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-12",
+          "title": "stacyalesi.com",
+          "url": "https://stacyalesi.com/2013/12/page/3",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-13",
+          "title": "Ruthless Redemption by Katee Robert | Goodreads",
+          "url": "https://goodreads.com/book/show/229621388",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-14",
+          "title": "For the Gods' Sake (Tempt the Gods, #3) by Rory L. Scott | Goodreads",
+          "url": "https://goodreads.com/book/show/195460141",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        }
+      ],
+      "researchCacheHit": false,
+      "webSearchUsed": true
+    },
+    "_usage": {
+      "researchCacheHit": false,
+      "webSearchCalls": 4,
+      "webSearchUsed": true
+    },
+    "_scoreReference": {
+      "locked": true,
+      "source": "excel",
+      "tineScore": 81
+    }
+  }
+]

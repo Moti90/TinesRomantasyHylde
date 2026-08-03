@@ -1,0 +1,27 @@
+{
+  "name": "tine-romantasy-db",
+  "version": "1.0.0",
+  "description": "Tines Romantasy Liste – lokal webapp til scoring og Excel",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "import:excel": "node server/scripts/import-excel.js",
+    "discovery": "node scripts/run-discovery.mjs",
+    "discovery:dna": "node scripts/run-discovery.mjs --dna",
+    "test": "node --test test/**/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.2",
+    "openai": "^7.3.0",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,804 @@
+{
+  "lastRun": "2026-08-03T19:51:19.346Z",
+  "tasteDNA": {
+    "topSerier": [
+      {
+        "name": "Mages of the Wheel",
+        "author": "J.D. Evans",
+        "score": 99
+      },
+      {
+        "name": "Hidden Legacy",
+        "author": "Ilona Andrews",
+        "score": 99
+      },
+      {
+        "name": "The Redemption Saga",
+        "author": "Kristen Banet",
+        "score": 98
+      },
+      {
+        "name": "The Bridge Kingdom",
+        "author": "Danielle L. Jensen",
+        "score": 98
+      },
+      {
+        "name": "A Court of Thorns and Roses",
+        "author": "Sarah J. Maas",
+        "score": 98
+      },
+      {
+        "name": "Order of Scorpions",
+        "author": "Ivy Asher",
+        "score": 97
+      },
+      {
+        "name": "Villains & Virtues",
+        "author": "A.K. Caggiano",
+        "score": 97
+      },
+      {
+        "name": "Kushiel's Legacy",
+        "author": "Jacqueline Carey",
+        "score": 96
+      },
+      {
+        "name": "Wraith Kings",
+        "author": "Grace Draven",
+        "score": 95
+      },
+      {
+        "name": "The Daevabad Trilogy",
+        "author": "S. A. Chakraborty",
+        "score": 95
+      },
+      {
+        "name": "The Twelve Houses",
+        "author": "Sharon Shinn",
+        "score": 93
+      },
+      {
+        "name": "The Chronicles of the Wolf Queen",
+        "author": "K. S. Villoso",
+        "score": 91
+      },
+      {
+        "name": "The Empire Trilogy",
+        "author": "Raymond E. Feist & Janny Wurts",
+        "score": 89
+      },
+      {
+        "name": "The Winnowing Flame Trilogy",
+        "author": "Jen Williams",
+        "score": 89
+      },
+      {
+        "name": "Dark Olympus",
+        "author": "Katee Robert",
+        "score": 81
+      }
+    ],
+    "bundSerier": [
+      {
+        "name": "Dark Olympus",
+        "author": "Katee Robert",
+        "score": 81
+      },
+      {
+        "name": "The Empire Trilogy",
+        "author": "Raymond E. Feist & Janny Wurts",
+        "score": 89
+      },
+      {
+        "name": "The Winnowing Flame Trilogy",
+        "author": "Jen Williams",
+        "score": 89
+      },
+      {
+        "name": "The Chronicles of the Wolf Queen",
+        "author": "K. S. Villoso",
+        "score": 91
+      },
+      {
+        "name": "The Twelve Houses",
+        "author": "Sharon Shinn",
+        "score": 93
+      },
+      {
+        "name": "Wraith Kings",
+        "author": "Grace Draven",
+        "score": 95
+      },
+      {
+        "name": "The Daevabad Trilogy",
+        "author": "S. A. Chakraborty",
+        "score": 95
+      },
+      {
+        "name": "Kushiel's Legacy",
+        "author": "Jacqueline Carey",
+        "score": 96
+      },
+      {
+        "name": "Order of Scorpions",
+        "author": "Ivy Asher",
+        "score": 97
+      },
+      {
+        "name": "Villains & Virtues",
+        "author": "A.K. Caggiano",
+        "score": 97
+      }
+    ]
+  },
+  "queries": [
+    "\"touch her and die\" romantasy recommendations",
+    "\"bodyguard romance\" fantasy books reddit",
+    "\"morally grey MMC who respects her\" book recs",
+    "\"alpha hero\" \"romance is the main plot\" fantasy",
+    "\"book hangover\" romantasy series worth reading",
+    "\"protective MMC\" romantasy recommendations",
+    "\"if you liked Mages of the Wheel\" similar series",
+    "\"if you liked Hidden Legacy\" similar series"
+  ],
+  "fromCache": true,
+  "candidates": [
+    {
+      "title": "Crescent City",
+      "author": "Sarah J. Maas",
+      "discoveryScore": 2,
+      "matchedSignals": [
+        "if you liked Mages of the Wheel",
+        "if you liked Hidden Legacy"
+      ],
+      "sources": [
+        {
+          "url": "https://www.romance.io/series/similar/5ecf61cbeaaef00e00df1866",
+          "context": "Anbefalet som en lignende serie til 'Mages of the Wheel'.",
+          "signal": "if you liked Mages of the Wheel"
+        },
+        {
+          "url": "https://www.romance.io/series/similar/58fe0a069096bf31c42d2c20",
+          "context": "Anbefalet som en serie med en sassy heroine og en verden fyldt med magi og mystik.",
+          "signal": "if you liked Hidden Legacy"
+        },
+        {
+          "url": "https://www.romance.io/series/similar/65da2d2397d82c6871662b79",
+          "context": "Anbefalet for sin dybde i karakterudvikling og en verden fyldt med magi og mystik.",
+          "signal": "if you liked Hidden Legacy"
+        },
+        {
+          "url": "https://www.romance.io/series/similar/6507277ade8d340d5142ebfa",
+          "context": "Anbefalet for sin dybde i karakterudvikling og en verden fyldt med magi og mystik.",
+          "signal": "if you liked Hidden Legacy"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Crescent%20City%20Sarah%20J.%20Maas"
+    },
+    {
+      "title": "Kingdom of the Wicked",
+      "author": "Kerri Maniscalco",
+      "discoveryScore": 2,
+      "matchedSignals": [
+        "touch her and die",
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://www.embernovels.com/tropes/touch-her-and-die",
+          "context": "A demon prince whose reputation for cruelty is well-earned discovers that one mortal witch has made him something far more dangerous than he was before. Someone with something to lose.",
+          "signal": "touch her and die"
+        },
+        {
+          "url": "https://feyble.com/recovering-from-a-from-blood-and-ash-book-hangover/",
+          "context": "Looking for an enemies-to-lovers romance? This one will do it. With witches and vampires and a star-crossed romance, this book might be your next win.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Kingdom%20of%20the%20Wicked%20Kerri%20Maniscalco"
+    },
+    {
+      "title": "The Cruel Prince",
+      "author": "Holly Black",
+      "discoveryScore": 2,
+      "matchedSignals": [
+        "morally grey MMC who respects her",
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://www.genredpodcast.com/post/trope-tuesday-morally-grey-mmc-8-favorite-picks",
+          "context": "Cardan’s arc proves cruelty can bend toward courage (with the right push).",
+          "signal": "morally grey MMC who respects her"
+        },
+        {
+          "url": "https://www.guiltychapters.com/what-to-read-after-fourth-wing/",
+          "context": "Enemies to lovers perfection. Mortal girl in fae world (similar to weak human in dragon world). Political intrigue and scheming.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Cruel%20Prince%20Holly%20Black"
+    },
+    {
+      "title": "A Fracture in Forever",
+      "author": "Sam Northman",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "added",
+      "searchUrl": "https://www.google.com/search?q=A%20Fracture%20in%20Forever%20Sam%20Northman"
+    },
+    {
+      "title": "A Heart of Blood and Ashes",
+      "author": "Milla Vane",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "alpha hero"
+      ],
+      "sources": [
+        {
+          "url": "https://goodreads.com/book/show/46181011",
+          "context": "En læser beskriver bogen som en 'episk fantasy (romance)', der indeholder en 'alpha, barbarisk kriger' og en 'heltinde, der bruger sine ord og hjerne til at sparke røv'.",
+          "signal": "alpha hero"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=A%20Heart%20of%20Blood%20and%20Ashes%20Milla%20Vane"
+    },
+    {
+      "title": "Artemis",
+      "author": "Elizabeth Davies",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "alpha hero"
+      ],
+      "sources": [
+        {
+          "url": "https://www.novelflow.app/novel/artemis",
+          "context": "Anmeldelser fremhæver den langsomme romance mellem Artemis og Lucan som 'smerteligt smuk' og bemærker, at 'verdenen er rig og opslugende'.",
+          "signal": "alpha hero"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Artemis%20Elizabeth%20Davies"
+    },
+    {
+      "title": "Beautiful Torment (Empire of Kings #1)",
+      "author": "A. Zavarelli",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/romance-touch-her-and-die",
+          "context": "A gripping story of a king's obsession with a woman who challenges his authority, leading to a tumultuous and protective relationship.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Beautiful%20Torment%20(Empire%20of%20Kings%20%231)%20A.%20Zavarelli"
+    },
+    {
+      "title": "Blackthorn",
+      "author": "T.J. Geissinger",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Blackthorn%20T.J.%20Geissinger"
+    },
+    {
+      "title": "Crown of War and Shadow",
+      "author": "J.R. Ward",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "A sweeping, slow-burn romantasy steeped in curses, demons, and fate, pairing a reluctant, magic-marked heroine with a dangerous mercenary who thrives in the shadows.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Crown%20of%20War%20and%20Shadow%20J.R.%20Ward"
+    },
+    {
+      "title": "Cry Wolf",
+      "author": "Patricia Briggs",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "alpha hero"
+      ],
+      "sources": [
+        {
+          "url": "https://www.cleanparanormal.com/shifterauthors-a-j",
+          "context": "Bogen indeholder en 'alpha male' hovedperson, og romance er en 'stor del af plottet', hvor Anna og Charles er bundet som 'mates'.",
+          "signal": "alpha hero"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Cry%20Wolf%20Patricia%20Briggs"
+    },
+    {
+      "title": "Flawless",
+      "author": "Elsie Silver",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/protective-mmc",
+          "context": "Anmeldt som en romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Flawless%20Elsie%20Silver"
+    },
+    {
+      "title": "Into the Fading Twilight",
+      "author": "Catherine Cowles",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/protective-mmc",
+          "context": "Anmeldt som en romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Into%20the%20Fading%20Twilight%20Catherine%20Cowles"
+    },
+    {
+      "title": "King of Battle and Blood",
+      "author": "Scarlett St. Clair",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://feyble.com/recovering-from-a-from-blood-and-ash-book-hangover/",
+          "context": "If you’re looking for vampires and steamy scenes, this one’s for you. Isolde, a human princess, marries the murderous King Adrian (the hunky vampire) in order to save her people.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=King%20of%20Battle%20and%20Blood%20Scarlett%20St.%20Clair"
+    },
+    {
+      "title": "Lady of the Fire",
+      "author": "Regan Allen",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Lady%20of%20the%20Fire%20Regan%20Allen"
+    },
+    {
+      "title": "Little Wolf in the Storm: Volume 1",
+      "author": "Adik Graves",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Little%20Wolf%20in%20the%20Storm%3A%20Volume%201%20Adik%20Graves"
+    },
+    {
+      "title": "Magic Bites",
+      "author": "Ilona Andrews",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "if you liked Hidden Legacy"
+      ],
+      "sources": [
+        {
+          "url": "https://bookdna.com/books-in-order/hidden-legacy/books-like",
+          "context": "Anbefalet for sin stærke kvindelige hovedperson og en verden fyldt med magi og mystik.",
+          "signal": "if you liked Hidden Legacy"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Magic%20Bites%20Ilona%20Andrews"
+    },
+    {
+      "title": "Master of Crows",
+      "author": "Grace Draven",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "if you liked Mages of the Wheel"
+      ],
+      "sources": [
+        {
+          "url": "https://www.romance.io/series/similar/67c1bf7d68aced932dac8048",
+          "context": "Anbefalet som en lignende serie til 'Mages of the Wheel'.",
+          "signal": "if you liked Mages of the Wheel"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Master%20of%20Crows%20Grace%20Draven"
+    },
+    {
+      "title": "Mind to Bend",
+      "author": "Aurelia Knight",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/mmc-protective",
+          "context": "Anmeldt som en romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Mind%20to%20Bend%20Aurelia%20Knight"
+    },
+    {
+      "title": "Powerless",
+      "author": "Lauren Roberts",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://www.guiltychapters.com/what-to-read-after-fourth-wing/",
+          "context": "Underdog heroine in deadly competition. Forbidden romance. Viral on BookTok right now.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Powerless%20Lauren%20Roberts"
+    },
+    {
+      "title": "Rhapsodic",
+      "author": "Laura Thalassa",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://feyble.com/recovering-from-a-from-blood-and-ash-book-hangover/",
+          "context": "Falling in love with the Bargainer is a mistake, but Callypso Lillis’s heart can’t help but beat for him. Even with the betrayal and heartbreak, she can’t help herself.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Rhapsodic%20Laura%20Thalassa"
+    },
+    {
+      "title": "Rose in Chains",
+      "author": "Julie Soto",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "morally grey MMC who respects her"
+      ],
+      "sources": [
+        {
+          "url": "https://www.genredpodcast.com/post/trope-tuesday-morally-grey-mmc-8-favorite-picks",
+          "context": "A protector who plays dirty when innocence won’t survive.",
+          "signal": "morally grey MMC who respects her"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Rose%20in%20Chains%20Julie%20Soto"
+    },
+    {
+      "title": "Summoned to the Wilds",
+      "author": "A.K. Caggiano",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "if you liked Mages of the Wheel"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/book/similar/73107342-reign-ruin",
+          "context": "Anbefalet af læsere, der nød 'Reign & Ruin' fra 'Mages of the Wheel' serien.",
+          "signal": "if you liked Mages of the Wheel"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Summoned%20to%20the%20Wilds%20A.K.%20Caggiano"
+    },
+    {
+      "title": "The Awakening of Gods",
+      "author": "Morgan Kielisch",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Awakening%20of%20Gods%20Morgan%20Kielisch"
+    },
+    {
+      "title": "The Dark Elements",
+      "author": "Jennifer L. Armentrout",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "if you liked Hidden Legacy"
+      ],
+      "sources": [
+        {
+          "url": "https://www.romance.io/series/similar/687dfff5d9305fbc38a64bc6",
+          "context": "Anbefalet for sin blanding af fantasy, magi og en verden fyldt med mystik.",
+          "signal": "if you liked Hidden Legacy"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Dark%20Elements%20Jennifer%20L.%20Armentrout"
+    },
+    {
+      "title": "The Dark Lord's Guide to Dating (and Other War Crimes)",
+      "author": "Tiffany Hunt",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/romance-touch-her-and-die",
+          "context": "A humorous yet intense tale of a dark lord's unexpected journey into love, showcasing his protective instincts in a world of war and magic.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Dark%20Lord's%20Guide%20to%20Dating%20(and%20Other%20War%20Crimes)%20Tiffany%20Hunt"
+    },
+    {
+      "title": "The Death-Made Prince",
+      "author": "Lisette Marshall",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.goodreads.com/shelf/show/romance-touch-her-and-die",
+          "context": "A dark fantasy romance where the prince's protective nature is tested as he navigates a world filled with magic and political intrigue.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Death-Made%20Prince%20Lisette%20Marshall"
+    },
+    {
+      "title": "The Neon Sky",
+      "author": "Alyssa Villaire",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Neon%20Sky%20Alyssa%20Villaire"
+    },
+    {
+      "title": "The Silversmith",
+      "author": "LJ Claren",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "An emotionally devastating fantasy romance following a grieving heroine thrust into a destiny she never asked for—and a bond she was never meant to survive.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Silversmith%20LJ%20Claren"
+    },
+    {
+      "title": "The Vampire Diaries: The Return",
+      "author": "L.J. Smith",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "if you liked Mages of the Wheel"
+      ],
+      "sources": [
+        {
+          "url": "https://www.romance.io/series/similar/67c1bf7d68aced932dac8048",
+          "context": "Anbefalet som en lignende serie til 'Mages of the Wheel'.",
+          "signal": "if you liked Mages of the Wheel"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=The%20Vampire%20Diaries%3A%20The%20Return%20L.J.%20Smith"
+    },
+    {
+      "title": "Threads of Rebellion",
+      "author": "Richard Fierce",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "Anmeldt som en romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Threads%20of%20Rebellion%20Richard%20Fierce"
+    },
+    {
+      "title": "To The Grave And Back",
+      "author": "Misty Evans",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://moodreads.app/dynamics/protective-mmc",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=To%20The%20Grave%20And%20Back%20Misty%20Evans"
+    },
+    {
+      "title": "Uprooted",
+      "author": "Naomi Novik",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://archziner.com/lifestyle/what-to-read-after-acotar-10-captivating-romantic-reads/",
+          "context": "If you want a quick, beautiful standalone fairy tale: You need to read Uprooted.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Uprooted%20Naomi%20Novik"
+    },
+    {
+      "title": "Verik’s Price",
+      "author": "Leann Ryans",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "alpha hero"
+      ],
+      "sources": [
+        {
+          "url": "https://a-readers-review-blog.com/tag/omegaverse/",
+          "context": "En 'sinfully hot but sweet' Omegaverse romance, der er en del af Alpha Barbarians serien.",
+          "signal": "alpha hero"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Verik%E2%80%99s%20Price%20Leann%20Ryans"
+    },
+    {
+      "title": "We Who Will Die",
+      "author": "Stacia Stark",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "touch her and die"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "Set in a brutal, Roman-inspired world ruled by vampires, this novel delivers slow-burn romantasy with lethal stakes and simmering tension.",
+          "signal": "touch her and die"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=We%20Who%20Will%20Die%20Stacia%20Stark"
+    },
+    {
+      "title": "Wicked Onyx",
+      "author": "Debbie Cassidy",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "protective MMC"
+      ],
+      "sources": [
+        {
+          "url": "https://www.momneedsachapter.com/turnthepage/touch-her-and-die-romances",
+          "context": "En romantasy med en beskyttende mandlig hovedperson, der beskytter sin elskede.",
+          "signal": "protective MMC"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Wicked%20Onyx%20Debbie%20Cassidy"
+    },
+    {
+      "title": "Zodiac Academy",
+      "author": "Peckham & Valenti",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "book hangover"
+      ],
+      "sources": [
+        {
+          "url": "https://www.guiltychapters.com/what-to-read-after-fourth-wing/",
+          "context": "If you want INTENSITY. Morally gray heroes, strong heroine, magical academy. Warning: 9 books, emotionally devastating.",
+          "signal": "book hangover"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Zodiac%20Academy%20Peckham%20%26%20Valenti"
+    },
+    {
+      "title": "Zodiac Academy: The Awakening",
+      "author": "Caroline Peckham & Susanne Valenti",
+      "discoveryScore": 1,
+      "matchedSignals": [
+        "morally grey MMC who respects her"
+      ],
+      "sources": [
+        {
+          "url": "https://www.genredpodcast.com/post/trope-tuesday-morally-grey-mmc-8-favorite-picks",
+          "context": "Messy boys with claws out—growth comes through accountability.",
+          "signal": "morally grey MMC who respects her"
+        }
+      ],
+      "status": "new",
+      "searchUrl": "https://www.google.com/search?q=Zodiac%20Academy%3A%20The%20Awakening%20Caroline%20Peckham%20%26%20Susanne%20Valenti"
+    }
+  ]
+}

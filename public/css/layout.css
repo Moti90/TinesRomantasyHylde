@@ -1,0 +1,320 @@
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 6, 18, 0.42) 0%,
+      rgba(12, 6, 18, 0.28) 35%,
+      rgba(12, 6, 18, 0.55) 100%
+    ),
+    url("/img/romantasy-bg.png") center / cover no-repeat;
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(16, 8, 22, 0.55), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 50% 0%, rgba(16, 8, 22, 0.35), transparent 60%);
+  pointer-events: none;
+}
+
+/* —— App navigation —— */
+.app-nav {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  pointer-events: auto;
+}
+
+.app-nav-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 1.2rem;
+  background: rgba(16, 8, 22, 0.55);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.app-nav-btn:hover {
+  color: var(--gold-soft);
+  border-color: var(--line);
+}
+
+.app-nav-btn.is-active {
+  color: var(--gold-soft);
+  border-color: var(--gold);
+  background: rgba(28, 14, 34, 0.85);
+  box-shadow: 0 0 18px rgba(232, 176, 96, 0.12);
+}
+
+.app-view {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.app-view[hidden] {
+  display: none !important;
+}
+
+/* —— Forside —— */
+.home-hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5.5rem 1.75rem 3rem;
+}
+
+.home-lede {
+  max-width: 28rem;
+}
+
+.home-cta {
+  margin-top: 1.75rem;
+}
+
+.home-cta .btn {
+  min-width: 11rem;
+}
+
+.home-hero .health {
+  margin-top: 1.5rem;
+}
+
+.library-title {
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+}
+
+.corner-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 3.6rem 1.25rem 0;
+  pointer-events: none;
+}
+
+.corner-menu {
+  position: relative;
+  pointer-events: auto;
+  max-width: min(380px, calc(100vw - 2rem));
+}
+
+.corner-trigger {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.65rem 1.15rem;
+  background: rgba(16, 8, 22, 0.72);
+  color: var(--gold-soft);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.corner-trigger:hover,
+.corner-menu.open .corner-trigger {
+  border-color: var(--gold);
+  background: rgba(28, 14, 34, 0.88);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(232, 176, 96, 0.12);
+}
+
+.corner-trigger .chev {
+  font-size: 0.85rem;
+  color: var(--gold);
+  transition: transform 0.2s ease;
+}
+
+.corner-menu.open .corner-trigger .chev {
+  transform: rotate(180deg);
+}
+
+.corner-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  width: min(360px, calc(100vw - 2.5rem));
+  z-index: 50;
+  animation: fade-rise 0.25s ease both;
+}
+
+.corner-left .corner-panel {
+  left: 0;
+}
+
+.corner-right .corner-panel {
+  right: 0;
+}
+
+.corner-right {
+  text-align: right;
+}
+
+.corner-panel h2 {
+  font-size: 1.55rem;
+}
+
+.site-header,
+.shell {
+  position: relative;
+  z-index: 1;
+}
+
+.site-header {
+  width: 100%;
+  margin: 0 auto;
+  padding: 5.5rem 2rem 1.4rem;
+  text-align: center;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.flourish {
+  color: var(--gold);
+  opacity: 0.85;
+  animation: shimmer 4.5s ease-in-out infinite;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+.lede {
+  max-width: 34rem;
+  margin: 0.85rem auto 0.5rem;
+  color: #f0dcc8;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-style: italic;
+  line-height: 1.45;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+}
+
+.health {
+  font-size: 0.9rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+.header-rule {
+  width: min(280px, 50%);
+  height: 1px;
+  margin: 1.4rem auto 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong),
+    var(--gold),
+    var(--line-strong),
+    transparent
+  );
+}
+
+.shell {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: 1fr;
+}
+
+.list-panel,
+.detail-panel {
+  grid-column: 1;
+}
+
+.reveal {
+  animation: fade-rise 0.7s ease both;
+}
+
+.delay-1 {
+  animation-delay: 0.08s;
+}
+
+.delay-2 {
+  animation-delay: 0.16s;
+}
+
+.delay-3 {
+  animation-delay: 0.24s;
+}
+
+@media (max-width: 800px) {
+  .app-nav {
+    left: 0;
+    right: 0;
+    transform: none;
+    justify-content: center;
+  }
+
+  .corner-bar {
+    padding: 3.4rem 0.75rem 0;
+  }
+
+  .corner-trigger {
+    font-size: 1.02rem;
+    padding: 0.55rem 0.9rem;
+  }
+
+  .site-header {
+    padding-top: 5.2rem;
+  }
+
+  .atmosphere {
+    background-position: 35% center;
+  }
+}
