@@ -326,8 +326,9 @@ app.post("/api/import", upload.single("file"), async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Tines Romantasy Liste kører på http://localhost:${PORT}`);
+// Railway (og andre PaaS) kræver 0.0.0.0 — ellers "Application failed to respond"
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Tines Romantasy Liste lytter på 0.0.0.0:${PORT}`);
   console.log(`DATA_DIR: ${process.env.DATA_DIR || "(lokal ./data)"}`);
   if (hasOpenAIKey()) console.log("AI: OpenAI klar (webresearch + håndbogsanalyse)");
   else console.log("AI: mangler (sæt OPENAI_API_KEY eller data/config.json)");
