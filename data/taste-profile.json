@@ -1,0 +1,99 @@
+{
+  "version": "taste-v1",
+  "source": "Tine – eksplicit bogprofil",
+  "updatedAt": "2026-08-03",
+  "priority1": {
+    "seriesFinished": true,
+    "standalonesOk": true,
+    "genre": ["fantasy", "high fantasy", "romantasy"],
+    "epicPlot": true,
+    "strongRomance": true,
+    "romanceTypes": ["MF", "reverse harem"],
+    "preferReverseHarem": true,
+    "happyEnding": true,
+    "heroineGrowth": "Fra ingenting til magt (dronning/gudinde/leder) + personlig udvikling",
+    "worldbuilding": "strong",
+    "romanticChemistry": "sommerfugle / stærk kemi",
+    "mmc": {
+      "powerfulButNotDomineering": true,
+      "competentIntelligent": true,
+      "protectiveInstinct": true,
+      "bodyguardVibe": true,
+      "respectsHeroine": true,
+      "loyal": true,
+      "masculine": true,
+      "letsHerGrow": true,
+      "touchHerAndDie": true,
+      "noBully": true
+    }
+  },
+  "priority2": {
+    "longBooks": "gerne mindst 300 sider",
+    "foundFamily": true,
+    "politicalIntrigue": true,
+    "femDom": "nice-to-have",
+    "spice": true,
+    "wellWrittenPlotted": true
+  },
+  "penalties": [
+    "heartbreaking / hjerteknuser",
+    "romcom",
+    "bully MMC",
+    "spice fylder mere end plot",
+    "fade to black",
+    "teenage protagonists",
+    "kvalitetsfald i senere bøger",
+    "misforståelser som eneste konflikt",
+    "urban fantasy"
+  ],
+  "noGo": [
+    "ingen romance",
+    "ufærdige serier",
+    "ingen fantasy-elementer",
+    "permanente dødsfald blandt hovedpersonerne"
+  ],
+  "belovedFmc": [
+    { "name": "Aelin", "series": "Throne of Glass" },
+    { "name": "Feyre", "series": "ACOTAR" },
+    { "name": "Sal", "series": "Rise of the Iliri" },
+    { "name": "Mave", "series": "Age of the Andinna" },
+    { "name": "Shea", "series": "The Broken Lands" },
+    { "name": "Shara", "series": "Their Vampire Queen" },
+    { "name": "Scarlet", "series": "Lady of Darkness" },
+    { "name": "Aria", "series": "Legacy of the Nine Realms" }
+  ],
+  "belovedMmc": [
+    { "name": "Rhysand", "series": "ACOTAR" },
+    { "name": "Casteel", "series": "Blood and Ash" },
+    { "name": "Rain", "series": "Tairen Soul" },
+    { "name": "Rowan", "series": "Throne of Glass" },
+    { "name": "Rik", "series": "Their Vampire Queen" },
+    {
+      "name": "Edward",
+      "series": "Twilight",
+      "note": "dyb forelskelse, beskytterinstinkt, bodyguard-vibe"
+    }
+  ],
+  "belovedSeries": [
+    "Age of the Andinna",
+    "Throne of Glass",
+    "Rise of the Iliri",
+    "Tairen Soul",
+    "WITSEC",
+    "Blood and Ash",
+    "ACOTAR",
+    "Twilight",
+    "Their Vampire Queen",
+    "Legacy of the Nine Realms",
+    "Black Dagger Brotherhood",
+    "Red Queen",
+    "Rhapsodic",
+    "The Broken Lands",
+    "The Plated Prisoner",
+    "Shadow Beast Shifters",
+    "The War of Lost Hearts"
+  ],
+  "belovedSeriesCaveats": {
+    "Legacy of the Nine Realms": "MMC lidt for bully"
+  }
+}

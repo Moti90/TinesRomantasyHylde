@@ -1,0 +1,14 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[service]
+# Sæt i Railway dashboard:
+# - Variable: OPENAI_API_KEY
+# - Variable: DATA_DIR=/data
+# - Variable (valgfri): PIRATEREADS_USER_ID=155251530
+# - Volume mount: mount path /data

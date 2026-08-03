@@ -3,13 +3,11 @@
  * Bruges til at filtrere discovery-kandidater fra Tines læste / TBR / læser-nu.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { dataPath, getDataDir } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, "../../data");
-const CACHE_PATH = join(DATA_DIR, "piratereads-cache.json");
-const CONFIG_PATH = join(DATA_DIR, "config.json");
+const DATA_DIR = getDataDir();
+const CACHE_PATH = dataPath("piratereads-cache.json");
+const CONFIG_PATH = dataPath("config.json");
 
 const API_BASE = "https://api.piratereads.com";
 const SHELVES = ["read", "currently-reading", "want-to-read"];

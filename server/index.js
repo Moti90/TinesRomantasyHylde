@@ -328,9 +328,10 @@ app.post("/api/import", upload.single("file"), async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Tines Romantasy Liste kører på http://localhost:${PORT}`);
+  console.log(`DATA_DIR: ${process.env.DATA_DIR || "(lokal ./data)"}`);
   if (hasOpenAIKey()) console.log("AI: OpenAI klar (webresearch + håndbogsanalyse)");
   else console.log("AI: mangler (sæt OPENAI_API_KEY eller data/config.json)");
-  if (!existsSync(join(root, "data/series.json"))) {
+  if (!existsSync(join(root, "data/series.json")) && !process.env.DATA_DIR) {
     saveSeries([]);
   }
 });

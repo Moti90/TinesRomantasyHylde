@@ -1,11 +1,10 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { dirname } from "path";
 import * as XLSX from "xlsx";
 import { COLUMNS } from "./columns.js";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const REF_PATH = join(__dirname, "../../data/score-reference.json");
+const REF_PATH = dataPath("score-reference.json");
 
 /** Felter der kommer fra Excel-referencen og ikke må overskrives af AI. */
 export const REFERENCE_SCORE_KEYS = [

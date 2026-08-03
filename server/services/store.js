@@ -1,19 +1,17 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import { sortSeries } from "./columns.js";
 import { migrateSeriesList } from "./migrate.js";
 import { sanitizeGoodreadsScore } from "./goodreads.js";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataPath = join(__dirname, "../../data/series.json");
+const dataFile = dataPath("series.json");
 
 export function loadSeries() {
-  if (!existsSync(dataPath)) {
-    writeFileSync(dataPath, "[]", "utf8");
+  if (!existsSync(dataFile)) {
+    writeFileSync(dataFile, "[]", "utf8");
     return [];
   }
-  const raw = readFileSync(dataPath, "utf8");
+  const raw = readFileSync(dataFile, "utf8");
   const list = migrateSeriesList(JSON.parse(raw || "[]"));
   return sortSeries(list);
 }
@@ -23,10 +21,10 @@ export function saveSeries(list) {
     ...row,
     "Goodreads-score": sanitizeGoodreadsScore(row["Goodreads-score"]),
   }));
-  if (existsSync(dataPath)) {
-    copyFileSync(dataPath, `${dataPath}.bak`);
+  if (existsSync(dataFile)) {
+    copyFileSync(dataFile, `${dataFile}.bak`);
   }
-  writeFileSync(dataPath, JSON.stringify(cleaned, null, 2), "utf8");
+  writeFileSync(dataFile, JSON.stringify(cleaned, null, 2), "utf8");
   return cleaned;
 }
 
@@ -80,5 +78,5 @@ export function deleteSeries(seriesName) {
 }
 
 export function getDataPath() {
-  return dataPath;
+  return dataFile;
 }

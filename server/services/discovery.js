@@ -9,8 +9,6 @@ import {
   readFileSync,
   writeFileSync,
 } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import { getOpenAIKey, hasOpenAIKey } from "./config.js";
 import { loadSeries } from "./store.js";
 import { parseTineScore } from "./columns.js";
@@ -31,11 +29,16 @@ import {
   sharpenQueriesForProfile,
   looksLikeChildrensBook,
 } from "./readingProfile.js";
+import {
+  loadTasteProfile,
+  formatTasteProfileForPrompt,
+  buildTasteDiscoveryQueries,
+} from "./tasteProfile.js";
+import { dataPath, getDataDir } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, "../../data");
-const DISCOVERED_PATH = join(DATA_DIR, "discovered.json");
-const CACHE_PATH = join(DATA_DIR, "discovery-cache.json");
+const DATA_DIR = getDataDir();
+const DISCOVERED_PATH = dataPath("discovered.json");
+const CACHE_PATH = dataPath("discovery-cache.json");
 
 const MAX_QUERIES_PER_RUN = 10;
 const MAX_BOOKS_PER_QUERY = 15;
@@ -194,29 +197,22 @@ export function extractTasteDNA(seriesList = null) {
 
 /**
  * 2. Signatur-søgninger — naturligt sprog, max 10.
- * Fokus: adult romantasy (ikke børne-/MG).
+ * Bruger Tines eksplicitte bogprofil + top-scorerede serier.
  */
 export function buildDiscoveryQueries(topSerier = []) {
-  const tropes = [
-    `"touch her and die" adult romantasy recommendations`,
-    `"bodyguard romance" adult fantasy books reddit`,
-    `"morally grey MMC who respects her" romantasy book recs`,
-    `"alpha hero" "romance is the main plot" adult fantasy`,
-    `"book hangover" adult romantasy series worth reading`,
-    `"protective MMC" adult romantasy recommendations`,
-  ];
-
-  const liked = [];
-  for (const s of topSerier.slice(0, 2)) {
+  const fromTaste = buildTasteDiscoveryQueries(loadTasteProfile());
+  const likedFromScores = [];
+  for (const s of (topSerier || []).slice(0, 2)) {
     const title = (s.name || "").trim();
     if (!title) continue;
-    liked.push(`"if you liked ${title}" similar series`);
+    likedFromScores.push(
+      `"if you liked ${title}" similar finished adult romantasy series`
+    );
   }
 
-  // Unikke, bevar rækkefølge — mål ~6–8, hårdt loft 10
   const seen = new Set();
   const out = [];
-  for (const q of [...tropes, ...liked]) {
+  for (const q of [...fromTaste, ...likedFromScores]) {
     const key = q.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -1025,7 +1021,10 @@ export async function generateTeaser({
   ).map(slimReference);
 
   const client = new OpenAI({ apiKey: getOpenAIKey() });
-  const prompt = `Skriv en kort dansk teaser om denne romantasy-bog til en læser, der leder efter beskyttende MMC, bodyguard-vibe, touch-her-and-die og romance i centrum.
+  const tasteBlock = formatTasteProfileForPrompt();
+  const prompt = `Skriv en kort dansk teaser om denne romantasy-bog til Tine.
+
+${tasteBlock}
 
 Bog: ${candidate.title}
 Forfatter: ${candidate.author || "ukendt"}
@@ -1039,17 +1038,17 @@ ${JSON.stringify(
   null,
   2
 )}
-Ligner lidt Tines favoritter: ${refs.map((r) => r.name).join(", ") || "ukendt"}
+Ligner lidt favoritter i hendes bibliotek: ${refs.map((r) => r.name).join(", ") || "ukendt"}
 
 Returnér KUN JSON:
 {
   "blurb": "2–4 sætninger teaser på dansk — stemning, ikke spoilers",
-  "vibe": "én kort linje, fx «beskyttende MMC · langsomt burn · fae»",
-  "whyMatch": "1–2 sætninger om hvorfor den dukkede op ift. signalerne",
-  "caution": "valgfri kort advarsel hvis evidens er tynd, ellers null"
+  "vibe": "én kort linje, fx «beskyttende MMC · high fantasy · HEA-vibes»",
+  "whyMatch": "1–2 sætninger om match til Tines profil (P1-signaler)",
+  "caution": "kort advarsel hvis urban fantasy, bully, ufærdig serie, teenage MC, hjerteknuser, fade-to-black, eller tynd evidens — ellers null"
 }
 
-Regler: Ingen spoiler. Ingen opfordring til at tilføje til bibliotek. Hvis kilderne er tynde, sig det ærligt i caution.`;
+Regler: Ingen spoiler. Ingen opfordring til at tilføje til bibliotek. Vær ærlig i caution ift. NO GO / trækker-ned.`;
 
   const response = await client.responses.create({
     model: DISCOVERY_MODEL,
@@ -1058,7 +1057,7 @@ Regler: Ingen spoiler. Ingen opfordring til at tilføje til bibliotek. Hvis kild
       {
         role: "system",
         content:
-          "Du skriver korte, ærlige romantasy-teasers på dansk. Returnér KUN JSON. Opdig ikke plot der ikke fremgår af kilderne.",
+          "Du skriver korte, ærlige romantasy-teasers på dansk til Tines smagsprofil. Returnér KUN JSON. Opdig ikke plot der ikke fremgår af kilderne. Flag bully/urban fantasy/ufærdig serie/teenage MC.",
       },
       { role: "user", content: prompt },
     ],

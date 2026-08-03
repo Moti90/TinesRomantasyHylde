@@ -1,11 +1,7 @@
 import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const columnsPath = join(__dirname, "../../data/columns.json");
-
-export const COLUMNS = JSON.parse(readFileSync(columnsPath, "utf8"));
+export const COLUMNS = JSON.parse(readFileSync(dataPath("columns.json"), "utf8"));
 
 export const STATUS_ORDER = [
   "Læser nu",

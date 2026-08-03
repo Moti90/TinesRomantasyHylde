@@ -1,6 +1,4 @@
 import { readFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { COLUMNS, emptySeries } from "./columns.js";
 import {
@@ -11,14 +9,11 @@ import {
   hasOpenAIKey,
 } from "./config.js";
 import { getCalibrationAnchors } from "./calibration.js";
+import { dataPath } from "./paths.js";
 
 export { hasGeminiKey, hasOpenAIKey };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const handbook = readFileSync(
-  join(__dirname, "../../data/handbook.md"),
-  "utf8"
-);
+const handbook = readFileSync(dataPath("handbook.md"), "utf8");
 
 const OPENAI_MODEL = "gpt-4o-mini";
 const GEMINI_MODELS = [

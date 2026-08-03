@@ -45,15 +45,21 @@ npm start
 npm test
 ```
 
+### Deploy (Railway)
+
+Se **[RAILWAY.md](./RAILWAY.md)** — ca. $5/md, offentlig URL til Tine, volume til at gemme listen.
+
 ### Miljøvariabler
 
 | Variabel | Betydning | Default |
 |----------|-----------|---------|
 | `OPENAI_API_KEY` | API-nøgle | — |
 | `PORT` | Serverport | `3847` |
+| `DATA_DIR` | Persistensmappe (Railway volume) | `./data` |
+| `PIRATEREADS_USER_ID` | PirateReads/Goodreads user id | `155251530` |
 | `OPENAI_RESEARCH_MODEL` | Model til webresearch | `gpt-4o` |
 | `OPENAI_ANALYSIS_MODEL` | Model til håndbogsanalyse | `gpt-4o-mini` |
-| `RESEARCH_CACHE_DAYS` | Cache-levetid for research | `60` |
+| `RESEARCH_CACHE_DAYS` | Cache-levetid for research | `7` |
 | `GOODREADS_CACHE_DAYS` | Cache-levetid for Goodreads-del | `30` |
 
 ### Admin

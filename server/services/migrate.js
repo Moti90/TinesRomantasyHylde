@@ -5,19 +5,16 @@ import {
   readFileSync,
   writeFileSync,
 } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = join(__dirname, "../..");
-const dataPath = join(root, "data/series.json");
-const backupsDir = join(root, "data/backups");
+import { join } from "path";
+import { dataPath, getDataDir } from "./paths.js";
 import {
   sanitizeGoodreadsScore,
   isCatalogRatingDisguise,
   parseRatingNumber,
 } from "./goodreads.js";
 
+const dataFile = () => dataPath("series.json");
+const backupsDir = () => join(getDataDir(), "backups");
 const MIGRATION_FLAG = "schemaVersion";
 const CURRENT_SCHEMA = 3;
 
@@ -101,9 +98,11 @@ export function migrateSeriesList(list) {
  * Backup + migrér series.json hvis nødvendigt. Returnerer om der blev skrevet.
  */
 export function ensureMigratedDatabase() {
-  if (!existsSync(dataPath)) return { migrated: false, count: 0 };
+  const seriesFile = dataFile();
+  const backups = backupsDir();
+  if (!existsSync(seriesFile)) return { migrated: false, count: 0 };
 
-  const raw = readFileSync(dataPath, "utf8");
+  const raw = readFileSync(seriesFile, "utf8");
   const list = JSON.parse(raw || "[]");
   const needs =
     !Array.isArray(list) ||
@@ -111,13 +110,13 @@ export function ensureMigratedDatabase() {
 
   if (!needs) return { migrated: false, count: list.length };
 
-  if (!existsSync(backupsDir)) mkdirSync(backupsDir, { recursive: true });
+  if (!existsSync(backups)) mkdirSync(backups, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const backupPath = join(backupsDir, `series-pre-migrate-${stamp}.json`);
-  copyFileSync(dataPath, backupPath);
+  const backupPath = join(backups, `series-pre-migrate-${stamp}.json`);
+  copyFileSync(seriesFile, backupPath);
 
   const migrated = migrateSeriesList(list);
-  writeFileSync(dataPath, JSON.stringify(migrated, null, 2), "utf8");
+  writeFileSync(seriesFile, JSON.stringify(migrated, null, 2), "utf8");
   console.log(
     `Migrerede ${migrated.length} serier → schema v${CURRENT_SCHEMA} (backup: ${backupPath})`
   );

@@ -169,3 +169,32 @@ Matcher Tines helteprofil:
 - Har Tine sat **Tines score**, vejer den tungest.
 - Ellers bruges Excel-/database-**Tine-score** + udfyldte 0–5-felter som reference-ankre (høje vs. lave for kontrast).
 - Nye scores skal være konsistente med ankrene og denne håndbog.
+
+## 7. Tines eksplicitte bogprofil (taste-v1)
+
+Kilde: Tines egen prioriterede smagsliste. Bruges ved scoring, discovery og teasers.
+
+### Prioritet 1 (skal næsten altid rammes til høj score)
+- Hovedserien **færdigskrevet** (standalones OK)
+- Fantasy — gerne **high fantasy**
+- **Episk plot**
+- **Stærk romance** (MF eller meget gerne reverse harem)
+- **Happy ending**
+- **Heltindens udvikling** (personlig + fra ingenting til magt: dronning/gudinde/leder)
+- **God worldbuilding**
+- Romance med **sommerfugle / stærk kemi**
+- Helteprofil: magtfuld uden at dominere · kompetent/intelligent · beskytterinstinkt · bodyguard-vibe · respekt · loyal · maskulin · lader hende vokse · **touch her and die** · **ingen bully**
+
+### Prioritet 2 (plus)
+- Lange bøger (gerne 300+ sider) · found family · politiske intriger · spice · velskrevet/gennemtænkt plot · FemDom (nice-to-have)
+
+### Trækker ned
+- Hjerteknuser · romcom · bully · spice > plot · fade to black · teenage hovedpersoner · kvalitetsfald senere · misforståelser som eneste konflikt · **urban fantasy**
+
+### No go (lav Tine-score / fraråd)
+- Ingen romance · ufærdige serier · ingen fantasy-elementer · permanente dødsfald blandt hovedpersonerne
+
+### Favorit-ankre (kalibrering)
+- FMC: Aelin (ToG), Feyre (ACOTAR), Sal (Iliri), Mave (Andinna), Shea (Broken Lands), Shara (Vampire Queen), Scarlet (Lady of Darkness), Aria (Nine Realms)
+- MMC: Rhysand, Casteel, Rain (Tairen Soul), Rowan, Rik, Edward/Twilight (beskytter/bodyguard/dyb forelskelse)
+- Serier: Age of the Andinna, ToG, Rise of the Iliri, Tairen Soul, WITSEC, Blood and Ash, ACOTAR, Twilight, Their Vampire Queen, Legacy of the Nine Realms (MMC dog lidt bully), Black Dagger Brotherhood, Red Queen, Rhapsodic, The Broken Lands, Plated Prisoner, Shadow Beast Shifters, War of Lost Hearts

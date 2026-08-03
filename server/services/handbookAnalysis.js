@@ -1,6 +1,4 @@
 import { readFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import OpenAI from "openai";
 import { COLUMNS, emptySeries } from "./columns.js";
 import { getOpenAIKey } from "./config.js";
@@ -14,12 +12,9 @@ import {
 } from "./versions.js";
 import { resolveGoodreadsScore, sanitizeGoodreadsScore } from "./goodreads.js";
 import { summarizeSourceFoundation } from "./webResearch.js";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const handbook = readFileSync(
-  join(__dirname, "../../data/handbook.md"),
-  "utf8"
-);
+const handbook = readFileSync(dataPath("handbook.md"), "utf8");
 
 const SUBJECTIVE_KEYS = [
   "Book hangover (0-5)",

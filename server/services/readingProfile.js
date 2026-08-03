@@ -4,8 +4,7 @@
  */
 import OpenAI from "openai";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { dirname } from "path";
 import { getOpenAIKey, hasOpenAIKey } from "./config.js";
 import {
   DISCOVERY_MODEL,
@@ -16,9 +15,10 @@ import {
   splitGoodreadsTitle,
   normalizeBookKey,
 } from "./pirateReads.js";
+import { formatTasteProfileForPrompt, loadTasteProfile } from "./tasteProfile.js";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROFILE_PATH = join(__dirname, "../../data/reading-profile.json");
+const PROFILE_PATH = dataPath("reading-profile.json");
 const PROFILE_CACHE_DAYS = Number(process.env.READING_PROFILE_CACHE_DAYS || 7);
 
 /** Hårde ekskluderinger — børnebøger / MG / picture books */
@@ -103,23 +103,37 @@ export async function getReadingProfile({ force = false } = {}) {
 
   const fallbackProfile = {
     audience: "adult",
-    includeGenres: ["romantasy", "fantasy romance", "paranormal romance", "reverse harem"],
+    includeGenres: [
+      "romantasy",
+      "high fantasy",
+      "fantasy romance",
+      "reverse harem",
+      "epic fantasy romance",
+    ],
     excludeGenres: [
       "children's",
       "middle grade",
       "picture books",
       "early readers",
       "middle-grade fantasy without romance",
+      "romcom",
+      "urban fantasy",
+      "teen protagonists as main",
+      "unfinished series as primary rec",
     ],
     vibeKeywords: [
       "protective MMC",
+      "bodyguard vibe",
       "touch her and die",
-      "spice",
-      "fated mates",
-      "morally grey",
+      "no bully",
+      "heroine growth to power",
+      "epic plot",
+      "HEA",
+      "found family",
+      "spice secondary to plot",
     ],
     summary:
-      "Adult romantasy / fantasy romance med beskyttende eller mørke helte — ikke børne- eller MG-bøger.",
+      "Adult high/fantasy romantasy med episk plot, HEA, stærk romance (MF/RH), heltinde der vokser ind i magt, og beskyttende/respektfulde helte (Rhysand/THAD/bodyguard) — ikke bully, ikke urban fantasy, ikke ufærdige serier.",
   };
 
   if (!hasOpenAIKey() || sample.length < 5) {
@@ -136,7 +150,11 @@ export async function getReadingProfile({ force = false } = {}) {
   }
 
   const client = new OpenAI({ apiKey: getOpenAIKey() });
+  const tasteHint = formatTasteProfileForPrompt(loadTasteProfile());
   const prompt = `Du analyserer en læsers «har læst»-liste for at styre bogforslag.
+
+Hendes eksplicitte bogprofil:
+${tasteHint}
 
 Her er et udsnit af titler hun har læst:
 ${titleLines.join("\n")}
@@ -151,9 +169,10 @@ Returnér KUN JSON:
 }
 
 Regler:
-- Hvis listen er romantasy / adult fantasy romance / RH / dark romance → audience = "adult"
-- excludeGenres SKAL inkludere børnebøger, middle grade, picture books hvis de ikke matcher hendes liste
-- Vær konkret ift. tropes (beskyttende MMC, spice, fae, osv.) ud fra titlerne
+- Respektér den eksplicitte bogprofil (NO GO + trækker ned)
+- audience = "adult" medmindre listen klart siger andet
+- excludeGenres SKAL inkludere børnebøger, middle grade, romcom, og gerne urban fantasy som lav prioritet
+- Vær konkret ift. tropes (beskyttende MMC, THAD, epic plot, heroine growth)
 - Opdig ikke genrer der ikke fremgår`;
 
   const response = await client.responses.create({

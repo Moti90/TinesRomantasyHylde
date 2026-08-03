@@ -6,16 +6,15 @@ import {
   readdirSync,
   unlinkSync,
 } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 import { researchInputHash } from "./hash.js";
 import {
   RESEARCH_CACHE_DAYS,
   GOODREADS_CACHE_DAYS,
 } from "./versions.js";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const cacheDir = join(__dirname, "../../data/research-cache");
+const cacheDir = dataPath("research-cache");
 
 function ensureDir() {
   if (!existsSync(cacheDir)) mkdirSync(cacheDir, { recursive: true });

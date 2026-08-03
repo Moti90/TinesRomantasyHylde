@@ -8,11 +8,10 @@ import {
   estimateCostUsd,
 } from "./versions.js";
 import { appendFileSync, mkdirSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { dataPath } from "./paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DEBUG_LOG = join(__dirname, "../../data/debug-research.log");
+const DEBUG_LOG = dataPath("debug-research.log");
 
 /** Midlertidig debug: skriv både til konsol og fil (så Tine kan åbne filen). */
 function fsWriteClearDebug() {
