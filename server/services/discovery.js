@@ -131,8 +131,13 @@ export function signalLabelFromQuery(query) {
 }
 
 /**
- * 1. Smags-DNA — top-15 / bund-10 uden OpenAI.
+ * 1. Smags-DNA — top-favoritter / ægte bund (kun reelt lave / droppet).
+ * Tine-score er AI-match (0–100). Under 80 = svagt match; 90+ er stærkt.
+ * Vi må ALDRIG fylde "bund" op med høje scorer bare for at nå 10 stk.
  */
+const BUND_SCORE_MAX = 70; // kun tydeligt svage matches tæller som bund
+const TOP_SCORE_MIN = 85;
+
 export function extractTasteDNA(seriesList = null) {
   const list = seriesList || loadSeries();
   const withName = list.filter((r) => (r["Seriens navn"] || "").trim());
@@ -151,13 +156,17 @@ export function extractTasteDNA(seriesList = null) {
     .filter((r) => r.hasScore);
 
   const byScoreDesc = [...scored].sort((a, b) => b.score - a.score);
-  const topSerier = byScoreDesc.slice(0, 15).map(({ name, author, score, status }) => ({
-    name,
-    author,
-    score,
-    status,
-  }));
+  const topSerier = byScoreDesc
+    .filter((r) => r.score >= TOP_SCORE_MIN)
+    .slice(0, 15)
+    .map(({ name, author, score, status }) => ({
+      name,
+      author,
+      score,
+      status,
+    }));
 
+  // Ægte bund: Droppet, eller score tydeligt lav (ikke "lavest blandt høje 90'ere")
   const dropped = withName
     .filter((r) => /droppet/i.test(String(r.Status || "")))
     .map((r) => ({
@@ -167,22 +176,36 @@ export function extractTasteDNA(seriesList = null) {
       status: String(r.Status || "").trim(),
     }));
 
-  const byScoreAsc = [...scored].sort((a, b) => a.score - b.score);
-  const lowScored = byScoreAsc.slice(0, 10).map(({ name, author, score, status }) => ({
-    name,
-    author,
-    score,
-    status,
-  }));
+  const trulyLow = scored
+    .filter((r) => r.score <= BUND_SCORE_MAX)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 10)
+    .map(({ name, author, score, status }) => ({
+      name,
+      author,
+      score,
+      status,
+    }));
 
-  // Bund = lave scores + droppet (dedupe på navn)
+  const topKeys = new Set(topSerier.map((s) => titleOnlyKey(s.name)));
   const bundMap = new Map();
-  for (const row of [...lowScored, ...dropped]) {
+  for (const row of [...trulyLow, ...dropped]) {
     const key = titleOnlyKey(row.name);
-    if (!key) continue;
+    if (!key || topKeys.has(key)) continue;
+    // Droppet uden score OK; scorerede rækker skal stadig være lave
+    if (
+      row.score != null &&
+      !Number.isNaN(row.score) &&
+      row.score > BUND_SCORE_MAX &&
+      !/droppet/i.test(String(row.status || ""))
+    ) {
+      continue;
+    }
     if (!bundMap.has(key)) bundMap.set(key, row);
   }
-  const bundSerier = [...bundMap.values()].slice(0, 10);
+  const bundSerier = [...bundMap.values()]
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+    .slice(0, 10);
 
   return {
     topSerier,
@@ -192,6 +215,8 @@ export function extractTasteDNA(seriesList = null) {
       scoredCount: scored.length,
       topCount: topSerier.length,
       bundCount: bundSerier.length,
+      bundScoreMax: BUND_SCORE_MAX,
+      topScoreMin: TOP_SCORE_MIN,
     },
   };
 }

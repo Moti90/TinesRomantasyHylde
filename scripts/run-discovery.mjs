@@ -21,6 +21,11 @@ async function main() {
     console.log(`  ${i + 1}. ${s.name} (${s.author}) — ${s.score}`);
   });
   console.log("Bund-serier:", dna.bundSerier.length);
+  if (!dna.bundSerier.length) {
+    console.log(
+      `  (ingen — kræver Droppet eller Tine-score ≤ ${dna.stats.bundScoreMax})`
+    );
+  }
   dna.bundSerier.slice(0, 5).forEach((s, i) => {
     console.log(`  ${i + 1}. ${s.name} (${s.author}) — ${s.score} [${s.status}]`);
   });
