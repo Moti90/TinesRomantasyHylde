@@ -970,6 +970,43 @@ tbody tr:hover {
   margin: 0 0 0.75rem;
 }
 
+.teaser-match {
+  margin: 0.85rem 0 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.teaser-match-block h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.teaser-match-block ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  color: #f0dcc8;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.teaser-match-yes h4 {
+  color: #9dcfb0;
+}
+
+.teaser-match-maybe h4 {
+  color: var(--gold-soft);
+}
+
+.teaser-match-no h4 {
+  color: #e8a090;
+}
+
 .teaser-caution {
   margin: 0.5rem 0;
 }

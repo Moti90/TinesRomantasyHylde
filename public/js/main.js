@@ -20,6 +20,7 @@ import {
   setDiscoveryStatus,
   showTeaserPanel,
   hideTeaserPanel,
+  isFreshTeaser,
 } from "./ui/discovery.js";
 
 let series = [];
@@ -350,8 +351,8 @@ async function loadDiscovery({ keepStatus = false } = {}) {
 async function showDiscoveredTeaser(book) {
   setDiscoveryStatus(`Henter teaser for «${book.title}»…`);
   try {
-    // Genbrug cachet teaser uden API-kald hvis muligt
-    if (book.teaser?.blurb) {
+    // Genbrug kun friske teasers (schema v2 med match-parametre)
+    if (isFreshTeaser(book.teaser)) {
       showTeaserPanel(book, book.teaser);
       setDiscoveryStatus("");
       return;

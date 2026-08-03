@@ -94,3 +94,52 @@ export function tasteHardNoGoBlob() {
     "kills off the main couple",
   ];
 }
+
+/**
+ * Faste parametre til transparent teaser-match.
+ * Modellen skal kun bruge disse labels (eller sige usikker).
+ */
+export function listTasteParametersForTeaser(profile = null) {
+  const p = profile || loadTasteProfile();
+  return {
+    priority1: [
+      "Færdig serie / standalone OK",
+      "High fantasy / romantasy (ikke urban)",
+      "Episk plot",
+      "Stærk romance (MF eller reverse harem)",
+      "HEA / happy ending",
+      "Heltinde vokser fra ingenting til magt",
+      "Stærk worldbuilding",
+      "Romantisk kemi / sommerfugle",
+      "MMC: magtfuld uden at dominere",
+      "MMC: kompetent/intelligent",
+      "MMC: beskytterinstinkt / bodyguard-vibe",
+      "MMC: respekterer heltinden",
+      "MMC: loyal / touch her and die",
+      "MMC: ingen bully",
+    ],
+    priority2: [
+      "Lange bøger (gerne 300+ sider)",
+      "Found family",
+      "Politiske intriger",
+      "Spice (uden at overtage plot)",
+      "Velskrevet plot",
+      "FemDom (nice-to-have)",
+    ],
+    penalties: p?.penalties || [
+      "hjerteknuser",
+      "romcom",
+      "bully MMC",
+      "spice > plot",
+      "fade to black",
+      "teenage MC",
+      "urban fantasy",
+    ],
+    noGo: p?.noGo || [
+      "ingen romance",
+      "ufærdige serier",
+      "ingen fantasy",
+      "permanente dødsfald blandt hovedpersoner",
+    ],
+  };
+}

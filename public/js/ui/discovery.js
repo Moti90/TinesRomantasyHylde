@@ -107,6 +107,82 @@ export function renderDiscoveryList(candidates, { onTeaser, onIgnore } = {}) {
   });
 }
 
+function cleanDisplayText(value) {
+  if (value == null) return "";
+  const s = String(value).trim();
+  if (!s || /^(null|undefined|none|n\/a|na|ingen|intet)$/i.test(s)) return "";
+  return s;
+}
+
+function isFreshTeaser(teaser) {
+  if (!teaser?.blurb) return false;
+  if (Number(teaser.schemaVersion) < 2) return false;
+  for (const key of ["vibe", "whyMatch", "caution"]) {
+    const v = teaser[key];
+    if (typeof v === "string" && /^(null|undefined)$/i.test(v.trim())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function renderMatchSection(teaser) {
+  const matched = Array.isArray(teaser?.matchedParams) ? teaser.matchedParams : [];
+  const uncertain = Array.isArray(teaser?.uncertainParams)
+    ? teaser.uncertainParams
+    : [];
+  const penalties = Array.isArray(teaser?.penaltyHits) ? teaser.penaltyHits : [];
+
+  const parts = [];
+  if (matched.length) {
+    const items = matched
+      .map((row) => {
+        const param =
+          typeof row === "string"
+            ? cleanDisplayText(row)
+            : cleanDisplayText(row?.param || row?.label);
+        if (!param) return "";
+        const evidence =
+          typeof row === "object" ? cleanDisplayText(row?.evidence) : "";
+        return `<li><strong>${escapeHtml(param)}</strong>${
+          evidence ? ` — <span class="hint">${escapeHtml(evidence)}</span>` : ""
+        }</li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    if (items) {
+      parts.push(
+        `<div class="teaser-match-block teaser-match-yes"><h4>Matcher Tines parametre</h4><ul>${items}</ul></div>`
+      );
+    }
+  }
+  if (uncertain.length) {
+    const items = uncertain
+      .map((s) => cleanDisplayText(s))
+      .filter(Boolean)
+      .map((s) => `<li>${escapeHtml(s)}</li>`)
+      .join("");
+    if (items) {
+      parts.push(
+        `<div class="teaser-match-block teaser-match-maybe"><h4>Usikkert / ikke bekræftet</h4><ul>${items}</ul></div>`
+      );
+    }
+  }
+  if (penalties.length) {
+    const items = penalties
+      .map((s) => cleanDisplayText(s))
+      .filter(Boolean)
+      .map((s) => `<li>${escapeHtml(s)}</li>`)
+      .join("");
+    if (items) {
+      parts.push(
+        `<div class="teaser-match-block teaser-match-no"><h4>Trækker ned</h4><ul>${items}</ul></div>`
+      );
+    }
+  }
+  return parts.join("");
+}
+
 export function showTeaserPanel(book, teaser) {
   const panel = document.getElementById("discovery-teaser-panel");
   if (!panel) return;
@@ -117,23 +193,33 @@ export function showTeaserPanel(book, teaser) {
   const vibeEl = document.getElementById("teaser-vibe");
   const blurbEl = document.getElementById("teaser-blurb");
   const whyEl = document.getElementById("teaser-why");
+  const matchEl = document.getElementById("teaser-match");
   const cautionEl = document.getElementById("teaser-caution");
   const linkEl = document.getElementById("teaser-search");
+
+  const vibe = cleanDisplayText(teaser?.vibe);
+  const why = cleanDisplayText(teaser?.whyMatch);
+  const caution = cleanDisplayText(teaser?.caution);
+  const matchHtml = renderMatchSection(teaser);
 
   if (titleEl) titleEl.textContent = book?.title || "";
   if (authorEl) authorEl.textContent = book?.author || "Ukendt forfatter";
   if (vibeEl) {
-    vibeEl.textContent = teaser?.vibe || "";
-    vibeEl.hidden = !teaser?.vibe;
+    vibeEl.textContent = vibe;
+    vibeEl.hidden = !vibe;
   }
   if (blurbEl) blurbEl.textContent = teaser?.blurb || "";
   if (whyEl) {
-    whyEl.textContent = teaser?.whyMatch || "";
-    whyEl.hidden = !teaser?.whyMatch;
+    whyEl.textContent = why;
+    whyEl.hidden = !why;
+  }
+  if (matchEl) {
+    matchEl.innerHTML = matchHtml;
+    matchEl.hidden = !matchHtml;
   }
   if (cautionEl) {
-    cautionEl.textContent = teaser?.caution || "";
-    cautionEl.hidden = !teaser?.caution;
+    cautionEl.textContent = caution;
+    cautionEl.hidden = !caution;
   }
   if (linkEl) {
     const url = book?.searchUrl;
@@ -147,6 +233,8 @@ export function showTeaserPanel(book, teaser) {
 
   panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+
+export { isFreshTeaser };
 
 export function hideTeaserPanel() {
   const panel = document.getElementById("discovery-teaser-panel");
