@@ -26,6 +26,7 @@ import {
 let series = [];
 let pendingAnalyze = null;
 let stepTimer = null;
+const LIBRARY_LOCK_CODE = "1234";
 
 const ANALYZE_STEPS = [
   "Identificerer bog eller serie",
@@ -40,6 +41,10 @@ function setMsg(id, text, isError = false) {
   el.textContent = text || "";
   el.classList.toggle("error", Boolean(isError && text));
   el.classList.toggle("ok", Boolean(!isError && text));
+}
+
+function requireLibraryCode() {
+  return window.prompt("Indtast kode for at låse bibliotekshandlingen op") === LIBRARY_LOCK_CODE;
 }
 
 function showSteps(activeIndex) {
@@ -440,6 +445,10 @@ async function init() {
       const name = document.getElementById("detail")?.dataset.seriesName;
       const btn = document.getElementById("reanalyze-detail");
       if (!name) return;
+      if (!requireLibraryCode()) {
+        setMsg("reanalyze-status", "Låst - forkert kode", true);
+        return;
+      }
       btn.disabled = true;
       setMsg("reanalyze-status", "Genanalyserer efter håndbogen…");
       try {
@@ -469,6 +478,10 @@ async function init() {
       const name = document.getElementById("detail")?.dataset.seriesName;
       const btn = document.getElementById("refresh-detail");
       if (!name) return;
+      if (!requireLibraryCode()) {
+        setMsg("reanalyze-status", "Låst - forkert kode", true);
+        return;
+      }
       btn.disabled = true;
       setMsg(
         "reanalyze-status",
