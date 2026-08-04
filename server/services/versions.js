@@ -1,8 +1,8 @@
 /** Fastlåste versioner til cache/stabilitet — bump kun ved bevidste promptændringer. */
 export const HANDBOOK_VERSION = "handbook-v3";
-export const RESEARCH_PROMPT_VERSION = "research-v12";
+export const RESEARCH_PROMPT_VERSION = "research-v13";
 export const ANALYSIS_PROMPT_VERSION = "analysis-v11";
-export const SEARCH_PLAN_VERSION = "batch-v4";
+export const SEARCH_PLAN_VERSION = "batch-v5";
 export const DISCOVERY_PROMPT_VERSION = "discovery-v1";
 
 export const RESEARCH_MODEL = process.env.OPENAI_RESEARCH_MODEL || "gpt-4o";

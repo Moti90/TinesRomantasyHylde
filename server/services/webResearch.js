@@ -276,14 +276,14 @@ export function buildSearchPlan(identity) {
       query: "",
       userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser, blogindlæg og diskussioner der beskriver den mandlige hovedperson og hans relation til heltinden.
 
-Læs de 5-8 mest detaljerede resultater og for hver der beskriver hans personlighed eller deres dynamik, notér hvad der siges om:
+Læs de 6-10 mest detaljerede resultater og for hver der beskriver hans personlighed eller deres dynamik, notér hvad der siges om:
 - Er han beskyttende? Besidderisk? Alpha?
 - Er der bodyguard- eller "passer på dig"-dynamik?
 - Reagerer han voldsomt når hun er i fare?
 - Er han morally grey men respekterer hende?
 - Behandler han hende dårligt eller er han respektfuld?
 
-Returnér 5-8 kilder med URL og et kort resume af hvad de siger om ham.`,
+Returnér 6-10 kilder med URL og et kort resume af hvad de siger om ham.`,
     },
     {
       id: "romanceprofil",
@@ -292,14 +292,14 @@ Returnér 5-8 kilder med URL og et kort resume af hvad de siger om ham.`,
       query: "",
       userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser og blogindlæg der diskuterer romancen og spice-niveauet.
 
-Læs de 5-8 mest detaljerede resultater og notér hvad der siges om:
+Læs de 6-10 mest detaljerede resultater og notér hvad der siges om:
 - Hvor meget fylder romancen i forhold til plottet?
 - Hvordan er kemien mellem hovedpersonerne?
 - Er der spice? Hvor meget? Er det open door eller fade to black?
 - Er spice-scenerne velskrevne eller ligegyldigt fyld?
 - Hvilken relationstype er der tale om?
 
-Returnér 5-8 kilder med URL og resume af hvad de siger om romancen og spice.`,
+Returnér 6-10 kilder med URL og resume af hvad de siger om romancen og spice.`,
     },
     {
       id: "plotkarakter",
@@ -308,7 +308,7 @@ Returnér 5-8 kilder med URL og resume af hvad de siger om romancen og spice.`,
       query: "",
       userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find dybdegående anmeldelser der analyserer plot, karakterudvikling og pacing.
 
-Læs de 5-8 bedste resultater og notér:
+Læs de 6-10 bedste resultater og notér:
 - Er plottet episk eller mere personligt?
 - Er der politiske intriger og magtspil?
 - Spiller krig og militære konflikter en stor rolle?
@@ -316,7 +316,7 @@ Læs de 5-8 bedste resultater og notér:
 - Er der dyb følelsesmæssig karakterudvikling?
 - Er tempoet langsomt, moderat eller hurtigt?
 
-Returnér 5-8 kilder med resume af deres analyse.`,
+Returnér 6-10 kilder med resume af deres analyse.`,
     },
     {
       id: "helhed",
@@ -334,7 +334,7 @@ Notér hvad der siges om:
 - Eventuelle trigger warnings
 - Hvilke andre serier sammenlignes den med?
 
-Returnér 5-8 kilder med resume af læseoplevelsen.`,
+Returnér 6-10 kilder med resume af læseoplevelsen.`,
     },
   ];
 }
@@ -636,6 +636,12 @@ function isPlotOnlyNoise(title, summary) {
  * Samme URL må godt overleve i flere batches — ellers stjæler helte/romance
  * Goodreads-siden fra plotkarakter/helhed, og de batches ender på 0.
  */
+const MAX_SOURCES_PER_BATCH = 8;
+const MAX_SOURCES_TOTAL = 28;
+const MAX_PER_HOST_PER_BATCH = 3;
+const MAX_GOODREADS_PER_BATCH = 3;
+const MAX_GOODREADS_TOTAL = 12;
+
 export function selectValuableSources(sources) {
   if (!Array.isArray(sources)) return [];
   const byCanon = new Map();
@@ -701,12 +707,12 @@ export function selectValuableSources(sources) {
     }
     const hostKey = `${s.batch || "_"}:${host}`;
     const hn = hostCount.get(hostKey) || 0;
-    if (hn >= 2) continue;
+    if (hn >= MAX_PER_HOST_PER_BATCH) continue;
 
     if (s.type === "goodreads") {
       const gb = goodreadsByBatch.get(s.batch || "_") || 0;
-      if (gb >= 2) continue;
-      if (goodreadsReviews >= 8) continue;
+      if (gb >= MAX_GOODREADS_PER_BATCH) continue;
+      if (goodreadsReviews >= MAX_GOODREADS_TOTAL) continue;
       goodreadsByBatch.set(s.batch || "_", gb + 1);
       goodreadsReviews += 1;
     } else if (s.type === "wikipedia") {
@@ -725,13 +731,13 @@ export function selectValuableSources(sources) {
 
     const b = s.batch;
     if (b && batchCount[b] != null) {
-      if (batchCount[b] >= 5) continue;
+      if (batchCount[b] >= MAX_SOURCES_PER_BATCH) continue;
       batchCount[b] += 1;
     }
 
     hostCount.set(hostKey, hn + 1);
     out.push(s);
-    if (out.length >= 18) break;
+    if (out.length >= MAX_SOURCES_TOTAL) break;
   }
 
   return out.map((s, i) => ({
@@ -957,7 +963,7 @@ Returnér JSON:
 }
 
 Batch-id for denne søgning: ${batchLabel}
-Max 8 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
+Max 10 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
 
   const response = await client.responses.create({
     model: ANALYSIS_MODEL,
@@ -1091,7 +1097,7 @@ Max 8 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
     });
   }
 
-  const merged = [...byUrl.values()].slice(0, 10);
+  const merged = [...byUrl.values()].slice(0, 12);
 
   // === MIDLERTIDIG DEBUG filter-trin ===
   if (debugHelte) {
