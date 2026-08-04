@@ -416,7 +416,7 @@ function fillIdentifiedGaps(assessments, research) {
       confidence: "low",
       basis: "insufficient",
       reason: batch
-        ? `Ikke verificeret — ${n} kilde(r) i batch "${batch}", men ingen belæg til at sætte score.`
+        ? `Ikke verificeret — ${n} kilde(r) i batch "${batch}", men ingen beskriver dette fænomen (heller ikke med andre ord).`
         : "Ikke nok information",
       sourceBatch: batch || null,
       sourceCount: n,
@@ -556,11 +556,10 @@ skal den indgå i vurderingen. Flere eksplicitte ratings for samme felt → brug
 ikke den højeste alene. Stor uenighed → lavere confidence og nævn spredningen i reason.
 Sæt ALDRIG en standard-midt (fx 3) uden belæg. Gæt ikke "typisk romantasy".
 Hvis en batch har 0 kilder: sæt score til null, confidence low, basis "insufficient", reason "Ikke verificeret — ingen kilder i batch". Gæt IKKE.
-Hvis batch har kilder men intet belæg for feltet: score null, basis "insufficient" — ikke ai_inference-midt.
+Når du scorer et felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Markér KUN 'Ikke verificeret' hvis INGEN af kilderne overhovedet nævner eller beskriver det pågældende fænomen. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.
 Hvis en batch har færre end 2 kilder: hold confidence på low.
 For hvert assessment: inkluder "sourceBatch" og "sourceCount". reason skal nævne konkret kilde når muligt.
 
-VIGTIGT — "ingen gæt" gælder fakta OG vibe-felter uden belæg.
 Når batch HAR belæg: udfyld scores (0 = fraværende, ikke "ved ikke").
 basis "source_consensus" når scoren bygger på anmeldelser; "ai_inference" kun hvis du må bruge generel seriekendskab OG reason siger præcist hvad.
 Skeln serier: kopiér aldrig tal fra én serie til den næste.
@@ -895,7 +894,7 @@ export async function runHandbookAnalysis({
         {
           role: "system",
           content:
-            "Du er en deterministisk håndbogs-analytiker. Samme input → samme JSON. Ingen web search. Svar kun med ét JSON-objekt. Sæt aldrig Goodreads fra Open Library eller Google Books.",
+            "Du er en deterministisk håndbogs-analytiker. Samme input → samme JSON. Ingen web search. Svar kun med ét JSON-objekt. Sæt aldrig Goodreads fra Open Library eller Google Books. Når du scorer et felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Markér KUN 'Ikke verificeret' hvis INGEN af kilderne overhovedet nævner eller beskriver det pågældende fænomen. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.",
         },
         { role: "user", content: prompt },
       ],

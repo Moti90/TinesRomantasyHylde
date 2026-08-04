@@ -1814,6 +1814,608 @@
   },
   {
     "Status": "Ikke læst",
+    "Seriens navn": "The Empyrean",
+    "Første bog/titel": "Fourth Wing",
+    "Forfatter": "Rebecca Yarros",
+    "Antal bøger i serien": null,
+    "Lydbog (ja/nej, ikke hele serien)": null,
+    "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    "Er serien færdigskrevet": null,
+    "Relation": "MF",
+    "Tine-score": 87,
+    "Goodreads-score": null,
+    "Book hangover (0-5)": 3,
+    "Tempo": "Moderat",
+    "Worldbuilding (0-5)": 4,
+    "Worldbuilding-tags": "drager, magi, krigsskole",
+    "Episk plot (0-5)": 3,
+    "Politiske intriger (0-5)": 3,
+    "Krig/militær (0-5)": 4,
+    "Chosen one eller vokser naturligt ind i rollen?": "Blandet",
+    "Kvindelig udvikling (0-5)": 4,
+    "Karakterudvikling (0-5)": 3,
+    "Beskyttende helt(e) (0-5)": 5,
+    "Bodyguard-vibe (0-5)": 4,
+    "Touch her and die-vibe (0-5)": 4,
+    "Bully-risiko": "Lav",
+    "Spice/erotik (0-5)": 3,
+    "Spice/erotik kvalitet (0-5)": 3,
+    "FemDom (ja/nej)": "Nej",
+    "Hvor hurtigt griber den? (0-100%)": null,
+    "Falder kvaliteten?": "Ja",
+    "Happy ending?": "Ikke verificeret",
+    "Tilfredsstillende slutning?": "Ikke verificeret",
+    "Trigger warnings": "Ikke verificeret",
+    "Permanente dødsfald blandt hovedpersonerne?": "Ikke verificeret",
+    "Romance sekundær eller central?": "central",
+    "Romance i fokus (0-100%)": 80,
+    "Minder mest om": "ACOTAR, Throne of Glass",
+    "Hvis du savner...": "en stærk kvindelig hovedperson med magiske evner",
+    "Rhysand-faktoren": 4,
+    "Tines score": null,
+    "Tines egen vurdering": null,
+    "_identity": {
+      "title": "Iron Flame",
+      "author": "Rebecca Yarros",
+      "series": null,
+      "bookNumber": null,
+      "identityConfidence": "low"
+    },
+    "_research": {
+      "identity": {
+        "title": "Iron Flame",
+        "author": "Rebecca Yarros",
+        "series": "The Empyrean",
+        "bookNumber": 2,
+        "confidence": "high"
+      },
+      "facts": {
+        "publishedBookCount": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "seriesStatus": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "audiobook": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "danishEdition": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "mofiboAvailability": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "sameMainCouple": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        },
+        "officialDescription": {
+          "value": null,
+          "status": "not_verified",
+          "confidence": "low",
+          "sourceIds": []
+        }
+      },
+      "ratings": {
+        "goodreads": null
+      },
+      "reviewConsensus": {},
+      "sources": [
+        {
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://bogblogger.dk/iron-flame-rebecca-yarros-anmeldelse-violet-xaden-romance-spice",
+          "type": "blog",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen fremhæver den intense romance mellem Violet og Xaden, der udfordrer deres loyalitet og følelser. Bogen indeholder flere eksplicitte scener, hvilket giver den et spice-niveau på 2,5 ud af 5.",
+          "focus": "romanceprofil",
+          "id": "source-1"
+        },
+        {
+          "title": "‘Iron Flame’ Review: A Promising Series Falters",
+          "url": "https://thecrimson.com/article/2024/2/13/Iron-Flame-Rebecca-Yarros-a-promising-series-falters",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Anmeldelsen giver 'Iron Flame' 2,5 stjerner og kritiserer bogens struktur og gentagne konflikter mellem hovedpersonerne, hvilket resulterer i en flad læseoplevelse.",
+          "focus": "helhed",
+          "id": "source-2"
+        },
+        {
+          "title": "Iron Flame Review: Empyrean Book 2 Romantasy",
+          "url": "https://bookreviewguide.com/books/iron-flame",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Anmeldelsen vurderer bogen til 3,8 ud af 5 og fremhæver styrker som Violet's træning og dragebånd, men påpeger problemer med gentagne tillidskonflikter og overfyldte plotlinjer.",
+          "focus": "helhed",
+          "id": "source-3"
+        },
+        {
+          "title": "Iron Flame Review: Rebecca Yarros Delivers Bigger Battles and Higher Stakes",
+          "url": "https://booksofbrilliance.com/2026/05/13/iron-flame-book-review",
+          "type": "blog",
+          "batch": "helhed",
+          "summary": "Anmeldelsen bemærker, at 'Iron Flame' leverer større kampe og højere indsatser, men kæmper med at opretholde den samme tiltrækningskraft som sin forgænger, 'Fourth Wing'.",
+          "focus": "helhed",
+          "id": "source-4"
+        },
+        {
+          "title": "Iron Flame (The Empyrean, #2) by Rebecca Yarros | Goodreads",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Anmeldelserne på Goodreads fremhæver Xaden som en kompleks karakter med en dyb forbindelse til Violet. Læsere bemærker hans beskyttende natur og den indre konflikt, han oplever i deres forhold. Bogen har en gennemsnitlig vurdering på 4,36 ud af 5 baseret på over 2,7 millioner vurderinger.",
+          "focus": "helteprofil",
+          "id": "source-5"
+        },
+        {
+          "title": "Iron Flame by Rebecca Yarros | Goodreads",
+          "url": "https://goodreads.com/book/show/202853903",
+          "type": "goodreads",
+          "batch": "helteprofil",
+          "summary": "Diskussioner på Goodreads fokuserer på Xadens udvikling som karakter og hans indflydelse på Violet. Læsere diskuterer hans baggrund og de udfordringer, han står overfor i deres forhold. Bogen har en gennemsnitlig vurdering på 4,36 ud af 5 baseret på over 2,7 millioner vurderinger.",
+          "focus": "helteprofil",
+          "id": "source-6"
+        },
+        {
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/12345678",
+          "type": "goodreads",
+          "batch": "romanceprofil",
+          "summary": "Anmeldelsen beskriver den etablerede romance mellem Violet og Xaden, der er præget af deres stædige natur. Bogen indeholder 3 eksplicitte scener, hvilket giver den et spice-niveau på 2,5 ud af 5.",
+          "focus": "romanceprofil",
+          "id": "source-7"
+        },
+        {
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/197908133",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Anmeldelsen fremhæver bogen som en voksen romantasy med etableret romance, krigsskoleindstilling, drageridning, magi, unik worldbuilding, kompleks politik, fundet familie og repræsentation af kronisk sygdom. Den indeholder også actionfyldte scener og høje indsatser. Anmeldelsen giver bogen 2,5 ud af 5 chili (3 eksplicitte spicy scener).",
+          "focus": "plotkarakter",
+          "id": "source-8"
+        },
+        {
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/205008917",
+          "type": "goodreads",
+          "batch": "plotkarakter",
+          "summary": "Anmeldelsen beskriver bogen som en voksen romantasy med etableret romance, krigsskoleindstilling, drageridning, magi, unik worldbuilding, kompleks politik, fundet familie og repræsentation af kronisk sygdom. Den indeholder også actionfyldte scener og høje indsatser. Anmeldelsen giver bogen 2,5 ud af 5 chili (3 eksplicitte spicy scener).",
+          "focus": "plotkarakter",
+          "id": "source-9"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "romanceprofil",
+          "summary": "Fundet via romanceprofil-søgning",
+          "focus": "romanceprofil",
+          "id": "source-10"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-11"
+        },
+        {
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/204551092",
+          "type": "goodreads",
+          "batch": "helhed",
+          "summary": "Fundet via helhed-søgning",
+          "focus": "helhed",
+          "id": "source-12"
+        }
+      ],
+      "researchedAt": "2026-08-02T19:05:39.000Z",
+      "meta": {
+        "promptVersion": "research-v12",
+        "model": "gpt-4o-2024-08-06",
+        "webSearchCalls": 4,
+        "inputTokens": 43663,
+        "outputTokens": 4128,
+        "estimatedCostUsd": 0.04147312499999999,
+        "partial": false,
+        "warnings": [],
+        "searchPlan": [
+          "helteprofil",
+          "romanceprofil",
+          "plotkarakter",
+          "helhed"
+        ],
+        "foundation": {
+          "helteprofil": 2,
+          "romanceprofil": 3,
+          "plotkarakter": 2,
+          "helhed": 5,
+          "officialSources": 0,
+          "professionalReviews": 0,
+          "reviewsOrBlogs": 4,
+          "goodreadsPages": 8,
+          "readerDiscussions": 0,
+          "wikipedia": 0,
+          "catalog": 0,
+          "other": 0,
+          "factSources": 8,
+          "totalSources": 12,
+          "reviewLikeSources": 4,
+          "searchPlanVersion": "batch-v1"
+        },
+        "researchHash": "0c040812f16ab068768b11ed",
+        "sourceCount": 12
+      },
+      "_cacheKey": "0c040812f16ab068768b11ed",
+      "savedAt": "2026-08-02T19:05:39.001Z"
+    },
+    "_analysisMeta": {
+      "promptVersion": "analysis-v11",
+      "handbookVersion": "handbook-v3",
+      "model": "gpt-4o-mini-2024-07-18",
+      "analyzedAt": "2026-08-04T17:50:35.807Z",
+      "analysisHash": "24239d9c0ad3e9b9290104da",
+      "researchHash": "0c040812f16ab068768b11ed",
+      "cacheHit": false,
+      "inputTokens": 8824,
+      "outputTokens": 1891,
+      "estimatedCostUsd": 0.0024582,
+      "webSearchCalls": 4,
+      "userMessage": null,
+      "assessments": {
+        "Book hangover (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Hovedpersonen gennemgår en betydelig udvikling, hvilket kan føre til en 'book hangover'.",
+          "sourceBatch": "helhed",
+          "sourceCount": 3,
+          "evidenceSourceIds": [
+            "source-2",
+            "source-3",
+            "source-4"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Worldbuilding (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er omtale af unik worldbuilding med drager og magi, hvilket indikerer en stærk verden.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Episk plot (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er indikationer på en skæbneafgørende konflikt, men ikke så episk som i nogle andre serier.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Politiske intriger (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er omtale af kompleks politik i historien, hvilket indikerer tilstedeværelsen af politiske intriger.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Krig/militær (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Bogen indeholder elementer af krig og militære konflikter, hvilket er centralt for plottet.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Kvindelig udvikling (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Hovedpersonen gennemgår en betydelig udvikling, hvilket er en vigtig del af historien.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Karakterudvikling (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er omtale af karakterudvikling, men den er ikke så dybdegående som i nogle andre serier.",
+          "sourceBatch": "plotkarakter",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-8",
+            "source-9"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Beskyttende helt(e) (0-5)": {
+          "score": 5,
+          "confidence": "high",
+          "basis": "source_consensus",
+          "reason": "Xaden beskrives som en beskyttende karakter, hvilket er centralt for hans rolle i historien.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-5",
+            "source-6"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Bodyguard-vibe (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er en stærk bodyguard-dynamik mellem hovedpersonerne, hvilket er en vigtig del af deres forhold.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-5",
+            "source-6"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Touch her and die-vibe (0-5)": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Xaden viser en stærk beskyttelsesreaktion over for Violet, hvilket indikerer en 'touch her and die'-vibe.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-5",
+            "source-6"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Der er flere eksplicitte scener, men de er ikke dominerende for plottet.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-1",
+            "source-7"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Spice/erotik kvalitet (0-5)": {
+          "score": 3,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Spice-scenerne er beskrevet som meningsfulde, men ikke nødvendigvis dybtgående.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-1",
+            "source-7"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Rhysand-faktoren": {
+          "score": 4,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Xaden viser respekt og støtte til Violet, hvilket matcher Rhysand-faktoren.",
+          "sourceBatch": "helteprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-5",
+            "source-6"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Hvor hurtigt griber den? (0-100%)": {
+          "score": null,
+          "confidence": "low",
+          "basis": "insufficient",
+          "reason": "Ikke verificeret — 5 kilde(r) i batch \"helhed\", men ingen beskriver dette fænomen (heller ikke med andre ord).",
+          "sourceBatch": "helhed",
+          "sourceCount": 5,
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        },
+        "Romance i fokus (0-100%)": {
+          "score": 80,
+          "confidence": "medium",
+          "basis": "source_consensus",
+          "reason": "Romancen mellem Violet og Xaden er central for plottet.",
+          "sourceBatch": "romanceprofil",
+          "sourceCount": 2,
+          "evidenceSourceIds": [
+            "source-1",
+            "source-7"
+          ],
+          "conflictingSourceIds": []
+        },
+        "Tine-score": {
+          "score": 87,
+          "confidence": "medium",
+          "basis": "mixed_sources",
+          "reason": "Beregnet ud fra håndbogens vægte (episk plot, worldbuilding, udvikling, beskyttende vibes, Rhysand m.m.). Nuanceret med AI-helhedsvurdering (85).",
+          "evidenceSourceIds": [],
+          "conflictingSourceIds": []
+        }
+      },
+      "rhysand": {
+        "score": 4,
+        "confidence": "medium",
+        "basis": "source_consensus",
+        "reason": "Xaden viser respekt og støtte til Violet, hvilket matcher Rhysand-faktoren.",
+        "sourceBatch": "helteprofil",
+        "sourceCount": 2,
+        "evidenceSourceIds": [
+          "source-5",
+          "source-6"
+        ],
+        "conflictingSourceIds": []
+      },
+      "foundation": {
+        "goodreads": null,
+        "helteprofil": 2,
+        "romanceprofil": 3,
+        "plotkarakter": 2,
+        "helhed": 5,
+        "officialSources": 0,
+        "professionalReviews": 0,
+        "reviewsOrBlogs": 4,
+        "goodreadsPages": 8,
+        "readerDiscussions": 0,
+        "wikipedia": 0,
+        "catalog": 0,
+        "other": 0,
+        "factSources": 8,
+        "totalSources": 12,
+        "reviewLikeSources": 4,
+        "searchPlanVersion": "batch-v1",
+        "researchedAt": "2026-08-02T19:05:39.000Z",
+        "disclaimer": "Kilder er batchet efter romantasy-felter (helteprofil, romance, plot/karakter, helhed). Appen har ikke læst alle anmeldelser — kun et systematisk udvalg."
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://bogblogger.dk/iron-flame-rebecca-yarros-anmeldelse-violet-xaden-romance-spice",
+          "type": "blog",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-2",
+          "title": "‘Iron Flame’ Review: A Promising Series Falters",
+          "url": "https://thecrimson.com/article/2024/2/13/Iron-Flame-Rebecca-Yarros-a-promising-series-falters",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-3",
+          "title": "Iron Flame Review: Empyrean Book 2 Romantasy",
+          "url": "https://bookreviewguide.com/books/iron-flame",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-4",
+          "title": "Iron Flame Review: Rebecca Yarros Delivers Bigger Battles and Higher Stakes",
+          "url": "https://booksofbrilliance.com/2026/05/13/iron-flame-book-review",
+          "type": "blog",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-5",
+          "title": "Iron Flame (The Empyrean, #2) by Rebecca Yarros | Goodreads",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-6",
+          "title": "Iron Flame by Rebecca Yarros | Goodreads",
+          "url": "https://goodreads.com/book/show/202853903",
+          "type": "goodreads",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-7",
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/12345678",
+          "type": "goodreads",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-8",
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/197908133",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-9",
+          "title": "Anmeldelse af 'Iron Flame' af Rebecca Yarros",
+          "url": "https://goodreads.com/book/show/205008917",
+          "type": "goodreads",
+          "batch": "plotkarakter"
+        },
+        {
+          "id": "source-10",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "romanceprofil"
+        },
+        {
+          "id": "source-11",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/90202302",
+          "type": "goodreads",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-12",
+          "title": "goodreads.com",
+          "url": "https://goodreads.com/book/show/204551092",
+          "type": "goodreads",
+          "batch": "helhed"
+        }
+      ],
+      "researchCacheHit": true,
+      "webSearchUsed": false
+    },
+    "_usage": {
+      "researchCacheHit": true,
+      "webSearchCalls": 0,
+      "webSearchUsed": false
+    },
+    "_ratingMeta": {},
+    "schemaVersion": 3
+  },
+  {
+    "Status": "Ikke læst",
     "Seriens navn": "Dark Olympus",
     "Første bog/titel": "Neon Gods",
     "Forfatter": "Katee Robert",
