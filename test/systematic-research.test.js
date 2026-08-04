@@ -35,25 +35,29 @@ describe("systematisk søgeplan", () => {
     assert.equal(plan[1].query, "");
     assert.equal(plan[2].query, "");
     assert.equal(plan[3].query, "");
-    assert.ok(plan[0].userPrompt.includes("Fourth Wing"));
+    assert.ok(plan[0].userPrompt.includes('"Fourth Wing"'));
     assert.ok(plan[0].userPrompt.includes("Rebecca Yarros"));
     assert.ok(plan[0].userPrompt.toLowerCase().includes("personlighed"));
+    assert.ok(plan[0].userPrompt.includes("bodyguard"));
     assert.ok(plan[1].userPrompt.toLowerCase().includes("spice"));
+    assert.ok(plan[1].userPrompt.toLowerCase().includes("fade to black"));
     assert.ok(plan[2].userPrompt.toLowerCase().includes("plot"));
+    assert.ok(plan[2].userPrompt.toLowerCase().includes("politiske"));
     assert.ok(plan[3].userPrompt.toLowerCase().includes("hangover"));
+    assert.ok(plan[3].userPrompt.toLowerCase().includes("happy ending"));
+    assert.ok(plan.every((p) => p.query === ""));
   });
 
-  it("bruger karakter-navne når identity har dem", () => {
+  it("bruger faste naturlige prompts uden MMC/FMC-navne i søgeplanen", () => {
     const plan = buildSearchPlan({
       title: "Iron Flame",
       author: "Rebecca Yarros",
       mmc: "Xaden Riorson",
       fmc: "Violet",
     });
-    assert.ok(plan[0].userPrompt.includes("Xaden Riorson"));
-    assert.ok(plan[0].userPrompt.includes("Violet"));
-    assert.ok(plan[1].userPrompt.includes("Violet"));
-    assert.ok(plan[1].userPrompt.includes("Xaden"));
+    assert.ok(plan[0].userPrompt.includes('"Iron Flame"'));
+    assert.ok(!plan[0].userPrompt.includes("Xaden Riorson"));
+    assert.ok(!plan[1].userPrompt.includes("Violet"));
   });
 
   it("er stabil for samme identity", () => {

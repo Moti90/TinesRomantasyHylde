@@ -226,34 +226,9 @@ function focusAllowsSource(focus, type, url) {
   return true;
 }
 
-function quote(s) {
-  const t = String(s || "").trim();
-  if (!t) return "";
-  return `"${t.replace(/"/g, "")}"`;
-}
-
 /**
  * 4 målrettede batches — hver dækker en gruppe håndbogsfelter.
- */
-function leadCharacters(identity) {
-  const mmc =
-    identity?.mmc ||
-    identity?.mmcName ||
-    identity?.characters?.mmc ||
-    null;
-  const fmc =
-    identity?.fmc ||
-    identity?.fmcName ||
-    identity?.characters?.fmc ||
-    null;
-  return {
-    mmc: mmc ? String(mmc).trim() : "",
-    fmc: fmc ? String(fmc).trim() : "",
-  };
-}
-
-/**
- * Udled MMC/FMC-navne fra tidligere research-summaries (fx "mellem Violet og Xaden").
+ * Naturlige prompts only (ingen teknisk query).
  */
 export function inferLeadCharactersFromResearch(research) {
   const blob = [
@@ -289,64 +264,77 @@ export function inferLeadCharactersFromResearch(research) {
 
 export function buildSearchPlan(identity) {
   const title = identity?.title || identity?.series || "book";
-  const author = identity?.author || "";
-  const series = identity?.series || title;
-  const t = quote(title);
-  const s = quote(series);
-  const { mmc, fmc } = leadCharacters(identity);
-
-  const helteSubject = mmc
-    ? fmc
-      ? `${mmc} som karakter, og hvordan hans forhold til ${fmc} er`
-      : `${mmc} som karakter, og hvordan hans forhold til heltinden er`
-    : `den mandlige hovedperson som karakter, og hvordan hans forhold til heltinden er`;
-
-  const romanceSubject =
-    mmc && fmc
-      ? `romancen mellem ${fmc} og ${mmc}, og spice-niveauet i bogen`
-      : `romancen mellem hovedpersonerne, og spice-niveauet i bogen`;
-
-  const nameHint = mmc
-    ? ""
-    : " Brug karakterernes rigtige navne i søgningen — ikke generiske trope-termer.";
+  const author = identity?.author || "ukendt forfatter";
+  const bog = String(title).trim();
+  const forfatter = String(author).trim();
 
   return [
     {
       id: "helteprofil",
       focus: "helteprofil",
       batch: "helteprofil",
-      // Ingen teknisk query — web_search klarer ikke komplekse OR/site:-strenge.
       query: "",
-      userPrompt: `Jeg undersøger ${t} af ${author}. Find anmeldelser der beskriver ${helteSubject}.${nameHint}
+      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser, blogindlæg og diskussioner der beskriver den mandlige hovedperson og hans relation til heltinden.
 
-Søg på Reddit, bogblogs og Goodreads. Prioritér Reddit-tråde og bloganmeldelser over Goodreads-udgavesider. Returner de 5-8 bedste resultater der siger noget om hans personlighed.`,
+Læs de 5-8 mest detaljerede resultater og for hver der beskriver hans personlighed eller deres dynamik, notér hvad der siges om:
+- Er han beskyttende? Besidderisk? Alpha?
+- Er der bodyguard- eller "passer på dig"-dynamik?
+- Reagerer han voldsomt når hun er i fare?
+- Er han morally grey men respekterer hende?
+- Behandler han hende dårligt eller er han respektfuld?
+
+Returnér 5-8 kilder med URL og et kort resume af hvad de siger om ham.`,
     },
     {
       id: "romanceprofil",
       focus: "romanceprofil",
       batch: "romanceprofil",
       query: "",
-      userPrompt: `Jeg undersøger ${t} af ${author}. Find anmeldelser der diskuterer ${romanceSubject}.${nameHint}
+      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser og blogindlæg der diskuterer romancen og spice-niveauet.
 
-Søg på bogblogs og Goodreads. Prioritér bloganmeldelser over Goodreads-udgavesider. Returner de 5-8 bedste resultater.`,
+Læs de 5-8 mest detaljerede resultater og notér hvad der siges om:
+- Hvor meget fylder romancen i forhold til plottet?
+- Hvordan er kemien mellem hovedpersonerne?
+- Er der spice? Hvor meget? Er det open door eller fade to black?
+- Er spice-scenerne velskrevne eller ligegyldigt fyld?
+- Hvilken relationstype er der tale om?
+
+Returnér 5-8 kilder med URL og resume af hvad de siger om romancen og spice.`,
     },
     {
       id: "plotkarakter",
       focus: "plotkarakter",
       batch: "plotkarakter",
       query: "",
-      userPrompt: `Jeg undersøger ${t} af ${author}. Find anmeldelser der analyserer plottet, karakterudvikling, worldbuilding og pacing.
+      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find dybdegående anmeldelser der analyserer plot, karakterudvikling og pacing.
 
-Søg på bogblogs, Reddit og Goodreads. Prioritér dybdegående anmeldelser over korte stjerne-ratings. Returner de 5-8 bedste resultater.`,
+Læs de 5-8 bedste resultater og notér:
+- Er plottet episk eller mere personligt?
+- Er der politiske intriger og magtspil?
+- Spiller krig og militære konflikter en stor rolle?
+- Gennemgår heltinden en stor transformation?
+- Er der dyb følelsesmæssig karakterudvikling?
+- Er tempoet langsomt, moderat eller hurtigt?
+
+Returnér 5-8 kilder med resume af deres analyse.`,
     },
     {
       id: "helhed",
       focus: "helhed",
       batch: "helhed",
       query: "",
-      userPrompt: `Jeg undersøger ${t} / serien ${s} af ${author}. Find anmeldelser og læseroplevelser om book hangover, hvor hurtigt den griber, serie-kvalitet og om den er værd at læse.
+      userPrompt: `Jeg undersøger serien omkring "${bog}" af ${forfatter}. Find anmeldelser og tråde der beskriver den samlede læseoplevelse.
 
-Søg på Reddit, bogblogs og Goodreads. Prioritér konkrete læseroplevelser over generiske plot-resuméer. Returner de 5-8 bedste resultater.`,
+Notér hvad der siges om:
+- Giver den book hangover? Tænker man på den længe efter?
+- Hvornår i første bog griber den for alvor?
+- Holder kvaliteten gennem hele serien eller falder den?
+- Er slutningen tilfredsstillende?
+- Er der en happy ending?
+- Eventuelle trigger warnings
+- Hvilke andre serier sammenlignes den med?
+
+Returnér 5-8 kilder med resume af læseoplevelsen.`,
     },
   ];
 }
@@ -953,11 +941,8 @@ async function runFocusedSearch(client, { id, focus, query, userPrompt, batch })
   const batchLabel = batch || focus;
   const debugHelte = batchLabel === "helteprofil";
   const debugRomance = batchLabel === "romanceprofil";
-  const technicalQuery =
-    query && String(query).trim()
-      ? `\n\nTeknisk søgestreng (brug som udgangspunkt): ${query}`
-      : "\n\nFormulér selv en kort, naturlig websøgning — undgå komplekse OR-kæder og site:-filtre.";
-  const promptText = `${userPrompt || `Søgning: ${query}`}${technicalQuery}
+  // Kun naturlig batch-prompt — ingen teknisk søgestreng.
+  const promptText = `${userPrompt}
 
 Returnér JSON:
 {
@@ -1009,10 +994,8 @@ Max 8 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
     debugLog("\n========== HELTEPROFIL DEBUG ==========");
     debugLog("Batch:", batchLabel, "| id:", id);
     debugLog("\n--- SØGEPROMPT (første 500 tegn) ---");
-    debugLog(String(userPrompt || query).slice(0, 500));
+    debugLog(String(userPrompt || "").slice(0, 500));
     debugLog("...(trunkeret)...");
-    debugLog("\n--- TEKNISK QUERY ---");
-    debugLog(query);
     debugLog("\n--- RÅ WEB_SEARCH URL'er (via extractRawSearchUrls) ---");
     debugLog("Antal rå URLer:", rawUrls.length);
     if (rawUrls.length === 0) {
@@ -1271,7 +1254,7 @@ async function synthesizeResearch(client, args) {
 }
 
 /**
- * Fase A: 5 faste web_search + syntese uden search.
+ * Fase A: 4 faste web_search-batches + syntese uden search.
  */
 export async function runWebResearch({ identity, catalog, mofibo }) {
   const key = getOpenAIKey();
