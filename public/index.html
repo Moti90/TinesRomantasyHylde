@@ -356,8 +356,9 @@
         </div>
         <h1 class="library-title">Tines Anmeldelser</h1>
         <p class="lede">
-          Én læst bog fra Goodreads ad gangen. Det Tine kan huske tæller med i
-          læring, og det hun ikke kan huske bliver sprunget over.
+          Søg efter en bog eller serie, bekræft at det er den rigtige, og
+          anmeld den. Det du kan huske tæller med i læring — resten kan
+          markeres som “kan ikke huske”.
         </p>
         <p id="review-status" class="status-msg" role="status"></p>
         <div class="header-rule" aria-hidden="true"></div>
@@ -366,177 +367,225 @@
       <main class="shell reviews-shell">
         <section class="panel review-panel reveal delay-1">
           <div class="panel-ornament" aria-hidden="true"></div>
-          <div class="review-book-top">
-            <div>
-              <p class="panel-kicker" id="review-position">Bog 0 af 0</p>
-              <h2 id="review-title">Ingen bøger klar endnu</h2>
-              <p id="review-author" class="hint"></p>
-            </div>
-            <span id="review-book-status" class="review-status-pill"></span>
-          </div>
 
-          <div id="review-empty" class="review-empty hint" hidden>
-            Der kunne ikke hentes læste bøger fra Tines Goodreads-liste lige
-            nu.
-          </div>
-
-          <form id="tine-review-form" class="tine-review-form">
-            <nav class="review-subtabs" role="tablist" aria-label="Dele af anmeldelsen">
-              <button
-                type="button"
-                class="review-subtab active"
-                data-review-tab="overview"
-                role="tab"
-                aria-selected="true"
-              >
-                1. Overblik
-              </button>
-              <button
-                type="button"
-                class="review-subtab"
-                data-review-tab="scores"
-                role="tab"
-                aria-selected="false"
-              >
-                2. Scorer
-              </button>
-              <button
-                type="button"
-                class="review-subtab"
-                data-review-tab="tags"
-                role="tab"
-                aria-selected="false"
-              >
-                3. Plus/minus
-              </button>
-            </nav>
-
-            <div class="review-tab-panel" data-review-tab-panel="overview" role="tabpanel">
-              <section class="review-summary-card" aria-live="polite">
-                <div class="review-summary-head">
-                  <div>
-                    <p class="panel-kicker">Hukommelseshjælp</p>
-                    <h3>Kort resumé</h3>
-                  </div>
-                  <span id="review-summary-source" class="review-summary-source">
-                    AI-genereret
-                  </span>
-                </div>
-                <p id="review-summary-loading" class="hint">
-                  Henter et kort resumé…
-                </p>
-                <p id="review-summary-short" class="review-summary-text" hidden></p>
-                <p id="review-summary-note" class="hint" hidden></p>
-                <details id="review-spoilers" class="review-spoilers" hidden>
-                  <summary>Vis huskepunkter med spoilers</summary>
-                  <ul id="review-spoiler-points"></ul>
-                </details>
-                <p class="review-summary-disclaimer hint">
-                  Resuméet er lavet af AI og kan indeholde fejl.
-                </p>
-              </section>
-
-              <section class="review-section">
-              <h3>Din samlede oplevelse</h3>
+          <form id="review-search-form" class="review-search-form">
+            <p class="panel-kicker">Find noget at anmelde</p>
+            <h2>Søg bog eller serie</h2>
+            <p class="hint">
+              Appen finder serien, hvis den findes — ellers en standalone-bog.
+              Du skal godkende match, før anmeldelsen åbnes.
+            </p>
+            <div class="review-search-grid">
               <label>
-                Tines score
+                Bogtitel eller serienavn
                 <input
-                  id="review-overall-score"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="0-100"
+                  id="review-query"
+                  name="query"
+                  type="text"
+                  placeholder="Fx Mist's Edge eller The Broken Lands"
+                  autocomplete="off"
+                  required
                 />
               </label>
-              <fieldset class="review-reread">
-                <legend>Ville du læse bogen igen?</legend>
-                <p class="hint">
-                  Det hjælper appen med at skelne en god bog fra en bog, du
-                  virkelig ønsker at vende tilbage til.
-                </p>
-                <div class="review-reread-options">
-                  <label>
-                    <input type="radio" name="review-reread" value="yes" />
-                    <span>Ja</span>
-                  </label>
-                  <label>
-                    <input type="radio" name="review-reread" value="maybe" />
-                    <span>Måske</span>
-                  </label>
-                  <label>
-                    <input type="radio" name="review-reread" value="no" />
-                    <span>Nej</span>
-                  </label>
-                </div>
-              </fieldset>
               <label>
-                Kort kommentar
-                <textarea
-                  id="review-comment"
-                  rows="4"
-                  placeholder="Hvad kan du huske? Hvad gjorde bogen god eller dårlig?"
-                ></textarea>
+                Forfatter (valgfrit)
+                <input
+                  id="review-author-input"
+                  name="author"
+                  type="text"
+                  placeholder="Fx T.A. White"
+                  autocomplete="off"
+                />
               </label>
-              </section>
             </div>
-
-            <div
-              class="review-tab-panel"
-              data-review-tab-panel="scores"
-              role="tabpanel"
-              hidden
-            >
-              <section class="review-section">
-                <h3>Subjektive scores</h3>
-                <p class="hint">
-                  Hvis Tine ikke ved eller kan huske et felt, skal det krydses
-                  af. Så tæller feltet ikke med i statistik eller personlig
-                  læring.
-                </p>
-                <div id="review-score-fields" class="review-score-fields"></div>
-              </section>
-            </div>
-
-            <div
-              class="review-tab-panel"
-              data-review-tab-panel="tags"
-              role="tabpanel"
-              hidden
-            >
-              <section class="review-section review-checks-grid">
-                <div>
-                  <h3>Hvad trak op?</h3>
-                  <div id="review-positive-tags" class="review-tag-list"></div>
-                </div>
-                <div>
-                  <h3>Hvad trak ned?</h3>
-                  <div id="review-negative-tags" class="review-tag-list"></div>
-                </div>
-              </section>
-
-              <section class="review-learning-box">
-                <h3>Læringsstatus</h3>
-                <p id="review-learning-summary" class="hint">
-                  Udfyld felterne for at se, hvor meget der tæller med.
-                </p>
-              </section>
-            </div>
-
-            <div class="actions review-actions">
-              <button type="button" class="btn ghost" id="review-prev">
-                Forrige
-              </button>
-              <button type="button" class="btn ghost" id="review-skip">
-                Spring over
-              </button>
-              <button type="submit" class="btn primary" id="review-save">
-                Gem og næste bog
-              </button>
-              <button type="button" class="btn ghost" id="review-next">
-                Næste
+            <div class="actions">
+              <button type="submit" class="btn primary" id="review-search-btn">
+                Find bog/serie
               </button>
             </div>
+            <div id="review-candidate-pick" class="candidate-pick" hidden></div>
           </form>
+
+          <div id="review-confirm" class="review-confirm" hidden>
+            <p class="panel-kicker" id="review-confirm-kind">Fundet</p>
+            <h2 id="review-confirm-title"></h2>
+            <p id="review-confirm-meta" class="hint"></p>
+            <p id="review-confirm-note" class="hint"></p>
+            <div class="actions">
+              <button type="button" class="btn primary" id="review-confirm-yes">
+                Ja, anmeld denne
+              </button>
+              <button type="button" class="btn ghost" id="review-confirm-no">
+                Nej, søg igen
+              </button>
+            </div>
+          </div>
+
+          <div id="review-empty" class="review-empty hint">
+            Søg efter en bog eller serie for at starte en anmeldelse.
+          </div>
+
+          <div id="review-active" hidden>
+            <div class="review-book-top">
+              <div>
+                <p class="panel-kicker" id="review-position">Klar til anmeldelse</p>
+                <h2 id="review-title">Vælg noget at anmelde</h2>
+                <p id="review-author" class="hint"></p>
+              </div>
+              <span id="review-book-status" class="review-status-pill"></span>
+            </div>
+
+            <form id="tine-review-form" class="tine-review-form">
+              <nav class="review-subtabs" role="tablist" aria-label="Dele af anmeldelsen">
+                <button
+                  type="button"
+                  class="review-subtab active"
+                  data-review-tab="overview"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  1. Overblik
+                </button>
+                <button
+                  type="button"
+                  class="review-subtab"
+                  data-review-tab="scores"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  2. Scorer
+                </button>
+                <button
+                  type="button"
+                  class="review-subtab"
+                  data-review-tab="tags"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  3. Plus/minus
+                </button>
+              </nav>
+
+              <div class="review-tab-panel" data-review-tab-panel="overview" role="tabpanel">
+                <section class="review-summary-card" aria-live="polite">
+                  <div class="review-summary-head">
+                    <div>
+                      <p class="panel-kicker">Hukommelseshjælp</p>
+                      <h3>Kort resumé</h3>
+                    </div>
+                    <span id="review-summary-source" class="review-summary-source">
+                      AI-genereret
+                    </span>
+                  </div>
+                  <p id="review-summary-loading" class="hint">
+                    Henter et kort resumé…
+                  </p>
+                  <p id="review-summary-short" class="review-summary-text" hidden></p>
+                  <p id="review-summary-note" class="hint" hidden></p>
+                  <details id="review-spoilers" class="review-spoilers" hidden>
+                    <summary>Vis huskepunkter med spoilers</summary>
+                    <ul id="review-spoiler-points"></ul>
+                  </details>
+                  <p class="review-summary-disclaimer hint">
+                    Resuméet er lavet af AI og kan indeholde fejl.
+                  </p>
+                </section>
+
+                <section class="review-section">
+                  <h3>Din samlede oplevelse</h3>
+                  <label>
+                    Tines score
+                    <input
+                      id="review-overall-score"
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0-100"
+                    />
+                  </label>
+                  <fieldset class="review-reread">
+                    <legend>Ville du læse den igen?</legend>
+                    <p class="hint">
+                      Det hjælper appen med at skelne en god oplevelse fra noget,
+                      du virkelig ønsker at vende tilbage til.
+                    </p>
+                    <div class="review-reread-options">
+                      <label>
+                        <input type="radio" name="review-reread" value="yes" />
+                        <span>Ja</span>
+                      </label>
+                      <label>
+                        <input type="radio" name="review-reread" value="maybe" />
+                        <span>Måske</span>
+                      </label>
+                      <label>
+                        <input type="radio" name="review-reread" value="no" />
+                        <span>Nej</span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <label>
+                    Kort kommentar
+                    <textarea
+                      id="review-comment"
+                      rows="4"
+                      placeholder="Hvad kan du huske? Hvad gjorde den god eller dårlig?"
+                    ></textarea>
+                  </label>
+                </section>
+              </div>
+
+              <div
+                class="review-tab-panel"
+                data-review-tab-panel="scores"
+                role="tabpanel"
+                hidden
+              >
+                <section class="review-section">
+                  <h3>Alle biblioteksscorer</h3>
+                  <p class="hint">
+                    Samme felter som i biblioteket, så vi kan sammenligne 1:1.
+                    Markér “kan ikke huske”, hvis feltet ikke skal tælle med.
+                  </p>
+                  <div id="review-score-fields" class="review-score-fields"></div>
+                </section>
+              </div>
+
+              <div
+                class="review-tab-panel"
+                data-review-tab-panel="tags"
+                role="tabpanel"
+                hidden
+              >
+                <section class="review-section review-checks-grid">
+                  <div>
+                    <h3>Hvad trak op?</h3>
+                    <div id="review-positive-tags" class="review-tag-list"></div>
+                  </div>
+                  <div>
+                    <h3>Hvad trak ned?</h3>
+                    <div id="review-negative-tags" class="review-tag-list"></div>
+                  </div>
+                </section>
+
+                <section class="review-learning-box">
+                  <h3>Læringsstatus</h3>
+                  <p id="review-learning-summary" class="hint">
+                    Udfyld felterne for at se, hvor meget der tæller med.
+                  </p>
+                </section>
+              </div>
+
+              <div class="actions review-actions">
+                <button type="button" class="btn ghost" id="review-new-search">
+                  Søg efter en anden
+                </button>
+                <button type="submit" class="btn primary" id="review-save">
+                  Gem anmeldelse
+                </button>
+              </div>
+            </form>
+          </div>
         </section>
       </main>
     </div>

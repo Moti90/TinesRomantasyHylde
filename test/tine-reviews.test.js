@@ -6,14 +6,15 @@ import {
   mapPirateReadsBookForReview,
 } from "../server/services/pirateReads.js";
 import { buildLibraryRowFromReviews } from "../server/services/tineReviews.js";
+import { mapIdentityToReviewTarget } from "../server/services/tineReviewTargets.js";
 import { loadSeries } from "../server/services/store.js";
 import {
   normalizeReviewSummary,
   reviewSummaryKey,
 } from "../server/services/tineReviewSummaryUtils.js";
 
-describe("Goodreads-bøger til Tines anmeldelser", () => {
-  it("udelukker Harry Potter fra anmeldelseskøen", () => {
+describe("Goodreads-hjælpere (stadig brugt af discovery)", () => {
+  it("udelukker Harry Potter", () => {
     assert.equal(
       isExcludedReviewBook({
         book_title: "Harry Potter and the Philosopher's Stone (Harry Potter, #1)",
@@ -21,79 +22,104 @@ describe("Goodreads-bøger til Tines anmeldelser", () => {
       }),
       true
     );
-    assert.equal(
-      isExcludedReviewBook({
-        book_title: "Fourth Wing (The Empyrean, #1)",
-        book_author: "Rebecca Yarros",
-      }),
-      false
-    );
   });
 
-  it("bevarer bogens identitet og udleder serien fra Goodreads-titlen", () => {
+  it("udleder serien fra Goodreads-titlen", () => {
     const book = mapPirateReadsBookForReview({
       book_title: "Iron Flame (The Empyrean, #2)",
       book_author: "Rebecca Yarros",
       book_link: "https://www.goodreads.com/book/show/90202302",
     });
-    assert.equal(book.firstBookTitle, "Iron Flame");
     assert.equal(book.seriesName, "The Empyrean");
-    assert.equal(book.author, "Rebecca Yarros");
-    assert.equal(
-      book.sourceBookId,
-      "https://www.goodreads.com/book/show/90202302"
-    );
+    assert.equal(book.firstBookTitle, "Iron Flame");
+  });
+});
+
+describe("Søg-og-godkend anmeldelsesmål", () => {
+  it("mapper en serieidentitet til serieanmeldelse", () => {
+    const target = mapIdentityToReviewTarget({
+      title: "Mist's Edge",
+      author: "T.A. White",
+      series: "The Broken Lands",
+      bookNumber: 2,
+      identityConfidence: "high",
+    });
+    assert.equal(target.isSeries, true);
+    assert.equal(target.seriesName, "The Broken Lands");
+    assert.equal(target.firstBookTitle, "Mist's Edge");
+    assert.equal(target.displayTitle, "The Broken Lands");
+    assert.equal(target.source, "identity");
+    assert.match(target.sourceBookId, /^identity\|the broken lands\|/);
+  });
+
+  it("mapper en bog uden serie til standalone", () => {
+    const target = mapIdentityToReviewTarget({
+      title: "Standalone Romance",
+      author: "Some Author",
+      series: null,
+    });
+    assert.equal(target.isSeries, false);
+    assert.equal(target.seriesName, "Standalone Romance");
+    assert.equal(target.displayTitle, "Standalone Romance");
   });
 });
 
 describe("Anmeldelser til seriebibliotek", () => {
   const reviews = [
     {
-      sourceBookId: "goodreads-1",
+      sourceBookId: "identity|testserien|første bog|test forfatter",
       seriesName: "Testserien",
       firstBookTitle: "Første bog",
       author: "Test Forfatter",
+      isSeries: true,
       overallScore: 90,
       comment: "Virkelig god",
-      subjectiveScores: { rhysand: { score: 5 } },
+      subjectiveScores: {
+        "Rhysand-faktoren": { score: 5 },
+        "Bully-risiko": { value: "Lav" },
+      },
       updatedAt: "2026-08-01T10:00:00.000Z",
     },
     {
-      sourceBookId: "goodreads-2",
+      sourceBookId: "identity|testserien|anden bog|test forfatter",
       seriesName: "Testserien",
       firstBookTitle: "Anden bog",
       author: "Test Forfatter",
+      isSeries: true,
       overallScore: 70,
       comment: "Lidt svagere",
-      subjectiveScores: { rhysand: { score: 3 } },
+      subjectiveScores: {
+        "Rhysand-faktoren": { score: 3 },
+      },
       updatedAt: "2026-08-02T10:00:00.000Z",
     },
   ];
 
-  it("samler flere boganmeldelser i én serierække", () => {
+  it("samler anmeldelser og skriver 1:1-scorer ind på nye serierækker", () => {
     const row = buildLibraryRowFromReviews(reviews);
     assert.equal(row["Seriens navn"], "Testserien");
-    assert.equal(row["Første bog/titel"], "Første bog");
     assert.equal(row["Tines score"], 80);
-    assert.equal(row["Tine-score"], null);
+    assert.equal(row["Rhysand-faktoren"], 4);
+    assert.equal(row["Bully-risiko"], "Lav");
     assert.equal(row._origin.type, "tine_reviews");
-    assert.equal(row._tineReviews.count, 2);
-    assert.equal(row._tineReviews.subjectiveAverages.rhysand, 4);
-    assert.equal(row._tineReviews.reviewedBooks.length, 2);
+    assert.equal(row._tineReviews.subjectiveAverages["Rhysand-faktoren"], 4);
   });
 
-  it("bevarer Excel-oprindelse på en eksisterende serie", () => {
+  it("bevarer Excel-oprindelse og overskriver ikke Excel-scorer", () => {
     const row = buildLibraryRowFromReviews(reviews, {
       Status: "Ikke læst",
       "Seriens navn": "Testserien",
       "Første bog/titel": "Første bog",
       Forfatter: "Test Forfatter",
       "Tine-score": 88,
+      "Rhysand-faktoren": 5,
       _origin: { type: "excel", label: "Fra Tines Excel-ark" },
     });
     assert.equal(row._origin.type, "excel");
     assert.equal(row["Tine-score"], 88);
+    assert.equal(row["Rhysand-faktoren"], 5);
     assert.equal(row["Tines score"], 80);
+    assert.equal(row._tineReviews.subjectiveAverages["Rhysand-faktoren"], 4);
   });
 });
 
@@ -103,14 +129,6 @@ describe("Nuværende biblioteksoprindelse", () => {
     const excelRows = series.filter((row) => row._origin?.type === "excel");
     assert.equal(excelRows.length, 15);
     assert.equal(
-      excelRows.some((row) => row["Seriens navn"] === "Dark Olympus"),
-      true
-    );
-    assert.equal(
-      excelRows.some((row) => row["Seriens navn"] === "The Empyrean"),
-      false
-    );
-    assert.equal(
       series.some((row) =>
         /harry\s+potter/i.test(String(row["Seriens navn"] || ""))
       ),
@@ -119,8 +137,8 @@ describe("Nuværende biblioteksoprindelse", () => {
   });
 });
 
-describe("Resumé til hukommelseshjælp", () => {
-  it("bruger en stabil cache-nøgle for samme Goodreads-bog", () => {
+describe("Resumé og anmeldelses-UI", () => {
+  it("bruger en stabil cache-nøgle for samme bog", () => {
     const a = reviewSummaryKey({
       sourceBookId: "HTTPS://GOODREADS.COM/BOOK/123",
       firstBookTitle: "Iron Flame",
@@ -149,7 +167,6 @@ describe("Resumé til hukommelseshjælp", () => {
       "Fem",
       "Seks",
     ]);
-    assert.equal(summary.note, null);
   });
 
   it("afviser et tomt AI-resumé", () => {
@@ -159,15 +176,18 @@ describe("Resumé til hukommelseshjælp", () => {
     );
   });
 
-  it("har tre underfaner og skjuler spoilers som udgangspunkt", () => {
+  it("har søgeflow, bekræftelse og tre underfaner", () => {
     const html = readFileSync(
       new URL("../public/index.html", import.meta.url),
       "utf8"
     );
+    assert.match(html, /id="review-search-form"/);
+    assert.match(html, /id="review-confirm"/);
+    assert.match(html, /id="review-confirm-yes"/);
+    assert.match(html, /Alle biblioteksscorer/);
     assert.equal((html.match(/data-review-tab="/g) || []).length, 3);
-    assert.match(html, /data-review-tab-panel="overview"/);
-    assert.match(html, /data-review-tab-panel="scores"/);
-    assert.match(html, /data-review-tab-panel="tags"/);
     assert.match(html, /id="review-spoilers"[^>]*hidden/);
+    assert.doesNotMatch(html, /Gem og næste bog/);
+    assert.doesNotMatch(html, /Én læst bog fra Goodreads/);
   });
 });

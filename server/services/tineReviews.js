@@ -35,17 +35,21 @@ function sourceReviewKey(review) {
   return String(review?.sourceBookId || "").trim().toLowerCase();
 }
 
-function sameReview(a, b) {
-  const aSource = sourceReviewKey(a);
-  const bSource = sourceReviewKey(b);
-  if (aSource && bSource) return aSource === bSource;
-  return reviewKey(a) === reviewKey(b);
-}
-
 function seriesReviewKey(review) {
   return [review?.seriesName || review?.firstBookTitle, review?.author]
     .map((part) => String(part || "").trim().toLowerCase())
     .join("|");
+}
+
+function sameReview(a, b) {
+  const aSource = sourceReviewKey(a);
+  const bSource = sourceReviewKey(b);
+  if (aSource && bSource) return aSource === bSource;
+  // Series-level reviews: match on series + author
+  if (a?.isSeries || b?.isSeries || a?.source === "identity" || b?.source === "identity") {
+    return seriesReviewKey(a) === seriesReviewKey(b);
+  }
+  return reviewKey(a) === reviewKey(b);
 }
 
 function average(values) {
@@ -54,6 +58,28 @@ function average(values) {
   );
   if (!valid.length) return null;
   return Math.round(valid.reduce((sum, value) => sum + value, 0) / valid.length);
+}
+
+function collectFieldValues(reviews) {
+  const numeric = {};
+  const choices = {};
+  for (const review of reviews || []) {
+    for (const [key, entry] of Object.entries(review.subjectiveScores || {})) {
+      if (!entry || typeof entry !== "object") continue;
+      if (typeof entry.score === "number" && !Number.isNaN(entry.score)) {
+        if (!numeric[key]) numeric[key] = [];
+        numeric[key].push(entry.score);
+      } else if (entry.value != null && entry.value !== "") {
+        choices[key] = entry.value;
+      }
+    }
+  }
+  const subjectiveAverages = {};
+  for (const [key, values] of Object.entries(numeric)) {
+    const score = average(values);
+    if (score != null) subjectiveAverages[key] = score;
+  }
+  return { subjectiveAverages, choiceValues: choices };
 }
 
 export function buildLibraryRowFromReviews(reviews, existing = null) {
@@ -70,27 +96,22 @@ export function buildLibraryRowFromReviews(reviews, existing = null) {
       Date.parse(a.updatedAt || a.createdAt || 0)
   )[0];
   const seriesName = latest.seriesName || latest.firstBookTitle;
-  const subjectiveKeys = new Set(
-    scored.flatMap((review) => Object.keys(review.subjectiveScores || {}))
-  );
-  const subjectiveAverages = {};
-  for (const key of subjectiveKeys) {
-    const score = average(
-      scored.map((review) => Number(review.subjectiveScores?.[key]?.score))
-    );
-    if (score != null) subjectiveAverages[key] = score;
-  }
+  const { subjectiveAverages, choiceValues } = collectFieldValues(scored);
   const reviewedBooks = scored.map((review) => ({
     sourceBookId: review.sourceBookId || null,
     title: review.firstBookTitle || null,
     goodreadsUrl: review.goodreadsUrl || null,
     score: review.overallScore,
     rereadChoice: review.rereadChoice || null,
+    isSeries: Boolean(review.isSeries),
   }));
   const priorOrigin = existing?._origin || null;
   const base = existing || emptySeries();
+  const canWriteScores =
+    !existing?._scoreReference?.locked &&
+    (!priorOrigin || priorOrigin.type === "tine_reviews");
 
-  return {
+  const row = {
     ...base,
     Status: "Læst",
     "Seriens navn": seriesName,
@@ -111,10 +132,22 @@ export function buildLibraryRowFromReviews(reviews, existing = null) {
       count: scored.length,
       averageScore: average(scored.map((review) => review.overallScore)),
       subjectiveAverages,
+      choiceValues,
       reviewedBooks,
       updatedAt: latest.updatedAt || latest.createdAt || new Date().toISOString(),
     },
   };
+
+  if (canWriteScores) {
+    for (const [key, score] of Object.entries(subjectiveAverages)) {
+      row[key] = score;
+    }
+    for (const [key, value] of Object.entries(choiceValues)) {
+      row[key] = value;
+    }
+  }
+
+  return row;
 }
 
 function syncScoredReviewToLibrary(review, reviews) {
@@ -131,6 +164,12 @@ function syncScoredReviewToLibrary(review, reviews) {
     }) || null;
   const libraryRow = buildLibraryRowFromReviews(related, existing);
   if (libraryRow) upsertSeries(libraryRow);
+}
+
+export function findTineReviewForTarget(target) {
+  if (!target) return null;
+  const reviews = listTineReviews();
+  return reviews.find((row) => sameReview(row, target)) || null;
 }
 
 export function listTineReviews() {
@@ -156,3 +195,5 @@ export function upsertTineReview(review) {
   syncScoredReviewToLibrary(next, reviews);
   return reviews;
 }
+
+export { sameReview, seriesReviewKey };

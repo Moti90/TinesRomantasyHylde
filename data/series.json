@@ -1203,12 +1203,7 @@
         "fetchedAt": null
       }
     },
-    "schemaVersion": 3,
-    "_scoreReference": {
-      "locked": true,
-      "source": "excel",
-      "tineScore": 98
-    }
+    "schemaVersion": 3
   },
   {
     "Status": "Ikke læst",

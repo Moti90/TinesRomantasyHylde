@@ -28,12 +28,18 @@ import {
 import { seriesToWorkbook, workbookToSeries } from "./services/excel.js";
 import { STATUS_ORDER } from "./services/columns.js";
 import discoveryRouter from "./routes/discovery.js";
-import { listTineReviews, upsertTineReview } from "./services/tineReviews.js";
+import {
+  findTineReviewForTarget,
+  listTineReviews,
+  upsertTineReview,
+} from "./services/tineReviews.js";
 import {
   isExcludedReviewBook,
   loadPirateReadsLibrary,
   mapPirateReadsBookForReview,
 } from "./services/pirateReads.js";
+import { identifyBook } from "./services/identify.js";
+import { mapIdentityToReviewTarget } from "./services/tineReviewTargets.js";
 import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
 import { backfillDecisionScores } from "./services/decisionScoreBackfill.js";
 
@@ -141,6 +147,68 @@ app.get("/api/tine-review-books", async (req, res) => {
   }
 });
 
+app.post("/api/tine-review-identify", async (req, res) => {
+  try {
+    const query = String(req.body?.query || "").trim();
+    const author = String(req.body?.author || "").trim();
+    const selectedIdentity = req.body?.selectedIdentity || null;
+
+    if (!query && !selectedIdentity?.title) {
+      return res.status(400).json({ error: "Angiv bogtitel eller serienavn" });
+    }
+
+    let identityResult;
+    if (selectedIdentity?.title) {
+      identityResult = {
+        status: "identified",
+        identity: {
+          title: selectedIdentity.title,
+          author: selectedIdentity.author || author || null,
+          series: selectedIdentity.series || null,
+          bookNumber: selectedIdentity.bookNumber ?? null,
+          identityConfidence:
+            selectedIdentity.identityConfidence ||
+            selectedIdentity.confidence ||
+            "high",
+        },
+        candidates: [],
+      };
+    } else {
+      identityResult = await identifyBook({ query, author });
+    }
+
+    if (identityResult.status === "ambiguous") {
+      return res.json({
+        needsChoice: true,
+        candidates: identityResult.candidates || [],
+        userMessage: "Flere bøger matcher. Vælg den rigtige.",
+      });
+    }
+
+    if (identityResult.status === "not_found" || !identityResult.identity) {
+      return res.status(404).json({
+        error: "Kunne ikke finde en bog eller serie med det navn",
+      });
+    }
+
+    const target = mapIdentityToReviewTarget(identityResult.identity);
+    const existingReview = findTineReviewForTarget(target);
+    return res.json({
+      needsChoice: false,
+      target,
+      existingReview,
+      candidates: identityResult.candidates || [],
+      userMessage: target.isSeries
+        ? "Serien er fundet. Bekræft, at det er den rigtige."
+        : "Bogen er fundet. Bekræft, at det er den rigtige.",
+    });
+  } catch (err) {
+    res.status(502).json({
+      error: err.message || "Kunne ikke søge efter bog eller serie",
+    });
+  }
+});
+
 app.post("/api/tine-review-summary", async (req, res) => {
   try {
     const body = req.body || {};
@@ -182,14 +250,20 @@ app.post("/api/tine-reviews", (req, res) => {
     const rereadChoice = ["yes", "maybe", "no"].includes(body.rereadChoice)
       ? body.rereadChoice
       : null;
+    const source =
+      body.source === "piratereads" || body.source === "identity"
+        ? body.source
+        : "identity";
     const reviews = upsertTineReview({
       seriesName: body.seriesName || null,
       firstBookTitle: body.firstBookTitle || null,
       author: body.author || null,
-      status: body.status || null,
+      status: body.status || "Læst",
+      isSeries: Boolean(body.isSeries),
       sourceBookId: body.sourceBookId || null,
-      source: body.source === "piratereads" ? "piratereads" : null,
+      source,
       goodreadsUrl: body.goodreadsUrl || null,
+      identity: body.identity || null,
       overallScore,
       rereadChoice,
       comment: body.comment || "",

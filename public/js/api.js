@@ -25,6 +25,19 @@ export async function getTineReviewBooks() {
   return data;
 }
 
+export async function identifyTineReviewTarget(payload) {
+  const res = await fetch("/api/tine-review-identify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Kunne ikke finde bog eller serie");
+  }
+  return data;
+}
+
 export async function getTineReviewSummary(book, force = false) {
   const res = await fetch("/api/tine-review-summary", {
     method: "POST",

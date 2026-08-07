@@ -1,0 +1,215 @@
+Romantasy Metodeplan
+====================
+
+Omsæt metodebeskrivelsen til en prioriteret roadmap for appen:
+først rette scorelogik og dansk, letforståelig transparens,
+derefter adskille indholdsmatch/læseprioritet,
+og senere gøre evidens mere revisionssikker.
+
+Sprogprincip
+------------
+Alt Tine ser i frontend skal være på dansk og let at forstå.
+Tekniske felter som confidence, basis, ai_inference og sourceCount
+må gerne findes internt i koden, men de skal oversættes til
+menneskelige labels som:
+- Lav sikkerhed
+- Vurderet af modellen
+- Kildebaseret
+- Ingen direkte kilder fundet
+
+
+Fase 1: Ret subjektive scores som bliver not_verified
+-----------------------------------------------------
+Problem:
+Appen beder AI'en vurdere subjektive felter, men normalizeAssessment()
+nulstiller scoren, hvis den relevante kilde-batch har 0 kilder.
+
+Ændring:
+- Opdatér server/services/handbookAnalysis.js, så subjektive felter
+  må beholde en score med basis ai_inference / model_knowledge /
+  synopsis_only selv ved sourceCount 0.
+- Tving intern confidence ned til low, når scoren bygger på
+  modelviden/inferens uden kilder. I frontend vises det som
+  "Lav sikkerhed", ikke som "confidence".
+- Prefix reason med fx [MODELVIDEN/INFERENS], så Tine kan se at det
+  er vurdering og ikke verificeret fakta.
+- Opdatér prompten i buildAnalysisPrompt() til at skelne eksplicit
+  mellem [FAKTA] og [SUBJEKTIV].
+- Bump ANALYSIS_PROMPT_VERSION, så gamle analyser ikke genbruges
+  med forældet prompt.
+
+Bidrag til appen:
+- Færre tomme subjektive felter.
+- Mere brugbare Tine-scores for kendte serier med tynd research.
+- Bedre overensstemmelse med dokumentets princip om, at subjektive
+  vurderinger godt må bygge på modelviden/inferens, når de mærkes korrekt.
+- Objektive felter forbliver strenge og kildekrævende.
+
+
+Fase 2: Gør fakta vs vurdering synligt på dansk
+-----------------------------------------------
+Problem:
+Dokumentet lægger stor vægt på forskellen mellem FAKTA, WEB,
+MODELVIDEN, INFERENS, SUBJEKTIV og USIKKER. Appen har allerede
+interne felter, men Tine skal ikke se de tekniske navne.
+
+Ændring:
+- Behold eksisterende metadata i _analysisMeta.assessments,
+  men vis det tydeligere i detaljevisningen.
+- I public/js/ui/list.js tilføjes danske, korte labels for
+  vurderingsgrundlag:
+  - Kildebaseret
+  - Vurderet af modellen
+  - Ikke verificeret
+  - Lav sikkerhed
+- Brug eksisterende interne datafelter i koden, men oversæt dem
+  før visning:
+  - source_consensus -> Kildebaseret
+  - ai_inference -> Vurderet af modellen
+  - insufficient -> Ikke verificeret
+  - low -> Lav sikkerhed
+
+Bidrag til appen:
+- Tine kan forstå, hvorfor en score findes.
+- Appen bliver mere transparent uden stor backend-ombygning.
+- Lavere risiko for at subjektive scores ligner hårde fakta.
+
+
+Fase 3: Del Tine-score i Indholdsmatch og Læseprioritet nu
+---------------------------------------------------------
+Problem:
+En serie kan være perfekt for Tine indholdsmæssigt, men stadig være
+dårlig at starte på nu, hvis den ikke er færdig, ikke er på Mofibo
+eller har praktiske risici.
+
+Ændring:
+- Behold eksisterende Tine-score som indholdsmatch i første omgang.
+- Tilføj beregnede felter:
+  - Indholdsmatch
+  - Læseprioritet nu
+- Indholdsmatch beregnes fra romantasy-parametrene.
+- Læseprioritet nu starter fra Indholdsmatch, men justeres for:
+  - uafsluttet serie
+  - manglende Mofibo/lydbog
+  - lav evidens / høj usikkerhed
+  - hårde warnings som bully-risiko eller utilfredsstillende slutning
+- UI viser danske labels. Frontend må ikke vise engelske tekniske navne.
+
+Bidrag til appen:
+- Undgår at uafsluttede serier anbefales som "bedste næste læsning".
+- Gør forskel på "Tine vil nok elske indholdet" og "Tine bør læse den nu".
+- Passer direkte til dokumentets afsnit 7.5 og 8.1.
+
+
+Fase 4: Bedre usikkerhedsmodel uden stor databaseombygning
+----------------------------------------------------------
+Problem:
+Dokumentet foreslår confidence, evidenceCoverage, sourceAgreement,
+inferenceDepth og temporalFreshness. Appen har noget af det, men
+ikke samlet som en tydelig usikkerhedsprofil.
+
+Ændring:
+- Udvid buildAnalysisMeta() med en samlet uncertainty-blok:
+  - sourceCoverage
+  - lowConfidenceFields
+  - inferredFields
+  - notVerifiedFacts
+  - staleOrMissingFreshFacts
+- Brug eksisterende data fra assessments, research og objektive facts.
+- Vis en kort Analysegrundlag-sektion i UI med danske tekster som:
+  - Stærkt kildegrundlag
+  - Tyndt kildegrundlag
+  - Flere vurderinger bygger på modelviden
+  - Nogle fakta kunne ikke verificeres
+
+Bidrag til appen:
+- Tine kan hurtigt se om analysen er stærk eller tynd.
+- Bedre beslutningsgrundlag før hun stoler på en score.
+- Gør appen mere i tråd med dokumentets audit-princip uden at
+  kræve PostgreSQL/claim engine endnu.
+
+
+Fase 5: Kilde- og evidensforbedring i research
+----------------------------------------------
+Problem:
+Dokumentet anbefaler atomare claims og observationer. Det er rigtigt,
+men for stort at bygge fuldt nu. Appen har allerede sources,
+reviewConsensus, evidenceSourceIds og batches.
+
+Ændring:
+- I server/services/webResearch.js forbedres research-output gradvist:
+  - gem mere tydelige supportingSourceIds
+  - hold kilde-batches intakte
+  - marker konflikter mere synligt
+  - undgå at branchestøj/PR-kilder tæller som romantasy-evidens
+- Ikke bygge fuld Claim Engine endnu.
+- Først lave en let observations-struktur, hvis vi ser gentagne
+  problemer med forklarbarhed.
+
+Bidrag til appen:
+- Bedre forklaringer og færre mystiske scores.
+- Mere robust kildegrundlag uden massiv arkitekturombygning.
+- Forbereder senere claim/evidence-model.
+
+
+Fase 6: Discovery og teaser-transparens som del af samme metode
+---------------------------------------------------------------
+Status:
+Vi har allerede arbejdet i denne retning i discovery-teaseren.
+
+Næste ændring:
+- Sørg for at discovery også bruger samme sprog som analyseflowet:
+  - Bekræftet match
+  - Usikkert / ikke bekræftet
+  - Trækker ned / risiko
+  - Fundet her
+- Genbrug principperne fra dokumentet: kilde, usikkerhed, inferens
+  og klare advarsler.
+
+Bidrag til appen:
+- "Opdag nye" bliver ikke bare en AI-anbefaler, men en transparent
+  inspirationsmotor.
+- Tine kan selv vurdere om en teaser er stærk nok til at gå videre med.
+
+
+Fase 7: Senere, ikke nu — stor arkitektur fra dokumentet
+--------------------------------------------------------
+Dokumentet foreslår PostgreSQL, claim engine, observation engine,
+learning engine og pairwise ranking. Det er godt som fremtidigt
+målbillede, men bør ikke bygges nu.
+
+Gemmes til senere:
+- PostgreSQL/JSONB-skema
+- Claim-level lagring
+- Pairwise learning-to-rank
+- Kalibreringsdashboard
+- Automatisk drift detection
+
+Bidrag senere:
+- Meget højere revisionssikkerhed
+- Bedre læring fra Tines feedback
+- Mere professionel anbefalingsmotor
+
+
+Anbefalet implementeringsrækkefølge
+-----------------------------------
+Fase 1 (Subjektive scores)
+  -> Fase 2 (Fakta vs vurdering på dansk)
+  -> Fase 3 (Indholdsmatch og læseprioritet)
+  -> Fase 4 (Usikkerhedsprofil)
+  -> Fase 5 (Bedre research evidence)
+  -> Fase 6 (Discovery transparens)
+  -> Fase 7 (Stor arkitektur senere)
+
+
+Status (opdateret i forbindelse med implementering)
+---------------------------------------------------
+Fase 1: Implementeret
+Fase 2: Implementeret
+Fase 3: Implementeret
+Fase 4: Implementeret
+Fase 5: Ikke startet
+Fase 6: Delvist (discovery-teaser allerede forbedret)
+Fase 7: Bevidst udskudt
+
+Næste naturlige skridt: Fase 5 og/eller færdiggøre Fase 6.
