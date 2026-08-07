@@ -24,7 +24,11 @@ export function sortSeries(list) {
     const oa = sa === -1 ? 99 : sa;
     const ob = sb === -1 ? 99 : sb;
     if (oa !== ob) return oa - ob;
-    return Number(b["Tine-score"] ?? 0) - Number(a["Tine-score"] ?? 0);
+    const scoreA =
+      a["Læseprioritet nu"] ?? a.Indholdsmatch ?? a["Tine-score"] ?? 0;
+    const scoreB =
+      b["Læseprioritet nu"] ?? b.Indholdsmatch ?? b["Tine-score"] ?? 0;
+    return Number(scoreB) - Number(scoreA);
   });
 }
 

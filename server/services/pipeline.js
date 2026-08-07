@@ -3,6 +3,7 @@ import { researchSeries } from "./research.js";
 import { checkMofibo } from "./mofibo.js";
 import { runWebResearch, inferLeadCharactersFromResearch } from "./webResearch.js";
 import { runHandbookAnalysis } from "./handbookAnalysis.js";
+import { applyDecisionScoresToRow } from "./decisionScoreSync.js";
 import {
   getCachedResearch,
   saveResearchCache,
@@ -168,6 +169,7 @@ export async function analyzeNewSeries(opts) {
 
   const existing = findExisting(row["Seriens navn"]);
   row = mergePreserve(existing, row, { preserveGoodreads: false });
+  row = applyDecisionScoresToRow(row, analysis.meta).row;
 
   const usage = {
     researchCacheHit,
@@ -291,6 +293,7 @@ export async function reanalyzeSeries(name, { forceAnalysis = false } = {}) {
   let row = mergePreserve(existing, analysis.row, { preserveGoodreads: true });
   row["Seriens navn"] = existing["Seriens navn"] || row["Seriens navn"];
   row["Goodreads-score"] = sanitizeGoodreadsScore(existing["Goodreads-score"]);
+  row = applyDecisionScoresToRow(row, analysis.meta).row;
 
   const full = attachMeta(row, {
     research,
@@ -364,6 +367,7 @@ export async function refreshSeriesResearch(name) {
 
   let row = mergePreserve(existing, analysis.row, { preserveGoodreads: false });
   row["Seriens navn"] = existing["Seriens navn"] || row["Seriens navn"];
+  row = applyDecisionScoresToRow(row, analysis.meta).row;
 
   const full = attachMeta(row, {
     research,

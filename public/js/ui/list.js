@@ -30,6 +30,8 @@ const SCORE_PCT = [
 
 const HERO_SKIP = new Set([
   "Tine-score",
+  "Indholdsmatch",
+  "Læseprioritet nu",
   "Seriens navn",
   "Første bog/titel",
   "Forfatter",
@@ -99,7 +101,9 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   body.innerHTML = series
     .map((row, i) => {
       const name = row["Seriens navn"] || "Ukendt";
-      const score = row["Tine-score"] ?? row["Tines score"] ?? "–";
+      const contentMatch =
+        row.Indholdsmatch ?? row["Tine-score"] ?? row["Tines score"] ?? null;
+      const readPriority = row["Læseprioritet nu"] ?? null;
       return `
       <tr data-index="${i}">
         <td>
@@ -112,7 +116,22 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
           ${originBadge(row)}
         </td>
         <td>${escapeHtml(row.Forfatter || "–")}</td>
-        <td><span class="score-pill ${scoreClass(score)}">${escapeHtml(String(score))}</span></td>
+        <td>
+          <div class="decision-score-cell">
+            <span class="decision-score-compact">
+              <small>Match</small>
+              <span class="score-pill ${scoreClass(contentMatch)}">${escapeHtml(
+                String(contentMatch ?? "–")
+              )}</span>
+            </span>
+            <span class="decision-score-compact">
+              <small>Nu</small>
+              <span class="score-pill ${scoreClass(readPriority)}">${escapeHtml(
+                String(readPriority ?? "–")
+              )}</span>
+            </span>
+          </div>
+        </td>
         <td>${escapeHtml(String(row["Rhysand-faktoren"] ?? "–"))}</td>
         <td>${escapeHtml(displayFact(row["Er serien på Mofibo? (ja, nej, ikke hele serien)"]))}</td>
         <td>${escapeHtml(displayFact(row.Tempo))}</td>
@@ -187,20 +206,29 @@ export function renderDetail(row) {
     ownMsg.classList.remove("ok", "error");
   }
 
-  const tineScore = parseNumber(row["Tine-score"]);
-  const tineAssess = row._analysisMeta?.assessments?.["Tine-score"];
+  const contentMatch = parseNumber(row.Indholdsmatch ?? row["Tine-score"]);
+  const readPriority = parseNumber(row["Læseprioritet nu"]);
+  const contentAssess =
+    row._analysisMeta?.assessments?.Indholdsmatch ||
+    row._analysisMeta?.assessments?.["Tine-score"];
+  const priorityAssess =
+    row._analysisMeta?.assessments?.["Læseprioritet nu"];
   tine.innerHTML =
-    tineScore == null
-      ? `<div class="tine-hero-empty">Ingen Tine-score</div>`
+    contentMatch == null && readPriority == null
+      ? `<div class="tine-hero-empty">Ingen beslutningsscorer endnu</div>`
       : `
-      <div class="tine-ring">
-        <span class="tine-value">${escapeHtml(String(row["Tine-score"]))}</span>
-        <span class="tine-label">Tine-score</span>
-      </div>
-      <div class="bar-track tine-track">
-        <div class="bar-fill tone-high" style="width:${clamp(tineScore, 0, 100)}%"></div>
-      </div>
-      ${confidenceBadge(tineAssess)}`;
+        ${decisionScoreCard(
+          "Indholdsmatch",
+          contentMatch,
+          contentAssess,
+          "Hvor godt serien passer til Tines smag."
+        )}
+        ${decisionScoreCard(
+          "Læseprioritet nu",
+          readPriority,
+          priorityAssess,
+          "Justeret for tilgængelighed, risici og analysegrundlag."
+        )}`;
 
   const barRows = [
     ...SCORE_0_5.map((key) =>
@@ -343,8 +371,64 @@ function renderWhySections(row) {
     .filter(Boolean)
     .map((t) => `<li>${escapeHtml(t)}</li>`)
     .join("");
+  const uncertainty = meta.uncertainty;
+  const uncertaintyLabel =
+    uncertainty?.level === "strong"
+      ? "Stærkt analysegrundlag"
+      : uncertainty?.level === "medium"
+        ? "Delvist analysegrundlag"
+        : "Tyndt analysegrundlag";
+  const uncertaintyItems = uncertainty
+    ? [
+        `${uncertainty.sourceCoverage ?? 0}% af smagsvurderingerne har direkte kildegrundlag`,
+        `${uncertainty.inferredFields?.length || 0} vurderinger bygger på AI'ens viden eller bogbeskrivelsen`,
+        `${uncertainty.lowConfidenceFields?.length || 0} vurderinger har lav sikkerhed`,
+        uncertainty.notVerifiedFacts?.length
+          ? `Ikke verificerede fakta: ${uncertainty.notVerifiedFacts.join(", ")}`
+          : "De centrale fakta er verificeret",
+        uncertainty.staleOrMissingFreshFacts?.length
+          ? `Bør opdateres: ${uncertainty.staleOrMissingFreshFacts.join(", ")}`
+          : null,
+      ]
+        .filter(Boolean)
+        .map((item) => `<li>${escapeHtml(item)}</li>`)
+        .join("")
+    : "";
+  const readPriority = meta.readPriority;
+  const priorityAdjustments = (readPriority?.adjustments || [])
+    .map(
+      (adjustment) => `
+        <li>
+          <strong>${escapeHtml(adjustment.label)}</strong>
+          <span class="priority-points">${adjustment.points > 0 ? "+" : ""}${escapeHtml(
+            String(adjustment.points)
+          )} point</span>
+          <p>${escapeHtml(adjustment.reason)}</p>
+        </li>`
+    )
+    .join("");
 
   return `
+    ${
+      readPriority
+        ? `<details class="why-block decision-explanation">
+            <summary>Sådan beregnes læseprioriteten</summary>
+            <p class="hint">${escapeHtml(readPriority.reason || "")}</p>
+            <ul class="priority-adjustments">${
+              priorityAdjustments ||
+              "<li>Ingen praktiske forhold trækker prioriteten ned.</li>"
+            }</ul>
+          </details>`
+        : ""
+    }
+    ${
+      uncertainty
+        ? `<details class="why-block uncertainty-block">
+            <summary>${escapeHtml(uncertaintyLabel)}</summary>
+            <ul class="foundation-list">${uncertaintyItems}</ul>
+          </details>`
+        : ""
+    }
     <details class="why-block">
       <summary>Hvorfor denne vurdering?</summary>
       <ul class="why-list">${whyItems || "<li class='hint'>Ingen ekstra begrundelser endnu</li>"}</ul>
@@ -405,6 +489,36 @@ function factRow(key, value) {
     <div class="fact-row">
       <dt>${escapeHtml(shortLabel(key))}</dt>
       <dd>${escapeHtml(stringify(value))}</dd>
+    </div>`;
+}
+
+function decisionScoreCard(label, score, assessment, helpText) {
+  if (score == null) {
+    return `
+      <div class="decision-score-card muted-row">
+        <div class="decision-score-top">
+          <span class="decision-score-value">–</span>
+          <span class="decision-score-label">${escapeHtml(label)}</span>
+        </div>
+        <p class="decision-score-help">${escapeHtml(helpText)}</p>
+        <span class="conf-badge conf-low">Kræver ny analyse</span>
+      </div>`;
+  }
+  return `
+    <div class="decision-score-card">
+      <div class="decision-score-top">
+        <span class="decision-score-value">${escapeHtml(String(score))}</span>
+        <span class="decision-score-label">${escapeHtml(label)}</span>
+      </div>
+      <div class="bar-track tine-track">
+        <div class="bar-fill tone-${barTone(score)}" style="width:${clamp(
+          score,
+          0,
+          100
+        )}%"></div>
+      </div>
+      <p class="decision-score-help">${escapeHtml(helpText)}</p>
+      ${confidenceBadge(assessment)}
     </div>`;
 }
 

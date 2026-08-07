@@ -737,7 +737,13 @@ async function runAnalyze(payload) {
     const msg =
       res.meta?.userMessage ||
       `Tilføjet: ${res.row["Seriens navn"]}${
-        res.row["Tine-score"] != null ? ` · Tine-score ${res.row["Tine-score"]}` : ""
+        res.row.Indholdsmatch != null
+          ? ` · Indholdsmatch ${res.row.Indholdsmatch}`
+          : ""
+      }${
+        res.row["Læseprioritet nu"] != null
+          ? ` · Læseprioritet ${res.row["Læseprioritet nu"]}`
+          : ""
       }`;
     setMsg("analyze-status", msg, Boolean(res.meta?.fallback));
     document.getElementById("query").value = "";

@@ -35,6 +35,7 @@ import {
   mapPirateReadsBookForReview,
 } from "./services/pirateReads.js";
 import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
+import { backfillDecisionScores } from "./services/decisionScoreBackfill.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -44,6 +45,7 @@ const upload = multer({
 });
 
 ensureMigratedDatabase();
+backfillDecisionScores();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3847;
@@ -424,6 +426,8 @@ app.post("/api/import", upload.single("file"), async (req, res) => {
     } else {
       series = saveSeries(imported);
     }
+    backfillDecisionScores({ force: true });
+    series = loadSeries();
     res.json({ series, count: imported.length });
   } catch (err) {
     console.error(err);

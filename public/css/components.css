@@ -367,8 +367,67 @@ tbody tr:hover {
 }
 
 .tine-hero {
-  min-width: min(100%, 220px);
-  flex: 0 1 250px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 0.75rem;
+  min-width: min(100%, 340px);
+  flex: 0 1 430px;
+}
+
+.decision-score-card {
+  border: 1px solid rgba(232, 176, 96, 0.22);
+  border-radius: 8px;
+  padding: 0.8rem;
+  background: rgba(8, 4, 14, 0.26);
+}
+
+.decision-score-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.decision-score-value {
+  font-family: var(--font-brand);
+  font-size: 2.3rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #fff5f6;
+}
+
+.decision-score-label {
+  color: #e8a0a8;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.decision-score-help {
+  margin: 0.55rem 0 0;
+  color: rgba(224, 200, 184, 0.72);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.decision-score-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.decision-score-compact {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+}
+
+.decision-score-compact small {
+  color: rgba(224, 200, 184, 0.72);
+  font-size: 0.65rem;
+  text-transform: uppercase;
 }
 
 .tine-ring {
@@ -397,6 +456,31 @@ tbody tr:hover {
 
 .tine-track {
   height: 14px;
+}
+
+.priority-adjustments {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.priority-adjustments li {
+  border-left: 2px solid rgba(232, 176, 96, 0.3);
+  padding-left: 0.7rem;
+}
+
+.priority-adjustments p {
+  margin: 0.2rem 0 0;
+  color: rgba(224, 200, 184, 0.72);
+  font-size: 0.84rem;
+}
+
+.priority-points {
+  margin-left: 0.45rem;
+  color: #e8a090;
+  font-size: 0.8rem;
 }
 
 .own-assessment {
@@ -1378,6 +1462,16 @@ tbody tr:hover {
 
   .review-summary-head {
     display: grid;
+  }
+
+  .tine-hero {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .decision-score-cell {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .review-actions {

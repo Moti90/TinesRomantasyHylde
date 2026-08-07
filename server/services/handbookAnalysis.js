@@ -13,26 +13,14 @@ import {
 import { resolveGoodreadsScore, sanitizeGoodreadsScore } from "./goodreads.js";
 import { summarizeSourceFoundation } from "./webResearch.js";
 import { dataPath } from "./paths.js";
+import {
+  SUBJECTIVE_KEYS,
+  buildUncertaintyProfile,
+  calculateReadPriority,
+  estimateTineScoreFromVibes,
+} from "./decisionScores.js";
 
 const handbook = readFileSync(dataPath("handbook.md"), "utf8");
-
-const SUBJECTIVE_KEYS = [
-  "Book hangover (0-5)",
-  "Worldbuilding (0-5)",
-  "Episk plot (0-5)",
-  "Politiske intriger (0-5)",
-  "Krig/militær (0-5)",
-  "Kvindelig udvikling (0-5)",
-  "Karakterudvikling (0-5)",
-  "Beskyttende helt(e) (0-5)",
-  "Bodyguard-vibe (0-5)",
-  "Touch her and die-vibe (0-5)",
-  "Spice/erotik (0-5)",
-  "Spice/erotik kvalitet (0-5)",
-  "Rhysand-faktoren",
-  "Hvor hurtigt griber den? (0-100%)",
-  "Romance i fokus (0-100%)",
-];
 
 function extractJson(text) {
   const cleaned = String(text || "").replace(/```json|```/g, "").trim();
@@ -452,70 +440,6 @@ function fillIdentifiedGaps(assessments, research) {
   return assessments;
 }
 
-/**
- * Tine-score ud fra håndbogens vægte — romantasy-match vægtes tungere end
- * generel epic fantasy, så irrelevante bøger sorteres ned.
- */
-export function estimateTineScoreFromVibes(row) {
-  const keys = [
-    ["Beskyttende helt(e) (0-5)", 1.35],
-    ["Bodyguard-vibe (0-5)", 1.35],
-    ["Touch her and die-vibe (0-5)", 1.4],
-    ["Rhysand-faktoren", 1.4],
-    ["Kvindelig udvikling (0-5)", 1.25],
-    ["Karakterudvikling (0-5)", 1.15],
-    ["Spice/erotik kvalitet (0-5)", 1.05],
-    ["Book hangover (0-5)", 0.95],
-    ["Episk plot (0-5)", 0.85],
-    ["Worldbuilding (0-5)", 0.8],
-    ["Politiske intriger (0-5)", 0.7],
-    ["Krig/militær (0-5)", 0.7],
-  ];
-  let sum = 0;
-  let weight = 0;
-  let scored = 0;
-  for (const [key, w] of keys) {
-    const n = Number(row[key]);
-    if (Number.isNaN(n)) continue;
-    sum += Math.max(0, Math.min(5, n)) * w;
-    weight += w;
-    scored += 1;
-  }
-  if (!weight || scored < 3) return null;
-
-  const romancePct = Number(
-    String(row["Romance i fokus (0-100%)"] ?? "").replace(/[^\d.]/g, "")
-  );
-  let romanceAdj = 0;
-  if (!Number.isNaN(romancePct)) {
-    romanceAdj = ((romancePct - 45) / 100) * 10; // stærkere romantasy-bonus/malus
-  }
-
-  // Kernetropes: hvis de er lave, er bogen ofte ikke Tines romantasy-match
-  const coreKeys = [
-    "Bodyguard-vibe (0-5)",
-    "Touch her and die-vibe (0-5)",
-    "Rhysand-faktoren",
-    "Spice/erotik kvalitet (0-5)",
-  ];
-  let coreSum = 0;
-  let coreN = 0;
-  for (const k of coreKeys) {
-    const n = Number(row[k]);
-    if (Number.isNaN(n)) continue;
-    coreSum += n;
-    coreN += 1;
-  }
-  const coreAvg = coreN ? coreSum / coreN : 2.5;
-  let coreAdj = 0;
-  if (coreAvg <= 1.5) coreAdj = -8;
-  else if (coreAvg >= 4) coreAdj = 5;
-
-  const avg = sum / weight;
-  const raw = 52 + (avg / 5) * 44 + romanceAdj + coreAdj;
-  return Math.max(40, Math.min(99, Math.round(raw)));
-}
-
 function isStubTineScore(predicted) {
   if (!predicted || predicted.score == null) return true;
   const reason = String(predicted.reason || "").toLowerCase();
@@ -778,6 +702,30 @@ function assessmentsToRow(
   row["Tines egen vurdering"] = null;
 
   applyResearchFacts(row, research, mofibo, { existingRow, updateGoodreads });
+  const uncertainty = buildUncertaintyProfile(research, assessments);
+  const contentMatch = predicted.score;
+  const readPriority = calculateReadPriority(row, contentMatch, uncertainty);
+  row["Indholdsmatch"] = contentMatch;
+  row["Læseprioritet nu"] = readPriority.score;
+  assessments["Indholdsmatch"] = {
+    ...predicted,
+    reason: predicted.reason
+      ? `Samme smagsberegning som Tine-score. ${predicted.reason}`
+      : "Samme smagsberegning som Tine-score.",
+  };
+  assessments["Læseprioritet nu"] = {
+    score: readPriority.score,
+    confidence:
+      uncertainty.level === "strong"
+        ? "high"
+        : uncertainty.level === "medium"
+          ? "medium"
+          : "low",
+    basis: "mixed_sources",
+    reason: readPriority.reason,
+    evidenceSourceIds: predicted.evidenceSourceIds || [],
+    conflictingSourceIds: predicted.conflictingSourceIds || [],
+  };
 
   if (!row["Seriens navn"]) {
     row["Seriens navn"] =
@@ -793,12 +741,14 @@ function assessmentsToRow(
   }
   if (!row.Status) row.Status = "Ikke læst";
 
-  return { row, assessments };
+  return { row, assessments, uncertainty, readPriority };
 }
 
 function buildAnalysisMeta({
   research,
   assessments,
+  uncertainty,
+  readPriority,
   parsed,
   usage,
   cacheHit,
@@ -827,6 +777,8 @@ function buildAnalysisMeta({
         ? "Analysen blev gennemført, men nogle oplysninger kunne ikke verificeres."
         : null),
     assessments,
+    uncertainty,
+    readPriority,
     rhysand: assessments["Rhysand-faktoren"] || null,
     foundation: {
       goodreads: gr
@@ -889,7 +841,7 @@ export async function runHandbookAnalysis({
 
   const key = getOpenAIKey();
   if (!key) {
-    const { row, assessments } = assessmentsToRow(
+    const { row, assessments, uncertainty, readPriority } = assessmentsToRow(
       { fields: {}, assessments: {}, predictedTineScore: { score: null } },
       research,
       mofibo,
@@ -901,6 +853,8 @@ export async function runHandbookAnalysis({
     const meta = buildAnalysisMeta({
       research,
       assessments,
+      uncertainty,
+      readPriority,
       parsed: {
         userMessage:
           "Analysen kunne ikke bruge AI (mangler nøgle). Basisoplysninger er gemt.",
@@ -946,7 +900,7 @@ export async function runHandbookAnalysis({
     parsed.tineOwnReview = null;
     if (parsed.fields) delete parsed.fields["Goodreads-score"];
 
-    const { row, assessments } = assessmentsToRow(
+    const { row, assessments, uncertainty, readPriority } = assessmentsToRow(
       parsed,
       research,
       mofibo,
@@ -958,6 +912,8 @@ export async function runHandbookAnalysis({
     const meta = buildAnalysisMeta({
       research,
       assessments,
+      uncertainty,
+      readPriority,
       parsed,
       usage: {
         model: completion.model || ANALYSIS_MODEL,
@@ -979,7 +935,7 @@ export async function runHandbookAnalysis({
     return { reused: false, row, meta, analysisHash, fallback: false };
   } catch (err) {
     console.error("Håndbogsanalyse fejl:", err.message);
-    const { row, assessments } = assessmentsToRow(
+    const { row, assessments, uncertainty, readPriority } = assessmentsToRow(
       { fields: {}, assessments: {}, predictedTineScore: { score: null } },
       research,
       mofibo,
@@ -991,6 +947,8 @@ export async function runHandbookAnalysis({
     const meta = buildAnalysisMeta({
       research,
       assessments,
+      uncertainty,
+      readPriority,
       parsed: {
         userMessage:
           "Analysen blev gennemført, men nogle oplysninger kunne ikke verificeres.",
@@ -1010,4 +968,11 @@ export async function runHandbookAnalysis({
   }
 }
 
-export { SUBJECTIVE_KEYS, normalizeAssessment, applyResearchFacts };
+export {
+  SUBJECTIVE_KEYS,
+  buildUncertaintyProfile,
+  calculateReadPriority,
+  estimateTineScoreFromVibes,
+  normalizeAssessment,
+  applyResearchFacts,
+};

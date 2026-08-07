@@ -35,14 +35,16 @@ export async function seriesToWorkbook(list) {
   for (const row of sorted) {
     const values = COLUMNS.map((c) => row[c] ?? "");
     const excelRow = ws.addRow(values);
-    const scoreCol = COLUMNS.indexOf("Tine-score") + 1;
-    const cell = excelRow.getCell(scoreCol);
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: scoreFill(row["Tine-score"]) },
-    };
-    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    for (const key of ["Tine-score", "Indholdsmatch", "Læseprioritet nu"]) {
+      const scoreCol = COLUMNS.indexOf(key) + 1;
+      const cell = excelRow.getCell(scoreCol);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: scoreFill(row[key]) },
+      };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    }
   }
 
   ws.views = [{ state: "frozen", ySplit: 1 }];
@@ -63,7 +65,13 @@ export async function seriesToWorkbook(list) {
   for (let r = 2; r <= ws.rowCount; r++) {
     if (r % 2 === 0) {
       ws.getRow(r).eachCell({ includeEmpty: true }, (cell, col) => {
-        if (col === COLUMNS.indexOf("Tine-score") + 1) return;
+        if (
+          ["Tine-score", "Indholdsmatch", "Læseprioritet nu"].some(
+            (key) => col === COLUMNS.indexOf(key) + 1
+          )
+        ) {
+          return;
+        }
         cell.fill = {
           type: "pattern",
           pattern: "solid",
@@ -98,6 +106,8 @@ export async function workbookToSeries(bufferOrPath) {
 
   const numericKeys = [
     "Tine-score",
+    "Indholdsmatch",
+    "Læseprioritet nu",
     "Tines score",
     "Goodreads-score",
     "Book hangover (0-5)",
