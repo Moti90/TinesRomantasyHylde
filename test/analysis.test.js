@@ -10,7 +10,10 @@ import {
   normalizeResearch,
   emptyResearch,
 } from "../server/services/webResearch.js";
-import { normalizeAssessment } from "../server/services/handbookAnalysis.js";
+import {
+  normalizeAssessment,
+  applyResearchFacts,
+} from "../server/services/handbookAnalysis.js";
 import { migrateRow, migrateSeriesList } from "../server/services/migrate.js";
 import {
   researchInputHash,
@@ -224,6 +227,71 @@ describe("kilder og confidence", () => {
       conflictingSourceIds: [],
     });
     assert.equal(a.confidence, "medium");
+  });
+
+  it("subjektiv modelvurdering overlever uden direkte kilder ved sikker identitet", () => {
+    const a = normalizeAssessment(
+      {
+        score: 4,
+        confidence: "medium",
+        basis: "ai_inference",
+        reason: "Helten er kendt for at støtte heltindens selvstændighed.",
+        sourceBatch: "helteprofil",
+        sourceCount: 0,
+        evidenceSourceIds: [],
+      },
+      "Rhysand-faktoren",
+      {
+        identity: { title: "Kendt bog", author: "Kendt forfatter", confidence: "high" },
+        sources: [],
+      }
+    );
+    assert.equal(a.score, 4);
+    assert.equal(a.basis, "ai_inference");
+    assert.equal(a.confidence, "low");
+    assert.match(a.reason, /^Vurderet ud fra modelviden:/);
+  });
+
+  it("subjektiv modelvurdering afvises ved uklar identitet", () => {
+    const a = normalizeAssessment(
+      {
+        score: 5,
+        confidence: "medium",
+        basis: "ai_inference",
+        reason: "Muligvis den rigtige serie.",
+        sourceBatch: "helteprofil",
+        sourceCount: 0,
+      },
+      "Rhysand-faktoren",
+      {
+        identity: { title: "Uklar bog", confidence: "low" },
+        sources: [],
+      }
+    );
+    assert.equal(a.score, null);
+    assert.equal(a.basis, "insufficient");
+    assert.equal(a.confidence, "low");
+  });
+
+  it("objektive fakta uden research bliver ikke udfyldt fra modeloutput", () => {
+    const row = {
+      "Antal bøger i serien": 7,
+      "Lydbog (ja/nej, ikke hele serien)": "Ja",
+      "Er serien færdigskrevet": "Ja",
+      "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ja",
+    };
+    applyResearchFacts(
+      row,
+      { facts: {}, ratings: {}, identity: {} },
+      { status: "Ikke verificeret" }
+    );
+    assert.equal(row["Antal bøger i serien"], null);
+    assert.equal(row["Lydbog (ja/nej, ikke hele serien)"], null);
+    assert.equal(row["Er serien færdigskrevet"], null);
+    assert.equal(
+      row["Er serien på Mofibo? (ja, nej, ikke hele serien)"],
+      null
+    );
   });
 
   it("relation kan udledes fra review-felt (struktur)", () => {

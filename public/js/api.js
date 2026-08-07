@@ -16,6 +16,15 @@ export async function getTineReviews() {
   return data;
 }
 
+export async function getTineReviewBooks() {
+  const res = await fetch("/api/tine-review-books");
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Kunne ikke hente Tines Goodreads-bøger");
+  }
+  return data;
+}
+
 export async function saveTineReview(payload) {
   const res = await fetch("/api/tine-reviews", {
     method: "POST",

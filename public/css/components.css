@@ -301,6 +301,33 @@ tbody tr:hover {
   box-shadow: 0 0 16px rgba(0, 0, 0, 0.25);
 }
 
+.series-name {
+  display: block;
+}
+
+.origin-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.3rem;
+  border: 1px solid rgba(224, 200, 184, 0.24);
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  color: #c9af9f;
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.origin-badge.origin-review {
+  border-color: rgba(232, 176, 96, 0.42);
+  color: var(--gold-soft);
+}
+
+.detail-meta .origin-badge {
+  display: flex;
+  margin-top: 0.45rem;
+}
+
 .score-90 {
   background: linear-gradient(135deg, #7a2040, #c44a6a);
 }
@@ -1067,6 +1094,54 @@ tbody tr:hover {
   color: #fff4e8;
 }
 
+.review-reread {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(245, 230, 212, 0.11);
+  border-radius: 6px;
+  background: rgba(8, 4, 14, 0.28);
+}
+
+.review-reread legend {
+  padding: 0 0.35rem;
+  color: #e0c8b8;
+  font-size: 0.92rem;
+}
+
+.review-reread .hint {
+  margin: 0 0 0.7rem;
+}
+
+.review-reread-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.review-reread-options label {
+  margin: 0;
+}
+
+.review-reread-options input {
+  position: absolute;
+  opacity: 0;
+}
+
+.review-reread-options span {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  color: #f0dcc8;
+  cursor: pointer;
+}
+
+.review-reread-options input:checked + span {
+  border-color: var(--gold);
+  background: rgba(232, 176, 96, 0.16);
+  color: #fff4e8;
+}
+
 .review-score-fields {
   display: grid;
   gap: 0.85rem;
@@ -1082,6 +1157,13 @@ tbody tr:hover {
   border-radius: 6px;
   padding: 0.9rem 1rem;
   background: rgba(8, 4, 14, 0.28);
+}
+
+.review-field-help {
+  margin: 0.3rem 0 0;
+  color: #c9af9f;
+  font-size: 0.86rem;
+  line-height: 1.4;
 }
 
 .review-score-scale {

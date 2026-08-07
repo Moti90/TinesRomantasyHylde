@@ -77,6 +77,20 @@ const FACT_GROUPS = [
   },
 ];
 
+function originLabel(row) {
+  if (row?._origin?.type === "tine_reviews") return "Fra Tines anmeldelser";
+  if (row?._origin?.type === "excel") return "Fra Tines Excel-ark";
+  return "";
+}
+
+function originBadge(row) {
+  const label = originLabel(row);
+  if (!label) return "";
+  const cls =
+    row?._origin?.type === "tine_reviews" ? "origin-review" : "origin-excel";
+  return `<span class="origin-badge ${cls}">${escapeHtml(label)}</span>`;
+}
+
 export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   const body = document.getElementById("series-body");
   const count = document.getElementById("list-count");
@@ -85,7 +99,7 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   body.innerHTML = series
     .map((row, i) => {
       const name = row["Seriens navn"] || "Ukendt";
-      const score = row["Tine-score"] ?? "–";
+      const score = row["Tine-score"] ?? row["Tines score"] ?? "–";
       return `
       <tr data-index="${i}">
         <td>
@@ -93,7 +107,10 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
             ${statusOptions(row.Status)}
           </select>
         </td>
-        <td>${escapeHtml(name)}</td>
+        <td>
+          <span class="series-name">${escapeHtml(name)}</span>
+          ${originBadge(row)}
+        </td>
         <td>${escapeHtml(row.Forfatter || "–")}</td>
         <td><span class="score-pill ${scoreClass(score)}">${escapeHtml(String(score))}</span></td>
         <td>${escapeHtml(String(row["Rhysand-faktoren"] ?? "–"))}</td>
@@ -154,7 +171,9 @@ export function renderDetail(row) {
 
   panel.classList.remove("hidden");
   title.textContent = row["Seriens navn"] || "Serie";
-  meta.textContent = `${row.Forfatter || "Ukendt forfatter"} · ${row["Første bog/titel"] || ""}`;
+  meta.innerHTML = `${escapeHtml(row.Forfatter || "Ukendt forfatter")} · ${escapeHtml(
+    row["Første bog/titel"] || ""
+  )}${originBadge(row)}`;
   panel.dataset.seriesName = row["Seriens navn"] || "";
   if (own) own.value = row["Tines egen vurdering"] || "";
   if (ownScore) {
@@ -252,17 +271,25 @@ function renderWhySections(row) {
   const whyItems = withReason
     .slice(0, 12)
     .map(([key, a]) => {
+      const basis = assessmentBasisLabel(a);
       const conf = confidenceLabel(a);
       const support = a.evidenceSourceIds?.length || 0;
       const conflict = a.conflictingSourceIds?.length || 0;
+      const supportText = support
+        ? `${support} understøttende kilde${support === 1 ? "" : "r"}`
+        : ["ai_inference", "synopsis_only"].includes(a.basis)
+          ? "Ingen direkte kilder til netop dette felt"
+          : "Ingen understøttende kilder";
       return `
         <li>
           <strong>${escapeHtml(shortLabel(key))}</strong>
           ${a.score != null ? `· ${escapeHtml(String(a.score))}` : ""}
-          <span class="conf-inline">${escapeHtml(conf)}</span>
+          <span class="conf-inline">${escapeHtml(
+            [basis, conf].filter(Boolean).join(" · ")
+          )}</span>
           <p>${escapeHtml(a.reason || "")}</p>
           <p class="hint">
-            ${support} understøttende kilde${support === 1 ? "" : "r"}
+            ${escapeHtml(supportText)}
             ${conflict ? ` · ${conflict} uenig` : ""}
           </p>
         </li>`;
@@ -426,7 +453,7 @@ function barRow(key, value, max, isPercent = false, assessment = null) {
 function confidenceLabel(assessment) {
   if (!assessment) return "";
   if (assessment.basis === "insufficient" || assessment.score == null) {
-    return "Ikke nok information";
+    return "";
   }
   if (assessment.consensus === "mixed" || assessment.conflictingSourceIds?.length) {
     if (assessment.confidence === "low") return "Kilderne er uenige";
@@ -437,13 +464,29 @@ function confidenceLabel(assessment) {
   return "";
 }
 
+function assessmentBasisLabel(assessment) {
+  if (!assessment) return "";
+  if (assessment.basis === "source_consensus") return "Kildebaseret";
+  if (assessment.basis === "mixed_sources") return "Kilder og modelvurdering";
+  if (assessment.basis === "ai_inference") return "Vurderet af modellen";
+  if (assessment.basis === "synopsis_only") {
+    return "Vurderet ud fra bogbeskrivelsen";
+  }
+  if (assessment.basis === "insufficient" || assessment.score == null) {
+    return "Ikke verificeret";
+  }
+  return "";
+}
+
 function confidenceBadge(assessment) {
-  const label = confidenceLabel(assessment);
+  const label = [assessmentBasisLabel(assessment), confidenceLabel(assessment)]
+    .filter(Boolean)
+    .join(" · ");
   if (!label) return "";
   const cls =
-    label === "Høj sikkerhed"
+    assessment?.confidence === "high"
       ? "conf-high"
-      : label === "Middel sikkerhed"
+      : assessment?.confidence === "medium"
         ? "conf-mid"
         : "conf-low";
   return `<span class="conf-badge ${cls}">${escapeHtml(label)}</span>`;

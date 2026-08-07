@@ -1,6 +1,7 @@
 import {
   getHealth,
   getSeries,
+  getTineReviewBooks,
   getTineReviews,
   saveTineReview,
   analyzeSeries,
@@ -27,6 +28,7 @@ import {
 
 let series = [];
 let tineReviews = [];
+let reviewBooks = [];
 let reviewIndex = 0;
 let pendingAnalyze = null;
 let stepTimer = null;
@@ -41,16 +43,56 @@ const ANALYZE_STEPS = [
 ];
 
 const REVIEW_SCORE_FIELDS = [
-  ["romance", "Romance / sommerfugle"],
-  ["rhysand", "Rhysand-faktor"],
-  ["touchHerAndDie", "Touch Her And Die"],
-  ["protective", "Beskyttende helt(e)"],
-  ["bodyguard", "Bodyguard-vibe"],
-  ["femaleGrowth", "Kvindelig udvikling"],
-  ["worldbuilding", "Worldbuilding"],
-  ["epicPlot", "Episk plot"],
-  ["spiceQuality", "Spice-kvalitet"],
-  ["bookHangover", "Book hangover"],
+  [
+    "romance",
+    "Romance / sommerfugle",
+    "Hvor stærkt mærkede du romantikken, kemien og længslen mellem karaktererne?",
+  ],
+  [
+    "rhysand",
+    "Rhysand-faktor",
+    "Hvor respektfuld, loyal, kompetent og støttende var den centrale mandlige karakter?",
+  ],
+  [
+    "touchHerAndDie",
+    "Touch Her And Die",
+    "Hvor tydeligt og intenst reagerede han, når hun blev truet eller såret?",
+  ],
+  [
+    "protective",
+    "Beskyttende helt(e)",
+    "Hvor meget beskyttede han hende med omsorg uden at kontrollere hendes valg?",
+  ],
+  [
+    "bodyguard",
+    "Bodyguard-vibe",
+    "Hvor meget havde relationen følelsen af, at han passede på hende og skabte tryghed?",
+  ],
+  [
+    "femaleGrowth",
+    "Kvindelig udvikling",
+    "Hvor tydeligt voksede heltinden i styrke, selvstændighed, magt eller lederskab?",
+  ],
+  [
+    "worldbuilding",
+    "Worldbuilding",
+    "Hvor levende, sammenhængende og spændende oplevede du fantasyverdenen?",
+  ],
+  [
+    "epicPlot",
+    "Episk plot",
+    "Hvor stort og betydningsfuldt var plottet for riger, folk, krig eller verdens skæbne?",
+  ],
+  [
+    "spiceQuality",
+    "Spice-kvalitet",
+    "Hvor godt understøttede de intime scener romance, kemi, karakterer og plot?",
+  ],
+  [
+    "bookHangover",
+    "Book hangover",
+    "Hvor meget savnede du bogen, karaktererne eller universet efter læsningen?",
+  ],
 ];
 
 const REVIEW_POSITIVE_TAGS = [
@@ -255,23 +297,24 @@ async function refresh() {
 }
 
 function getReviewBooks() {
-  return series.filter((row) => {
-    const status = String(row.Status || "").trim().toLowerCase();
-    return status === "læst" || status === "droppet";
-  });
+  return reviewBooks;
 }
 
 function reviewBookKey(book) {
+  if (book?.sourceBookId) return String(book.sourceBookId).trim().toLowerCase();
   return [
-    book?.["Seriens navn"],
-    book?.["Første bog/titel"],
-    book?.Forfatter,
+    book?.seriesName,
+    book?.firstBookTitle,
+    book?.author,
   ]
     .map((part) => String(part || "").trim().toLowerCase())
     .join("|");
 }
 
 function reviewDataKey(review) {
+  if (review?.sourceBookId) {
+    return String(review.sourceBookId).trim().toLowerCase();
+  }
   return [review?.seriesName, review?.firstBookTitle, review?.author]
     .map((part) => String(part || "").trim().toLowerCase())
     .join("|");
@@ -302,7 +345,7 @@ function renderReviewScoreFields(saved = null) {
   if (!box) return;
   const ignored = new Set(saved?.ignoredFields || []);
   const scores = saved?.subjectiveScores || {};
-  box.innerHTML = REVIEW_SCORE_FIELDS.map(([key, label]) => {
+  box.innerHTML = REVIEW_SCORE_FIELDS.map(([key, label, helpText]) => {
     const score = scores[key]?.score;
     const isIgnored = ignored.has(key);
     const options = [0, 1, 2, 3, 4, 5]
@@ -324,6 +367,7 @@ function renderReviewScoreFields(saved = null) {
       <div class="review-score-row" data-review-field="${key}">
         <div>
           <strong>${escapeHtml(label)}</strong>
+          <p class="review-field-help">${escapeHtml(helpText)}</p>
           <div class="review-score-scale">${options}</div>
         </div>
         <label class="review-unknown">
@@ -386,12 +430,18 @@ function renderTineReviews() {
   const book = books[reviewIndex];
   const saved = findTineReview(book);
 
-  if (title) title.textContent = book["Seriens navn"] || book["Første bog/titel"] || "Ukendt bog";
-  if (author) author.textContent = book.Forfatter || "Ukendt forfatter";
+  if (title) {
+    title.textContent =
+      book.displayTitle || book.firstBookTitle || book.seriesName || "Ukendt bog";
+  }
+  if (author) author.textContent = book.author || "Ukendt forfatter";
   if (position) position.textContent = `Bog ${reviewIndex + 1} af ${books.length}`;
-  if (status) status.textContent = book.Status || "";
+  if (status) status.textContent = "Læst på Goodreads";
 
   document.getElementById("review-overall-score").value = saved?.overallScore ?? "";
+  document.querySelectorAll('input[name="review-reread"]').forEach((input) => {
+    input.checked = input.value === saved?.rereadChoice;
+  });
   document.getElementById("review-comment").value = saved?.comment || "";
   renderReviewScoreFields(saved);
   renderReviewTagList("review-positive-tags", REVIEW_POSITIVE_TAGS, saved?.positives || []);
@@ -400,9 +450,19 @@ function renderTineReviews() {
 }
 
 async function loadTineReviews() {
-  const data = await getTineReviews();
-  tineReviews = data.reviews || [];
-  renderTineReviews();
+  try {
+    const [reviewData, bookData] = await Promise.all([
+      getTineReviews(),
+      getTineReviewBooks(),
+    ]);
+    tineReviews = reviewData.reviews || [];
+    reviewBooks = bookData.books || [];
+    renderTineReviews();
+  } catch (err) {
+    reviewBooks = [];
+    renderTineReviews();
+    setMsg("review-status", err.message, true);
+  }
 }
 
 function collectCheckedValues(selector) {
@@ -434,11 +494,17 @@ function collectReviewPayload() {
   }
   const overallRaw = document.getElementById("review-overall-score")?.value;
   return {
-    seriesName: book["Seriens navn"] || null,
-    firstBookTitle: book["Første bog/titel"] || null,
-    author: book.Forfatter || null,
-    status: book.Status || null,
+    seriesName: book.seriesName || book.firstBookTitle || null,
+    firstBookTitle: book.firstBookTitle || null,
+    author: book.author || null,
+    status: "Læst",
+    sourceBookId: book.sourceBookId || null,
+    source: "piratereads",
+    goodreadsUrl: book.goodreadsUrl || null,
     overallScore: overallRaw === "" ? null : Number(overallRaw),
+    rereadChoice:
+      document.querySelector('input[name="review-reread"]:checked')?.value ||
+      null,
     comment: document.getElementById("review-comment")?.value?.trim() || "",
     subjectiveScores,
     positives: collectCheckedValues("#review-positive-tags"),
@@ -461,9 +527,15 @@ async function saveCurrentTineReview() {
   }
   const res = await saveTineReview(payload);
   tineReviews = res.reviews || [];
+  if (Array.isArray(res.series)) {
+    series = res.series;
+    paintList();
+  }
   setMsg(
     "review-status",
-    "Anmeldelsen er gemt. Felter markeret som 'kan ikke huske' tæller ikke med."
+    payload.overallScore == null
+      ? "Anmeldelsen er gemt, men bogen flyttes først til biblioteket, når Tines score er udfyldt."
+      : "Anmeldelsen er gemt og serien er føjet til biblioteket. Felter markeret som 'kan ikke huske' tæller ikke med."
   );
   const books = getReviewBooks();
   if (reviewIndex < books.length - 1) reviewIndex += 1;

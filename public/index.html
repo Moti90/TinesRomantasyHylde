@@ -356,8 +356,8 @@
         </div>
         <h1 class="library-title">Tines Anmeldelser</h1>
         <p class="lede">
-          Én bog ad gangen. Det Tine kan huske tæller med i læring, og det hun
-          ikke kan huske bliver sprunget over.
+          Én læst bog fra Goodreads ad gangen. Det Tine kan huske tæller med i
+          læring, og det hun ikke kan huske bliver sprunget over.
         </p>
         <p id="review-status" class="status-msg" role="status"></p>
         <div class="header-rule" aria-hidden="true"></div>
@@ -376,8 +376,8 @@
           </div>
 
           <div id="review-empty" class="review-empty hint" hidden>
-            Marker bøger som læst eller droppet i biblioteket, så dukker de op
-            her som tidligere læste bøger.
+            Der kunne ikke hentes læste bøger fra Tines Goodreads-liste lige
+            nu.
           </div>
 
           <form id="tine-review-form" class="tine-review-form">
@@ -393,6 +393,27 @@
                   placeholder="0-100"
                 />
               </label>
+              <fieldset class="review-reread">
+                <legend>Ville du læse bogen igen?</legend>
+                <p class="hint">
+                  Det hjælper appen med at skelne en god bog fra en bog, du
+                  virkelig ønsker at vende tilbage til.
+                </p>
+                <div class="review-reread-options">
+                  <label>
+                    <input type="radio" name="review-reread" value="yes" />
+                    <span>Ja</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="review-reread" value="maybe" />
+                    <span>Måske</span>
+                  </label>
+                  <label>
+                    <input type="radio" name="review-reread" value="no" />
+                    <span>Nej</span>
+                  </label>
+                </div>
+              </fieldset>
               <label>
                 Kort kommentar
                 <textarea

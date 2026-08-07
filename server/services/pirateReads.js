@@ -71,6 +71,33 @@ export function splitGoodreadsTitle(bookTitle) {
   return { bare, series: series || null };
 }
 
+export function isExcludedReviewBook(book) {
+  const { bare, series } = splitGoodreadsTitle(book?.book_title);
+  return [book?.book_title, bare, series].some((value) =>
+    /harry\s+potter/i.test(String(value || ""))
+  );
+}
+
+export function mapPirateReadsBookForReview(book) {
+  const { bare, series } = splitGoodreadsTitle(book?.book_title);
+  const author = String(book?.book_author || "").trim();
+  const fullTitle = String(book?.book_title || "").trim();
+  const goodreadsUrl = book?.book_link || null;
+  const sourceBookId =
+    goodreadsUrl ||
+    `${normalizeBookKey(fullTitle)}||${normalizeBookKey(author)}`;
+  return {
+    sourceBookId,
+    source: "piratereads",
+    displayTitle: fullTitle || bare,
+    seriesName: series || bare,
+    firstBookTitle: bare,
+    author,
+    status: "Læst",
+    goodreadsUrl,
+  };
+}
+
 function authorKey(author) {
   return normalizeBookKey(author).split(" ").filter(Boolean).slice(-1)[0] || "";
 }

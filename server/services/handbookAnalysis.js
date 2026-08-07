@@ -90,6 +90,10 @@ function batchCountsFromResearch(research) {
 function normalizeAssessment(a, fieldKey = null, research = null) {
   const defaultBatch = fieldKey ? FIELD_TO_BATCH[fieldKey] || null : null;
   const batches = batchCountsFromResearch(research);
+  const identityConfidence =
+    research?.identity?.confidence ||
+    research?.identity?.identityConfidence ||
+    "low";
   const sourceBatch =
     ["helteprofil", "romanceprofil", "plotkarakter", "helhed"].includes(
       a?.sourceBatch
@@ -148,10 +152,18 @@ function normalizeAssessment(a, fieldKey = null, research = null) {
   if (basis === "ai_inference" && confidence === "high") {
     confidence = "medium";
   }
+  const allowsModelInference =
+    score != null &&
+    ["ai_inference", "synopsis_only"].includes(basis) &&
+    ["high", "medium"].includes(identityConfidence);
   if (sourceBatch && sourceCount === 0) {
-    score = null;
-    confidence = "low";
-    basis = "insufficient";
+    if (allowsModelInference) {
+      confidence = "low";
+    } else {
+      score = null;
+      confidence = "low";
+      basis = "insufficient";
+    }
   } else if (sourceBatch && sourceCount < 2 && confidence === "high") {
     confidence = "low";
   } else if (sourceBatch && sourceCount < 2 && confidence === "medium") {
@@ -181,11 +193,24 @@ function normalizeAssessment(a, fieldKey = null, research = null) {
     if (confidence === "high") confidence = "medium";
   }
 
+  let reason = String(a.reason || "").slice(0, 500);
+  if (sourceBatch && sourceCount === 0 && allowsModelInference) {
+    const prefix =
+      basis === "synopsis_only"
+        ? "Vurderet ud fra bogbeskrivelsen"
+        : "Vurderet ud fra modelviden";
+    if (!reason.toLowerCase().startsWith(prefix.toLowerCase())) {
+      reason = reason
+        ? `${prefix}: ${reason}`
+        : `${prefix} uden direkte kildebelæg.`;
+    }
+  }
+
   return {
     score,
     confidence,
     basis,
-    reason: String(a.reason || "").slice(0, 500),
+    reason,
     sourceBatch,
     sourceCount,
     evidenceSourceIds: evidence,
@@ -554,9 +579,15 @@ Når du vurderer et felt, brug PRIMÆRT kilder fra den relevante batch.
 Hvis en kilde har EKSPLICIT rating (fx "World-Building 4/5", "Character Development 4.5 stars", "spice 3 chili"),
 skal den indgå i vurderingen. Flere eksplicitte ratings for samme felt → brug GENNEMSNIT (afrundet til 0–5),
 ikke den højeste alene. Stor uenighed → lavere confidence og nævn spredningen i reason.
-Sæt ALDRIG en standard-midt (fx 3) uden belæg. Gæt ikke "typisk romantasy".
-Hvis en batch har 0 kilder: sæt score til null, confidence low, basis "insufficient", reason "Ikke verificeret — ingen kilder i batch". Gæt IKKE.
-Når du scorer et felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Markér KUN 'Ikke verificeret' hvis INGEN af kilderne overhovedet nævner eller beskriver det pågældende fænomen. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.
+
+SKEL MELLEM FAKTA OG SUBJEKTIVE VURDERINGER:
+- [FAKTA]: Antal bøger, lydbog, Mofibo, seriestatus, Goodreads og andre objektive oplysninger må KUN komme fra research.facts, ratings eller verificerede kilder. Mangler det, returnér null / not_verified. Brug aldrig modelviden til at udfylde fakta.
+- [SUBJEKTIV]: Rhysand-faktor, Touch Her And Die, beskyttelse, bodyguard-vibe, romance, spice-kvalitet, worldbuilding, udvikling, book hangover og lignende er vurderinger. Brug først kilder og reviewConsensus.
+- Hvis værket er identificeret med high eller medium sikkerhed, men den relevante batch har 0 direkte kilder, SKAL du stadig give din bedste konkrete subjektive score, når din modelviden eller bogbeskrivelsen giver et meningsfuldt grundlag. Brug basis "ai_inference" eller "synopsis_only", confidence "low", sourceCount 0 og tomme evidenceSourceIds. Forklar præcist hvad vurderingen bygger på.
+- Hvis identiteten er low, eller du reelt ikke har et meningsfuldt grundlag, brug score null, basis "insufficient" og forklar hvorfor.
+- Sæt ALDRIG en standard-midt (fx 3) uden en konkret begrundelse. Gæt ikke "typisk romantasy".
+
+Når du scorer et subjektivt felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.
 Hvis en batch har færre end 2 kilder: hold confidence på low.
 For hvert assessment: inkluder "sourceBatch" og "sourceCount". reason skal nævne konkret kilde når muligt.
 
@@ -564,9 +595,9 @@ Når batch HAR belæg: udfyld scores (0 = fraværende, ikke "ved ikke").
 basis "source_consensus" når scoren bygger på anmeldelser; "ai_inference" kun hvis du må bruge generel seriekendskab OG reason siger præcist hvad.
 Skeln serier: kopiér aldrig tal fra én serie til den næste.
 
-A) FAKTA — kun fra research.facts / ratings.goodreads. Ellers null.
+A) FAKTA — kun fra research.facts / ratings.goodreads. Ellers null / not_verified.
    Udfyld IKKE Goodreads-score i fields (serveren sætter det). Open Library ≠ Goodreads.
-B) ASSESSMENTS — udfyld nøgler nedenfor med score + reason + sourceBatch + sourceCount.
+B) SUBJEKTIVE VURDERINGER — udfyld nøgler nedenfor med score + reason + sourceBatch + sourceCount.
    Brug reviewConsensus når den findes. Formålet er at skille Tines romantasy-match fra irrelevant fantasy.
 C) tineOwnScore og tineOwnReview = null.
    predictedTineScore: ærligt 0–100. Høj kun ved stærk romantasy-profil.
@@ -621,21 +652,21 @@ Eksempel FORMAT (fiktive tal):
     "Hvis du savner...": "..."
   },
   "assessments": {
-    "Book hangover (0-5)": { "score": "<0-5 eller null>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "helhed", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Worldbuilding (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Episk plot (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Politiske intriger (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Krig/militær (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Kvindelig udvikling (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Karakterudvikling (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Beskyttende helt(e) (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Bodyguard-vibe (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Touch her and die-vibe (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Spice/erotik (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Spice/erotik kvalitet (0-5)": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Rhysand-faktoren": { "score": "<0-5>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "traitsFound": [], "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Hvor hurtigt griber den? (0-100%)": { "score": "<0-100>", "confidence": "medium", "basis": "synopsis_only", "reason": "...", "sourceBatch": "helhed", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
-    "Romance i fokus (0-100%)": { "score": "<0-100>", "confidence": "medium", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] }
+    "Book hangover (0-5)": { "score": "<0-5 eller null>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "helhed", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Worldbuilding (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Episk plot (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Politiske intriger (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Krig/militær (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Kvindelig udvikling (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Karakterudvikling (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "plotkarakter", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Beskyttende helt(e) (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Bodyguard-vibe (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Touch her and die-vibe (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Spice/erotik (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Spice/erotik kvalitet (0-5)": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Rhysand-faktoren": { "score": "<0-5>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "helteprofil", "sourceCount": 0, "traitsFound": [], "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Hvor hurtigt griber den? (0-100%)": { "score": "<0-100>", "confidence": "low", "basis": "synopsis_only", "reason": "...", "sourceBatch": "helhed", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] },
+    "Romance i fokus (0-100%)": { "score": "<0-100>", "confidence": "low", "basis": "ai_inference", "reason": "...", "sourceBatch": "romanceprofil", "sourceCount": 0, "evidenceSourceIds": [], "conflictingSourceIds": [] }
   },
   "predictedTineScore": { "score": "<50-99 unikt for denne serie>", "confidence": "medium", "basis": "ai_inference", "reason": "Begrund ud fra DENNE series tropes — ikke et standardtal.", "evidenceSourceIds": [], "conflictingSourceIds": [] },
   "tineOwnScore": null,

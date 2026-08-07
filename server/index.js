@@ -29,6 +29,11 @@ import { seriesToWorkbook, workbookToSeries } from "./services/excel.js";
 import { STATUS_ORDER } from "./services/columns.js";
 import discoveryRouter from "./routes/discovery.js";
 import { listTineReviews, upsertTineReview } from "./services/tineReviews.js";
+import {
+  isExcludedReviewBook,
+  loadPirateReadsLibrary,
+  mapPirateReadsBookForReview,
+} from "./services/pirateReads.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -108,6 +113,31 @@ app.get("/api/tine-reviews", (_req, res) => {
   res.json({ reviews: listTineReviews() });
 });
 
+app.get("/api/tine-review-books", async (req, res) => {
+  try {
+    const library = await loadPirateReadsLibrary({
+      force: req.query.force === "true",
+    });
+    const books = library.books
+      .filter((book) => book.shelf === "read")
+      .filter((book) => !isExcludedReviewBook(book))
+      .map(mapPirateReadsBookForReview);
+    res.json({
+      books,
+      meta: {
+        source: "piratereads",
+        fromCache: library.fromCache,
+        fetchedAt: library.fetchedAt,
+        count: books.length,
+      },
+    });
+  } catch (err) {
+    res.status(502).json({
+      error: err.message || "Kunne ikke hente Tines læste Goodreads-bøger",
+    });
+  }
+});
+
 app.post("/api/tine-reviews", (req, res) => {
   try {
     const body = req.body || {};
@@ -121,19 +151,26 @@ app.post("/api/tine-reviews", (req, res) => {
     if (overallScore != null && (Number.isNaN(overallScore) || overallScore < 0 || overallScore > 100)) {
       return res.status(400).json({ error: "Tines score skal være mellem 0 og 100" });
     }
+    const rereadChoice = ["yes", "maybe", "no"].includes(body.rereadChoice)
+      ? body.rereadChoice
+      : null;
     const reviews = upsertTineReview({
       seriesName: body.seriesName || null,
       firstBookTitle: body.firstBookTitle || null,
       author: body.author || null,
       status: body.status || null,
+      sourceBookId: body.sourceBookId || null,
+      source: body.source === "piratereads" ? "piratereads" : null,
+      goodreadsUrl: body.goodreadsUrl || null,
       overallScore,
+      rereadChoice,
       comment: body.comment || "",
       subjectiveScores: body.subjectiveScores || {},
       positives: Array.isArray(body.positives) ? body.positives : [],
       negatives: Array.isArray(body.negatives) ? body.negatives : [],
       ignoredFields: Array.isArray(body.ignoredFields) ? body.ignoredFields : [],
     });
-    res.json({ reviews });
+    res.json({ reviews, series: loadSeries() });
   } catch (err) {
     res.status(500).json({ error: err.message || "Kunne ikke gemme anmeldelse" });
   }
@@ -325,7 +362,13 @@ app.get("/api/export", async (_req, res) => {
 app.post("/api/import", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Ingen fil uploadet" });
-    const imported = await workbookToSeries(req.file.buffer);
+    const imported = (await workbookToSeries(req.file.buffer)).map((row) => ({
+      ...row,
+      _origin: {
+        type: "excel",
+        label: "Fra Tines Excel-ark",
+      },
+    }));
     if (!imported.length) {
       return res.status(400).json({ error: "Ingen serier fundet i filen" });
     }
