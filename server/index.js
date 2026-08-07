@@ -34,6 +34,7 @@ import {
   loadPirateReadsLibrary,
   mapPirateReadsBookForReview,
 } from "./services/pirateReads.js";
+import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -134,6 +135,31 @@ app.get("/api/tine-review-books", async (req, res) => {
   } catch (err) {
     res.status(502).json({
       error: err.message || "Kunne ikke hente Tines læste Goodreads-bøger",
+    });
+  }
+});
+
+app.post("/api/tine-review-summary", async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!String(body.firstBookTitle || body.displayTitle || "").trim()) {
+      return res.status(400).json({ error: "Bogen mangler titel" });
+    }
+    const result = await getTineReviewSummary(
+      {
+        sourceBookId: body.sourceBookId || null,
+        displayTitle: body.displayTitle || null,
+        firstBookTitle: body.firstBookTitle || null,
+        seriesName: body.seriesName || null,
+        author: body.author || null,
+        goodreadsUrl: body.goodreadsUrl || null,
+      },
+      { force: body.force === true }
+    );
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({
+      error: err.message || "Kunne ikke lave et resumé af bogen",
     });
   }
 });

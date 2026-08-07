@@ -2,6 +2,7 @@ import {
   getHealth,
   getSeries,
   getTineReviewBooks,
+  getTineReviewSummary,
   getTineReviews,
   saveTineReview,
   analyzeSeries,
@@ -30,6 +31,9 @@ let series = [];
 let tineReviews = [];
 let reviewBooks = [];
 let reviewIndex = 0;
+let activeReviewTab = "overview";
+let reviewSummaryRequest = 0;
+const reviewSummaries = new Map();
 let pendingAnalyze = null;
 let stepTimer = null;
 const LIBRARY_LOCK_CODE = "1234";
@@ -325,6 +329,102 @@ function findTineReview(book) {
   return tineReviews.find((review) => reviewDataKey(review) === key) || null;
 }
 
+function setReviewTab(tabName) {
+  activeReviewTab = ["overview", "scores", "tags"].includes(tabName)
+    ? tabName
+    : "overview";
+  document.querySelectorAll("[data-review-tab]").forEach((button) => {
+    const active = button.dataset.reviewTab === activeReviewTab;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  document.querySelectorAll("[data-review-tab-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.reviewTabPanel !== activeReviewTab;
+  });
+}
+
+function showReviewSummary(summary, cached = false) {
+  const loading = document.getElementById("review-summary-loading");
+  const text = document.getElementById("review-summary-short");
+  const note = document.getElementById("review-summary-note");
+  const spoilers = document.getElementById("review-spoilers");
+  const points = document.getElementById("review-spoiler-points");
+  const source = document.getElementById("review-summary-source");
+  if (loading) loading.hidden = true;
+  if (text) {
+    text.textContent = summary.shortSummary || "";
+    text.hidden = !summary.shortSummary;
+  }
+  if (note) {
+    note.textContent = summary.note || "";
+    note.hidden = !summary.note;
+  }
+  if (points) {
+    points.innerHTML = (summary.spoilerPoints || [])
+      .map((point) => `<li>${escapeHtml(point)}</li>`)
+      .join("");
+  }
+  if (spoilers) {
+    spoilers.hidden = !(summary.spoilerPoints || []).length;
+    spoilers.open = false;
+  }
+  if (source) {
+    source.textContent = cached ? "AI-resumé · gemt" : "AI-genereret";
+  }
+}
+
+function resetReviewSummary() {
+  const loading = document.getElementById("review-summary-loading");
+  const text = document.getElementById("review-summary-short");
+  const note = document.getElementById("review-summary-note");
+  const spoilers = document.getElementById("review-spoilers");
+  const points = document.getElementById("review-spoiler-points");
+  const source = document.getElementById("review-summary-source");
+  if (loading) {
+    loading.textContent = "Henter et kort resumé…";
+    loading.hidden = false;
+  }
+  if (text) {
+    text.textContent = "";
+    text.hidden = true;
+  }
+  if (note) {
+    note.textContent = "";
+    note.hidden = true;
+  }
+  if (spoilers) {
+    spoilers.hidden = true;
+    spoilers.open = false;
+  }
+  if (points) points.innerHTML = "";
+  if (source) source.textContent = "AI-genereret";
+}
+
+async function loadReviewSummary(book) {
+  const key = reviewBookKey(book);
+  const request = ++reviewSummaryRequest;
+  resetReviewSummary();
+  if (reviewSummaries.has(key)) {
+    showReviewSummary(reviewSummaries.get(key), true);
+    return;
+  }
+  try {
+    const data = await getTineReviewSummary(book);
+    if (request !== reviewSummaryRequest) return;
+    const current = getReviewBooks()[reviewIndex];
+    if (!current || reviewBookKey(current) !== key) return;
+    reviewSummaries.set(key, data.summary);
+    showReviewSummary(data.summary, data.cached);
+  } catch (err) {
+    if (request !== reviewSummaryRequest) return;
+    const loading = document.getElementById("review-summary-loading");
+    if (loading) {
+      loading.textContent = `Resuméet kunne ikke hentes: ${err.message}`;
+      loading.hidden = false;
+    }
+  }
+}
+
 function renderReviewTagList(id, tags, selected = []) {
   const box = document.getElementById(id);
   if (!box) return;
@@ -415,6 +515,8 @@ function renderTineReviews() {
   const status = document.getElementById("review-book-status");
 
   if (!books.length) {
+    reviewSummaryRequest += 1;
+    resetReviewSummary();
     form.hidden = true;
     if (empty) empty.hidden = false;
     if (title) title.textContent = "Ingen tidligere læste bøger klar endnu";
@@ -447,6 +549,8 @@ function renderTineReviews() {
   renderReviewTagList("review-positive-tags", REVIEW_POSITIVE_TAGS, saved?.positives || []);
   renderReviewTagList("review-negative-tags", REVIEW_NEGATIVE_TAGS, saved?.negatives || []);
   updateReviewLearningSummary();
+  setReviewTab("overview");
+  loadReviewSummary(book);
 }
 
 async function loadTineReviews() {
@@ -543,6 +647,11 @@ async function saveCurrentTineReview() {
 }
 
 function setupTineReviews() {
+  document.querySelectorAll("[data-review-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setReviewTab(button.dataset.reviewTab);
+    });
+  });
   document.getElementById("tine-review-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     try {

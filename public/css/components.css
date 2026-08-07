@@ -1082,6 +1082,103 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
+.review-subtabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(245, 230, 212, 0.11);
+  border-radius: 8px;
+  background: rgba(8, 4, 14, 0.34);
+}
+
+.review-subtab {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.7rem 0.6rem;
+  background: transparent;
+  color: #c9af9f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.review-subtab:hover {
+  color: #fff4e8;
+}
+
+.review-subtab.active {
+  border-color: rgba(232, 176, 96, 0.42);
+  background: rgba(232, 176, 96, 0.12);
+  color: #fff4e8;
+}
+
+.review-tab-panel[hidden] {
+  display: none;
+}
+
+.review-summary-card {
+  border: 1px solid rgba(232, 176, 96, 0.28);
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(232, 176, 96, 0.07);
+}
+
+.review-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.review-summary-head h3 {
+  margin: 0;
+  color: #fff4e8;
+}
+
+.review-summary-source {
+  flex: 0 0 auto;
+  border: 1px solid rgba(224, 200, 184, 0.24);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: #c9af9f;
+  font-size: 0.72rem;
+}
+
+.review-summary-text {
+  margin: 0;
+  color: #f0dcc8;
+  line-height: 1.65;
+}
+
+.review-spoilers {
+  margin-top: 0.9rem;
+  border-top: 1px solid rgba(245, 230, 212, 0.11);
+  padding-top: 0.8rem;
+}
+
+.review-spoilers summary {
+  color: var(--gold-soft);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.review-spoilers ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+  color: #f0dcc8;
+  line-height: 1.5;
+}
+
+.review-summary-disclaimer {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
+}
+
 .review-section {
   border-top: 1px solid var(--line);
   padding-top: 1.1rem;
@@ -1247,6 +1344,17 @@ tbody tr:hover {
 
 .review-actions {
   justify-content: space-between;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  padding: 0.85rem 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 8, 20, 0),
+    rgba(15, 8, 20, 0.97) 28%
+  );
 }
 
 @media (max-width: 640px) {
@@ -1262,6 +1370,18 @@ tbody tr:hover {
   .review-score-row,
   .review-checks-grid {
     grid-template-columns: 1fr;
+  }
+
+  .review-subtabs {
+    grid-template-columns: 1fr;
+  }
+
+  .review-summary-head {
+    display: grid;
+  }
+
+  .review-actions {
+    position: static;
   }
 }
 

@@ -1,11 +1,16 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "fs";
 import {
   isExcludedReviewBook,
   mapPirateReadsBookForReview,
 } from "../server/services/pirateReads.js";
 import { buildLibraryRowFromReviews } from "../server/services/tineReviews.js";
 import { loadSeries } from "../server/services/store.js";
+import {
+  normalizeReviewSummary,
+  reviewSummaryKey,
+} from "../server/services/tineReviewSummaryUtils.js";
 
 describe("Goodreads-bøger til Tines anmeldelser", () => {
   it("udelukker Harry Potter fra anmeldelseskøen", () => {
@@ -111,5 +116,58 @@ describe("Nuværende biblioteksoprindelse", () => {
       ),
       false
     );
+  });
+});
+
+describe("Resumé til hukommelseshjælp", () => {
+  it("bruger en stabil cache-nøgle for samme Goodreads-bog", () => {
+    const a = reviewSummaryKey({
+      sourceBookId: "HTTPS://GOODREADS.COM/BOOK/123",
+      firstBookTitle: "Iron Flame",
+      author: "Rebecca Yarros",
+    });
+    const b = reviewSummaryKey({
+      sourceBookId: "https://goodreads.com/book/123",
+      firstBookTitle: " iron flame ",
+      author: "rebecca yarros",
+    });
+    assert.equal(a, b);
+  });
+
+  it("begrænser og renser resuméets spoilerpunkter", () => {
+    const summary = normalizeReviewSummary({
+      shortSummary: "  Et kort spoilerfrit resumé.  ",
+      spoilerPoints: ["Et", "To", "Tre", "Fire", "Fem", "Seks", "Syv"],
+      note: "",
+    });
+    assert.equal(summary.shortSummary, "Et kort spoilerfrit resumé.");
+    assert.deepEqual(summary.spoilerPoints, [
+      "Et",
+      "To",
+      "Tre",
+      "Fire",
+      "Fem",
+      "Seks",
+    ]);
+    assert.equal(summary.note, null);
+  });
+
+  it("afviser et tomt AI-resumé", () => {
+    assert.throws(
+      () => normalizeReviewSummary({ spoilerPoints: ["Kun spoiler"] }),
+      /brugbart resumé/
+    );
+  });
+
+  it("har tre underfaner og skjuler spoilers som udgangspunkt", () => {
+    const html = readFileSync(
+      new URL("../public/index.html", import.meta.url),
+      "utf8"
+    );
+    assert.equal((html.match(/data-review-tab="/g) || []).length, 3);
+    assert.match(html, /data-review-tab-panel="overview"/);
+    assert.match(html, /data-review-tab-panel="scores"/);
+    assert.match(html, /data-review-tab-panel="tags"/);
+    assert.match(html, /id="review-spoilers"[^>]*hidden/);
   });
 });

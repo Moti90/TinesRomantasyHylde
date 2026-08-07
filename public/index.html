@@ -381,7 +381,62 @@
           </div>
 
           <form id="tine-review-form" class="tine-review-form">
-            <section class="review-section">
+            <nav class="review-subtabs" role="tablist" aria-label="Dele af anmeldelsen">
+              <button
+                type="button"
+                class="review-subtab active"
+                data-review-tab="overview"
+                role="tab"
+                aria-selected="true"
+              >
+                1. Overblik
+              </button>
+              <button
+                type="button"
+                class="review-subtab"
+                data-review-tab="scores"
+                role="tab"
+                aria-selected="false"
+              >
+                2. Scorer
+              </button>
+              <button
+                type="button"
+                class="review-subtab"
+                data-review-tab="tags"
+                role="tab"
+                aria-selected="false"
+              >
+                3. Plus/minus
+              </button>
+            </nav>
+
+            <div class="review-tab-panel" data-review-tab-panel="overview" role="tabpanel">
+              <section class="review-summary-card" aria-live="polite">
+                <div class="review-summary-head">
+                  <div>
+                    <p class="panel-kicker">Hukommelseshjælp</p>
+                    <h3>Kort resumé</h3>
+                  </div>
+                  <span id="review-summary-source" class="review-summary-source">
+                    AI-genereret
+                  </span>
+                </div>
+                <p id="review-summary-loading" class="hint">
+                  Henter et kort resumé…
+                </p>
+                <p id="review-summary-short" class="review-summary-text" hidden></p>
+                <p id="review-summary-note" class="hint" hidden></p>
+                <details id="review-spoilers" class="review-spoilers" hidden>
+                  <summary>Vis huskepunkter med spoilers</summary>
+                  <ul id="review-spoiler-points"></ul>
+                </details>
+                <p class="review-summary-disclaimer hint">
+                  Resuméet er lavet af AI og kan indeholde fejl.
+                </p>
+              </section>
+
+              <section class="review-section">
               <h3>Din samlede oplevelse</h3>
               <label>
                 Tines score
@@ -422,34 +477,50 @@
                   placeholder="Hvad kan du huske? Hvad gjorde bogen god eller dårlig?"
                 ></textarea>
               </label>
-            </section>
+              </section>
+            </div>
 
-            <section class="review-section">
-              <h3>Subjektive scores</h3>
-              <p class="hint">
-                Hvis Tine ikke ved eller kan huske et felt, skal det krydses af.
-                Så tæller feltet ikke med i statistik eller personlig læring.
-              </p>
-              <div id="review-score-fields" class="review-score-fields"></div>
-            </section>
+            <div
+              class="review-tab-panel"
+              data-review-tab-panel="scores"
+              role="tabpanel"
+              hidden
+            >
+              <section class="review-section">
+                <h3>Subjektive scores</h3>
+                <p class="hint">
+                  Hvis Tine ikke ved eller kan huske et felt, skal det krydses
+                  af. Så tæller feltet ikke med i statistik eller personlig
+                  læring.
+                </p>
+                <div id="review-score-fields" class="review-score-fields"></div>
+              </section>
+            </div>
 
-            <section class="review-section review-checks-grid">
-              <div>
-                <h3>Hvad trak op?</h3>
-                <div id="review-positive-tags" class="review-tag-list"></div>
-              </div>
-              <div>
-                <h3>Hvad trak ned?</h3>
-                <div id="review-negative-tags" class="review-tag-list"></div>
-              </div>
-            </section>
+            <div
+              class="review-tab-panel"
+              data-review-tab-panel="tags"
+              role="tabpanel"
+              hidden
+            >
+              <section class="review-section review-checks-grid">
+                <div>
+                  <h3>Hvad trak op?</h3>
+                  <div id="review-positive-tags" class="review-tag-list"></div>
+                </div>
+                <div>
+                  <h3>Hvad trak ned?</h3>
+                  <div id="review-negative-tags" class="review-tag-list"></div>
+                </div>
+              </section>
 
-            <section class="review-learning-box">
-              <h3>Læringsstatus</h3>
-              <p id="review-learning-summary" class="hint">
-                Udfyld felterne for at se, hvor meget der tæller med.
-              </p>
-            </section>
+              <section class="review-learning-box">
+                <h3>Læringsstatus</h3>
+                <p id="review-learning-summary" class="hint">
+                  Udfyld felterne for at se, hvor meget der tæller med.
+                </p>
+              </section>
+            </div>
 
             <div class="actions review-actions">
               <button type="button" class="btn ghost" id="review-prev">
