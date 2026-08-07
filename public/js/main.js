@@ -324,16 +324,18 @@ function showReviewCandidates(candidates, basePayload) {
   if (!box) return;
   box.hidden = false;
   box.innerHTML = `
-    <p class="hint">Flere bøger matcher. Vælg den rigtige:</p>
+    <p class="hint">Flere matches. Vælg den rigtige:</p>
     <ul class="candidate-list">
       ${candidates
         .map(
           (c, i) => `
         <li>
           <button type="button" class="btn ghost candidate-btn" data-idx="${i}">
-            <strong>${escapeHtml(c.title || "?")}</strong>
+            <strong>${escapeHtml(
+              c.series ? `Serie: ${c.series}` : c.title || "?"
+            )}</strong>
             <span>${escapeHtml(c.author || "Ukendt forfatter")}${
-              c.series ? ` · ${escapeHtml(c.series)}` : ""
+              c.series && c.title ? ` · bog: ${escapeHtml(c.title)}` : ""
             }${c.year ? ` · ${c.year}` : ""}</span>
           </button>
         </li>`
@@ -871,8 +873,12 @@ function setupTineReviews() {
     const query = document.getElementById("review-query")?.value?.trim() || "";
     const author =
       document.getElementById("review-author-input")?.value?.trim() || "";
-    if (!query) {
-      setMsg("review-status", "Skriv en bogtitel eller et serienavn", true);
+    if (!query && !author) {
+      setMsg(
+        "review-status",
+        "Skriv en bogtitel, et serienavn eller en forfatter",
+        true
+      );
       return;
     }
     resetReviewSearchUi();

@@ -80,6 +80,66 @@ function seriesKey(name) {
 }
 
 /**
+ * Serier der bevidst IKKE skal bruge Excel-pejlemærker —
+ * AI-scorer må overskrive felterne (fx test af The Redemption Saga).
+ */
+const UNLOCKED_REFERENCE_SERIES = new Set(["the redemption saga"]);
+
+export function isReferenceUnlocked(seriesName) {
+  return UNLOCKED_REFERENCE_SERIES.has(seriesKey(seriesName));
+}
+
+/**
+ * Når Excel låser felterne: hold assessment.score synket med den viste værdi.
+ */
+export function syncAssessmentsToRowScores(row) {
+  const assessments = row?._analysisMeta?.assessments;
+  if (!assessments) return row;
+  let changed = false;
+  const nextAssessments = { ...assessments };
+  for (const key of REFERENCE_SCORE_KEYS) {
+    const a = nextAssessments[key];
+    if (!a || typeof a !== "object") continue;
+    const rowVal = row[key];
+    if (rowVal == null || rowVal === "") continue;
+    if (NUMERIC_KEYS.has(key) || /0-100/.test(key)) {
+      const n = Number(rowVal);
+      if (Number.isNaN(n) || Number(a.score) === n) continue;
+      nextAssessments[key] = {
+        ...a,
+        aiScore: a.aiScore ?? a.score,
+        score: n,
+        lockedToReference: true,
+      };
+      changed = true;
+    }
+  }
+  // Tine-score / Indholdsmatch
+  for (const key of ["Tine-score", "Indholdsmatch"]) {
+    const a = nextAssessments[key];
+    const rowVal = row[key];
+    if (!a || rowVal == null || rowVal === "") continue;
+    const n = Number(rowVal);
+    if (Number.isNaN(n) || Number(a.score) === n) continue;
+    nextAssessments[key] = {
+      ...a,
+      aiScore: a.aiScore ?? a.score,
+      score: n,
+      lockedToReference: true,
+    };
+    changed = true;
+  }
+  if (!changed) return row;
+  return {
+    ...row,
+    _analysisMeta: {
+      ...row._analysisMeta,
+      assessments: nextAssessments,
+    },
+  };
+}
+
+/**
  * Læs Excel og byg score-reference map (serie → scorefelter).
  */
 export function buildScoreReferenceFromExcel(filePath) {
@@ -135,6 +195,7 @@ export function loadScoreReference() {
 }
 
 export function getReferenceForSeries(seriesName) {
+  if (isReferenceUnlocked(seriesName)) return null;
   const ref = loadScoreReference();
   if (!ref?.bySerie) return null;
   return ref.bySerie[seriesKey(seriesName)] || null;
@@ -144,6 +205,15 @@ export function getReferenceForSeries(seriesName) {
  * Påfør Excel-reference-scores på en række (overskriv vibe + Tine-score).
  */
 export function applyReferenceScores(row, reference = null) {
+  if (isReferenceUnlocked(row?.["Seriens navn"])) {
+    const next = { ...row };
+    next._scoreReference = {
+      locked: false,
+      source: "unlocked",
+      reason: "explicit_test_unlock",
+    };
+    return next;
+  }
   const ref =
     reference || getReferenceForSeries(row?.["Seriens navn"]);
   if (!ref) return row;
@@ -158,7 +228,7 @@ export function applyReferenceScores(row, reference = null) {
     source: "excel",
     tineScore: ref["Tine-score"] ?? null,
   };
-  return next;
+  return syncAssessmentsToRowScores(next);
 }
 
 /**

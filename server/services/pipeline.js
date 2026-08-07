@@ -10,7 +10,11 @@ import {
 } from "./researchCache.js";
 import { loadSeries, upsertSeries } from "./store.js";
 import { sanitizeGoodreadsScore } from "./goodreads.js";
-import { applyReferenceScores, getReferenceForSeries } from "./scoreReference.js";
+import {
+  applyReferenceScores,
+  getReferenceForSeries,
+  isReferenceUnlocked,
+} from "./scoreReference.js";
 
 const PRESERVE_KEYS = ["Tines score", "Tines egen vurdering", "Status"];
 
@@ -42,8 +46,18 @@ function mergePreserve(existing, row, { preserveGoodreads = true } = {}) {
       incoming ?? sanitizeGoodreadsScore(existing["Goodreads-score"]);
   }
 
+  const seriesName = next["Seriens navn"] || existing["Seriens navn"];
+  // Bevidst ulåste serier (fx Redemption-test) må AI overskrive
+  if (isReferenceUnlocked(seriesName)) {
+    next._scoreReference = {
+      locked: false,
+      source: "unlocked",
+      reason: "explicit_test_unlock",
+    };
+    return next;
+  }
   // Excel-reference: scoringsfelter låses (Mages 99 må ikke blive 79 igen)
-  if (getReferenceForSeries(next["Seriens navn"] || existing["Seriens navn"])) {
+  if (getReferenceForSeries(seriesName)) {
     return applyReferenceScores(next);
   }
   if (existing._scoreReference?.locked) {

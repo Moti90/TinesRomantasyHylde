@@ -372,8 +372,8 @@
             <p class="panel-kicker">Find noget at anmelde</p>
             <h2>Søg bog eller serie</h2>
             <p class="hint">
-              Appen finder serien, hvis den findes — ellers en standalone-bog.
-              Du skal godkende match, før anmeldelsen åbnes.
+              Søg på bogtitel, serienavn eller kun forfatter. Appen foretrækker
+              serie, når den findes. Du skal godkende match, før anmeldelsen åbnes.
             </p>
             <div class="review-search-grid">
               <label>
@@ -384,11 +384,10 @@
                   type="text"
                   placeholder="Fx Mist's Edge eller The Broken Lands"
                   autocomplete="off"
-                  required
                 />
               </label>
               <label>
-                Forfatter (valgfrit)
+                Forfatter (valgfrit — eller alene)
                 <input
                   id="review-author-input"
                   name="author"
@@ -422,7 +421,7 @@
           </div>
 
           <div id="review-empty" class="review-empty hint">
-            Søg efter en bog eller serie for at starte en anmeldelse.
+            Søg efter bogtitel, serienavn eller forfatter for at starte en anmeldelse.
           </div>
 
           <div id="review-active" hidden>

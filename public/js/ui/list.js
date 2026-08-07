@@ -303,6 +303,9 @@ function renderWhySections(row) {
       const conf = confidenceLabel(a);
       const support = a.evidenceSourceIds?.length || 0;
       const conflict = a.conflictingSourceIds?.length || 0;
+      // Vis samme tal som scorebaren (rækkefelt), ikke et evt. forældet AI-tal
+      const displayScore =
+        row[key] != null && row[key] !== "" ? row[key] : a.score;
       const supportText = support
         ? `${support} understøttende kilde${support === 1 ? "" : "r"}`
         : ["ai_inference", "synopsis_only"].includes(a.basis)
@@ -311,7 +314,11 @@ function renderWhySections(row) {
       return `
         <li>
           <strong>${escapeHtml(shortLabel(key))}</strong>
-          ${a.score != null ? `· ${escapeHtml(String(a.score))}` : ""}
+          ${
+            displayScore != null && displayScore !== ""
+              ? `· ${escapeHtml(String(displayScore))}`
+              : ""
+          }
           <span class="conf-inline">${escapeHtml(
             [basis, conf].filter(Boolean).join(" · ")
           )}</span>

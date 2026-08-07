@@ -2,7 +2,10 @@
   {
     "Status": "Læser nu",
     "Seriens navn": "Mages of the Wheel",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Reign & Ruin",
     "Forfatter": "J.D. Evans",
     "Antal bøger i serien": null,
@@ -603,7 +606,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Hidden Legacy",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Burn for Me",
     "Forfatter": "Ilona Andrews",
     "Antal bøger i serien": null,
@@ -1156,7 +1162,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Redemption Saga",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "A Life of Shadows",
     "Forfatter": "Kristen Banet",
     "Antal bøger i serien": "5",
@@ -1164,26 +1173,26 @@
     "Er serien på Mofibo? (ja, nej, ikke hele serien)": "Ikke verificeret",
     "Er serien færdigskrevet": "Færdig",
     "Relation": "RH",
-    "Tine-score": 98,
+    "Tine-score": null,
     "Goodreads-score": 4.16,
-    "Book hangover (0-5)": 5,
+    "Book hangover (0-5)": null,
     "Tempo": "Moderat",
-    "Worldbuilding (0-5)": 5,
+    "Worldbuilding (0-5)": null,
     "Worldbuilding-tags": "Urban fantasy; shifters; vampyrer; dæmoner; magi",
-    "Episk plot (0-5)": 5,
-    "Politiske intriger (0-5)": 3,
-    "Krig/militær (0-5)": 4,
+    "Episk plot (0-5)": null,
+    "Politiske intriger (0-5)": null,
+    "Krig/militær (0-5)": null,
     "Chosen one eller vokser naturligt ind i rollen?": "Vokser naturligt ind i rollen",
-    "Kvindelig udvikling (0-5)": 5,
-    "Karakterudvikling (0-5)": 5,
-    "Beskyttende helt(e) (0-5)": 5,
-    "Bodyguard-vibe (0-5)": 5,
-    "Touch her and die-vibe (0-5)": 5,
+    "Kvindelig udvikling (0-5)": null,
+    "Karakterudvikling (0-5)": null,
+    "Beskyttende helt(e) (0-5)": null,
+    "Bodyguard-vibe (0-5)": null,
+    "Touch her and die-vibe (0-5)": null,
     "Bully-risiko": "Lav",
-    "Spice/erotik (0-5)": 4,
-    "Spice/erotik kvalitet (0-5)": 5,
+    "Spice/erotik (0-5)": null,
+    "Spice/erotik kvalitet (0-5)": null,
     "FemDom (ja/nej)": "Nej",
-    "Hvor hurtigt griber den? (0-100%)": 15,
+    "Hvor hurtigt griber den? (0-100%)": null,
     "Falder kvaliteten?": "Nej",
     "Happy ending?": "Ja",
     "Tilfredsstillende slutning?": "Ja",
@@ -1193,7 +1202,7 @@
     "Romance i fokus (0-100%)": 40,
     "Minder mest om": "Age of the Andinna; Rise of the Iliri",
     "Hvis du savner...": "Their Vampire Queen; Rise of the Iliri",
-    "Rhysand-faktoren": 5,
+    "Rhysand-faktoren": null,
     "Tines egen vurdering": "",
     "_ratingMeta": {
       "legacy": {
@@ -1203,12 +1212,23 @@
         "fetchedAt": null
       }
     },
-    "schemaVersion": 3
+    "schemaVersion": 3,
+    "Romance i procent (0-100%)": null,
+    "Indholdsmatch": null,
+    "Læseprioritet nu": null,
+    "_scoreReference": {
+      "locked": false,
+      "source": "unlocked",
+      "reason": "explicit_test_unlock"
+    }
   },
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Bridge Kingdom",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "The Bridge Kingdom",
     "Forfatter": "Danielle L. Jensen",
     "Antal bøger i serien": "6",
@@ -1265,7 +1285,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "A Court of Thorns and Roses",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "A Court of Mist and Fury",
     "Forfatter": "Sarah J. Maas",
     "Antal bøger i serien": null,
@@ -1311,7 +1334,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Order of Scorpions",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Order of Scorpions",
     "Forfatter": "Ivy Asher",
     "Antal bøger i serien": "1 (standalone)",
@@ -1368,7 +1394,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Villains & Virtues",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Throne in the Dark",
     "Forfatter": "A.K. Caggiano",
     "Antal bøger i serien": "3",
@@ -1425,7 +1454,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Kushiel's Legacy",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Kushiel's Dart",
     "Forfatter": "Jacqueline Carey",
     "Antal bøger i serien": "3 (Phèdre-trilogien)",
@@ -1482,7 +1514,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Wraith Kings",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Radiance",
     "Forfatter": "Grace Draven",
     "Antal bøger i serien": "4 romaner + noveller (ikke færdig)",
@@ -1539,7 +1574,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Daevabad Trilogy",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "The City of Brass",
     "Forfatter": "S. A. Chakraborty",
     "Antal bøger i serien": "3",
@@ -1596,7 +1634,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Twelve Houses",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Mystic and Rider",
     "Forfatter": "Sharon Shinn",
     "Antal bøger i serien": "5",
@@ -1653,7 +1694,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Chronicles of the Wolf Queen",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "The Wolf of Oren-Yaro",
     "Forfatter": "K. S. Villoso",
     "Antal bøger i serien": "3",
@@ -1710,7 +1754,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Empire Trilogy",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Daughter of the Empire",
     "Forfatter": "Raymond E. Feist & Janny Wurts",
     "Antal bøger i serien": "3",
@@ -1767,7 +1814,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "The Winnowing Flame Trilogy",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "The Ninth Rain",
     "Forfatter": "Jen Williams",
     "Antal bøger i serien": "3",
@@ -2426,7 +2476,10 @@
   {
     "Status": "Ikke læst",
     "Seriens navn": "Dark Olympus",
-    "_origin": { "type": "excel", "label": "Fra Tines Excel-ark" },
+    "_origin": {
+      "type": "excel",
+      "label": "Fra Tines Excel-ark"
+    },
     "Første bog/titel": "Neon Gods",
     "Forfatter": "Katee Robert",
     "Antal bøger i serien": null,

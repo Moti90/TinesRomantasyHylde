@@ -39,7 +39,11 @@ import {
   mapPirateReadsBookForReview,
 } from "./services/pirateReads.js";
 import { identifyBook } from "./services/identify.js";
-import { mapIdentityToReviewTarget } from "./services/tineReviewTargets.js";
+import {
+  enrichIdentityWithLocalSeries,
+  mapIdentityToReviewTarget,
+  matchLocalLibrary,
+} from "./services/tineReviewTargets.js";
 import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
 import { backfillDecisionScores } from "./services/decisionScoreBackfill.js";
 
@@ -153,15 +157,17 @@ app.post("/api/tine-review-identify", async (req, res) => {
     const author = String(req.body?.author || "").trim();
     const selectedIdentity = req.body?.selectedIdentity || null;
 
-    if (!query && !selectedIdentity?.title) {
-      return res.status(400).json({ error: "Angiv bogtitel eller serienavn" });
+    if (!query && !author && !selectedIdentity?.title) {
+      return res.status(400).json({
+        error: "Angiv bogtitel, serienavn eller forfatter",
+      });
     }
 
     let identityResult;
     if (selectedIdentity?.title) {
       identityResult = {
         status: "identified",
-        identity: {
+        identity: enrichIdentityWithLocalSeries({
           title: selectedIdentity.title,
           author: selectedIdentity.author || author || null,
           series: selectedIdentity.series || null,
@@ -170,18 +176,59 @@ app.post("/api/tine-review-identify", async (req, res) => {
             selectedIdentity.identityConfidence ||
             selectedIdentity.confidence ||
             "high",
-        },
+        }),
         candidates: [],
       };
     } else {
-      identityResult = await identifyBook({ query, author });
+      // Lokalt bibliotek først — serienavne er ofte bedre her end i katalogerne
+      const local = matchLocalLibrary({ query, author });
+      if (local?.status === "ambiguous") {
+        identityResult = local;
+      } else if (local?.status === "identified" && local.identity?.series) {
+        identityResult = local;
+      } else {
+        identityResult = await identifyBook({ query, author });
+        if (
+          identityResult.status === "not_found" &&
+          local?.status === "identified"
+        ) {
+          identityResult = local;
+        } else if (identityResult.status === "identified") {
+          identityResult = {
+            ...identityResult,
+            identity: enrichIdentityWithLocalSeries(identityResult.identity),
+          };
+        } else if (
+          identityResult.status === "ambiguous" &&
+          local?.candidates?.length
+        ) {
+          // Bland lokale seriehits ind først
+          const seen = new Set();
+          const merged = [];
+          for (const c of [...(local.candidates || []), ...identityResult.candidates]) {
+            const key = `${String(c.series || c.title || "").toLowerCase()}|${String(c.author || "").toLowerCase()}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(c);
+          }
+          identityResult = {
+            ...identityResult,
+            candidates: merged.slice(0, 8),
+            userMessage:
+              identityResult.userMessage ||
+              local.userMessage ||
+              "Flere bøger matcher. Vælg den rigtige.",
+          };
+        }
+      }
     }
 
     if (identityResult.status === "ambiguous") {
       return res.json({
         needsChoice: true,
         candidates: identityResult.candidates || [],
-        userMessage: "Flere bøger matcher. Vælg den rigtige.",
+        userMessage:
+          identityResult.userMessage || "Flere bøger matcher. Vælg den rigtige.",
       });
     }
 
