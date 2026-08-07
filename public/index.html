@@ -32,6 +32,9 @@
       <button type="button" class="app-nav-btn" data-view="discovery">
         Opdag nye
       </button>
+      <button type="button" class="app-nav-btn" data-view="reviews">
+        Tines Anmeldelser
+      </button>
     </nav>
 
     <!-- ========== FORSIDE ========== -->
@@ -340,6 +343,109 @@
             Discovery tilføjer ikke bøger til biblioteket — det er kun til inspiration.
           </p>
         </aside>
+      </main>
+    </div>
+
+    <!-- ========== TINES ANMELDELSER ========== -->
+    <div id="view-reviews" class="app-view" data-view-panel="reviews" hidden>
+      <header class="site-header reviews-header reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Tines Anmeldelser</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1 class="library-title">Tines Anmeldelser</h1>
+        <p class="lede">
+          Én bog ad gangen. Det Tine kan huske tæller med i læring, og det hun
+          ikke kan huske bliver sprunget over.
+        </p>
+        <p id="review-status" class="status-msg" role="status"></p>
+        <div class="header-rule" aria-hidden="true"></div>
+      </header>
+
+      <main class="shell reviews-shell">
+        <section class="panel review-panel reveal delay-1">
+          <div class="panel-ornament" aria-hidden="true"></div>
+          <div class="review-book-top">
+            <div>
+              <p class="panel-kicker" id="review-position">Bog 0 af 0</p>
+              <h2 id="review-title">Ingen bøger klar endnu</h2>
+              <p id="review-author" class="hint"></p>
+            </div>
+            <span id="review-book-status" class="review-status-pill"></span>
+          </div>
+
+          <div id="review-empty" class="review-empty hint" hidden>
+            Marker bøger som læst eller droppet i biblioteket, så dukker de op
+            her som tidligere læste bøger.
+          </div>
+
+          <form id="tine-review-form" class="tine-review-form">
+            <section class="review-section">
+              <h3>Din samlede oplevelse</h3>
+              <label>
+                Tines score
+                <input
+                  id="review-overall-score"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0-100"
+                />
+              </label>
+              <label>
+                Kort kommentar
+                <textarea
+                  id="review-comment"
+                  rows="4"
+                  placeholder="Hvad kan du huske? Hvad gjorde bogen god eller dårlig?"
+                ></textarea>
+              </label>
+            </section>
+
+            <section class="review-section">
+              <h3>Subjektive scores</h3>
+              <p class="hint">
+                Hvis Tine ikke ved eller kan huske et felt, skal det krydses af.
+                Så tæller feltet ikke med i statistik eller personlig læring.
+              </p>
+              <div id="review-score-fields" class="review-score-fields"></div>
+            </section>
+
+            <section class="review-section review-checks-grid">
+              <div>
+                <h3>Hvad trak op?</h3>
+                <div id="review-positive-tags" class="review-tag-list"></div>
+              </div>
+              <div>
+                <h3>Hvad trak ned?</h3>
+                <div id="review-negative-tags" class="review-tag-list"></div>
+              </div>
+            </section>
+
+            <section class="review-learning-box">
+              <h3>Læringsstatus</h3>
+              <p id="review-learning-summary" class="hint">
+                Udfyld felterne for at se, hvor meget der tæller med.
+              </p>
+            </section>
+
+            <div class="actions review-actions">
+              <button type="button" class="btn ghost" id="review-prev">
+                Forrige
+              </button>
+              <button type="button" class="btn ghost" id="review-skip">
+                Spring over
+              </button>
+              <button type="submit" class="btn primary" id="review-save">
+                Gem og næste bog
+              </button>
+              <button type="button" class="btn ghost" id="review-next">
+                Næste
+              </button>
+            </div>
+          </form>
+        </section>
       </main>
     </div>
 

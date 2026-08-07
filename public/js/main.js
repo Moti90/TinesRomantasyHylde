@@ -1,6 +1,8 @@
 import {
   getHealth,
   getSeries,
+  getTineReviews,
+  saveTineReview,
   analyzeSeries,
   patchSeries,
   deleteSeries,
@@ -24,6 +26,8 @@ import {
 } from "./ui/discovery.js";
 
 let series = [];
+let tineReviews = [];
+let reviewIndex = 0;
 let pendingAnalyze = null;
 let stepTimer = null;
 const LIBRARY_LOCK_CODE = "1234";
@@ -34,6 +38,41 @@ const ANALYZE_STEPS = [
   "Sammenholder kilder",
   "Vurderer efter Tines håndbog",
   "Gemmer analysen",
+];
+
+const REVIEW_SCORE_FIELDS = [
+  ["romance", "Romance / sommerfugle"],
+  ["rhysand", "Rhysand-faktor"],
+  ["touchHerAndDie", "Touch Her And Die"],
+  ["protective", "Beskyttende helt(e)"],
+  ["bodyguard", "Bodyguard-vibe"],
+  ["femaleGrowth", "Kvindelig udvikling"],
+  ["worldbuilding", "Worldbuilding"],
+  ["epicPlot", "Episk plot"],
+  ["spiceQuality", "Spice-kvalitet"],
+  ["bookHangover", "Book hangover"],
+];
+
+const REVIEW_POSITIVE_TAGS = [
+  "Beskyttende helt",
+  "Stærk kvindelig udvikling",
+  "Følelsesmæssig intensitet",
+  "Episk plot",
+  "Stærk romance",
+  "Book hangover",
+  "Found family",
+  "Reverse harem / why choose",
+];
+
+const REVIEW_NEGATIVE_TAGS = [
+  "Bully / nedladende MMC",
+  "For meget erotik ift. plot",
+  "For langsom uden payoff",
+  "Uafsluttet serie",
+  "Svag romance",
+  "Kontrol forklædt som beskyttelse",
+  "Tynd worldbuilding",
+  "Utilfredsstillende slutning",
 ];
 
 function setMsg(id, text, isError = false) {
@@ -212,6 +251,249 @@ async function refresh() {
   const data = await getSeries();
   series = data.series || [];
   paintList();
+  renderTineReviews();
+}
+
+function getReviewBooks() {
+  return series.filter((row) => {
+    const status = String(row.Status || "").trim().toLowerCase();
+    return status === "læst" || status === "droppet";
+  });
+}
+
+function reviewBookKey(book) {
+  return [
+    book?.["Seriens navn"],
+    book?.["Første bog/titel"],
+    book?.Forfatter,
+  ]
+    .map((part) => String(part || "").trim().toLowerCase())
+    .join("|");
+}
+
+function reviewDataKey(review) {
+  return [review?.seriesName, review?.firstBookTitle, review?.author]
+    .map((part) => String(part || "").trim().toLowerCase())
+    .join("|");
+}
+
+function findTineReview(book) {
+  const key = reviewBookKey(book);
+  return tineReviews.find((review) => reviewDataKey(review) === key) || null;
+}
+
+function renderReviewTagList(id, tags, selected = []) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  const chosen = new Set(selected);
+  box.innerHTML = tags
+    .map(
+      (tag, i) => `
+        <label class="review-tag-option">
+          <input type="checkbox" value="${escapeHtml(tag)}" ${chosen.has(tag) ? "checked" : ""} />
+          <span>${escapeHtml(tag)}</span>
+        </label>`
+    )
+    .join("");
+}
+
+function renderReviewScoreFields(saved = null) {
+  const box = document.getElementById("review-score-fields");
+  if (!box) return;
+  const ignored = new Set(saved?.ignoredFields || []);
+  const scores = saved?.subjectiveScores || {};
+  box.innerHTML = REVIEW_SCORE_FIELDS.map(([key, label]) => {
+    const score = scores[key]?.score;
+    const isIgnored = ignored.has(key);
+    const options = [0, 1, 2, 3, 4, 5]
+      .map(
+        (n) => `
+          <label class="review-score-option">
+            <input
+              type="radio"
+              name="review-score-${key}"
+              value="${n}"
+              ${Number(score) === n && !isIgnored ? "checked" : ""}
+              ${isIgnored ? "disabled" : ""}
+            />
+            <span>${n}</span>
+          </label>`
+      )
+      .join("");
+    return `
+      <div class="review-score-row" data-review-field="${key}">
+        <div>
+          <strong>${escapeHtml(label)}</strong>
+          <div class="review-score-scale">${options}</div>
+        </div>
+        <label class="review-unknown">
+          <input type="checkbox" class="review-unknown-input" ${isIgnored ? "checked" : ""} />
+          Jeg ved ikke / kan ikke huske det
+        </label>
+      </div>`;
+  }).join("");
+
+  box.querySelectorAll(".review-unknown-input").forEach((input) => {
+    input.addEventListener("change", () => {
+      const row = input.closest(".review-score-row");
+      row?.querySelectorAll('input[type="radio"]').forEach((radio) => {
+        radio.disabled = input.checked;
+        if (input.checked) radio.checked = false;
+      });
+      updateReviewLearningSummary();
+    });
+  });
+  box.querySelectorAll('input[type="radio"]').forEach((input) => {
+    input.addEventListener("change", updateReviewLearningSummary);
+  });
+}
+
+function updateReviewLearningSummary() {
+  const rows = [...document.querySelectorAll(".review-score-row")];
+  const ignored = rows.filter((row) => row.querySelector(".review-unknown-input")?.checked)
+    .length;
+  const scored = rows.filter((row) => row.querySelector('input[type="radio"]:checked'))
+    .length;
+  const summary = document.getElementById("review-learning-summary");
+  if (summary) {
+    summary.textContent = `${scored} subjektive felter tæller med. ${ignored} felter er markeret som "kan ikke huske" og bliver ikke brugt til statistik eller læring.`;
+  }
+}
+
+function renderTineReviews() {
+  const form = document.getElementById("tine-review-form");
+  if (!form) return;
+  const books = getReviewBooks();
+  const empty = document.getElementById("review-empty");
+  const title = document.getElementById("review-title");
+  const author = document.getElementById("review-author");
+  const position = document.getElementById("review-position");
+  const status = document.getElementById("review-book-status");
+
+  if (!books.length) {
+    form.hidden = true;
+    if (empty) empty.hidden = false;
+    if (title) title.textContent = "Ingen tidligere læste bøger klar endnu";
+    if (author) author.textContent = "";
+    if (position) position.textContent = "Bog 0 af 0";
+    if (status) status.textContent = "";
+    return;
+  }
+
+  form.hidden = false;
+  if (empty) empty.hidden = true;
+  reviewIndex = Math.max(0, Math.min(reviewIndex, books.length - 1));
+  const book = books[reviewIndex];
+  const saved = findTineReview(book);
+
+  if (title) title.textContent = book["Seriens navn"] || book["Første bog/titel"] || "Ukendt bog";
+  if (author) author.textContent = book.Forfatter || "Ukendt forfatter";
+  if (position) position.textContent = `Bog ${reviewIndex + 1} af ${books.length}`;
+  if (status) status.textContent = book.Status || "";
+
+  document.getElementById("review-overall-score").value = saved?.overallScore ?? "";
+  document.getElementById("review-comment").value = saved?.comment || "";
+  renderReviewScoreFields(saved);
+  renderReviewTagList("review-positive-tags", REVIEW_POSITIVE_TAGS, saved?.positives || []);
+  renderReviewTagList("review-negative-tags", REVIEW_NEGATIVE_TAGS, saved?.negatives || []);
+  updateReviewLearningSummary();
+}
+
+async function loadTineReviews() {
+  const data = await getTineReviews();
+  tineReviews = data.reviews || [];
+  renderTineReviews();
+}
+
+function collectCheckedValues(selector) {
+  return [...document.querySelectorAll(`${selector} input:checked`)].map(
+    (input) => input.value
+  );
+}
+
+function collectReviewPayload() {
+  const books = getReviewBooks();
+  const book = books[reviewIndex];
+  if (!book) return null;
+  const subjectiveScores = {};
+  const ignoredFields = [];
+  for (const [key, label] of REVIEW_SCORE_FIELDS) {
+    const row = document.querySelector(`[data-review-field="${key}"]`);
+    if (!row) continue;
+    if (row.querySelector(".review-unknown-input")?.checked) {
+      ignoredFields.push(key);
+      continue;
+    }
+    const selected = row.querySelector('input[type="radio"]:checked');
+    if (selected) {
+      subjectiveScores[key] = {
+        label,
+        score: Number(selected.value),
+      };
+    }
+  }
+  const overallRaw = document.getElementById("review-overall-score")?.value;
+  return {
+    seriesName: book["Seriens navn"] || null,
+    firstBookTitle: book["Første bog/titel"] || null,
+    author: book.Forfatter || null,
+    status: book.Status || null,
+    overallScore: overallRaw === "" ? null : Number(overallRaw),
+    comment: document.getElementById("review-comment")?.value?.trim() || "",
+    subjectiveScores,
+    positives: collectCheckedValues("#review-positive-tags"),
+    negatives: collectCheckedValues("#review-negative-tags"),
+    ignoredFields,
+  };
+}
+
+async function saveCurrentTineReview() {
+  const payload = collectReviewPayload();
+  if (!payload) return;
+  if (
+    payload.overallScore != null &&
+    (Number.isNaN(payload.overallScore) ||
+      payload.overallScore < 0 ||
+      payload.overallScore > 100)
+  ) {
+    setMsg("review-status", "Tines score skal være mellem 0 og 100", true);
+    return;
+  }
+  const res = await saveTineReview(payload);
+  tineReviews = res.reviews || [];
+  setMsg(
+    "review-status",
+    "Anmeldelsen er gemt. Felter markeret som 'kan ikke huske' tæller ikke med."
+  );
+  const books = getReviewBooks();
+  if (reviewIndex < books.length - 1) reviewIndex += 1;
+  renderTineReviews();
+}
+
+function setupTineReviews() {
+  document.getElementById("tine-review-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await saveCurrentTineReview();
+    } catch (err) {
+      setMsg("review-status", err.message, true);
+    }
+  });
+  document.getElementById("review-prev")?.addEventListener("click", () => {
+    reviewIndex = Math.max(0, reviewIndex - 1);
+    renderTineReviews();
+  });
+  document.getElementById("review-next")?.addEventListener("click", () => {
+    const books = getReviewBooks();
+    reviewIndex = Math.min(Math.max(books.length - 1, 0), reviewIndex + 1);
+    renderTineReviews();
+  });
+  document.getElementById("review-skip")?.addEventListener("click", () => {
+    const books = getReviewBooks();
+    if (books.length) reviewIndex = (reviewIndex + 1) % books.length;
+    renderTineReviews();
+    setMsg("review-status", "Sprunget over");
+  });
 }
 
 function closeMenus(except = null) {
@@ -310,6 +592,9 @@ function setView(view) {
       setDiscoveryStatus(err.message || "Kunne ikke hente discovery", true)
     );
   }
+  if (view === "reviews") {
+    renderTineReviews();
+  }
   try {
     sessionStorage.setItem("trl-view", view);
   } catch {
@@ -327,7 +612,12 @@ function setupViews() {
   let start = "home";
   try {
     const saved = sessionStorage.getItem("trl-view");
-    if (saved === "home" || saved === "library" || saved === "discovery") {
+    if (
+      saved === "home" ||
+      saved === "library" ||
+      saved === "discovery" ||
+      saved === "reviews"
+    ) {
       start = saved;
     }
   } catch {
@@ -409,6 +699,7 @@ function setupDiscovery() {
 async function init() {
   setupViews();
   setupDiscovery();
+  setupTineReviews();
 
   try {
     const health = await getHealth();
@@ -429,6 +720,7 @@ async function init() {
 
   setupCornerMenus();
   await refresh();
+  await loadTineReviews();
 
   document.getElementById("close-detail").addEventListener("click", () => {
     renderDetail(null);

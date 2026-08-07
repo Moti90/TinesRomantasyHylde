@@ -28,6 +28,7 @@ import {
 import { seriesToWorkbook, workbookToSeries } from "./services/excel.js";
 import { STATUS_ORDER } from "./services/columns.js";
 import discoveryRouter from "./routes/discovery.js";
+import { listTineReviews, upsertTineReview } from "./services/tineReviews.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -101,6 +102,41 @@ app.post("/api/settings/openai", (req, res) => {
 
 app.get("/api/series", (_req, res) => {
   res.json({ series: loadSeries(), statusOrder: STATUS_ORDER });
+});
+
+app.get("/api/tine-reviews", (_req, res) => {
+  res.json({ reviews: listTineReviews() });
+});
+
+app.post("/api/tine-reviews", (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!String(body.seriesName || body.firstBookTitle || "").trim()) {
+      return res.status(400).json({ error: "Bogen mangler titel" });
+    }
+    const overallScore =
+      body.overallScore === null || body.overallScore === undefined || body.overallScore === ""
+        ? null
+        : Number(body.overallScore);
+    if (overallScore != null && (Number.isNaN(overallScore) || overallScore < 0 || overallScore > 100)) {
+      return res.status(400).json({ error: "Tines score skal være mellem 0 og 100" });
+    }
+    const reviews = upsertTineReview({
+      seriesName: body.seriesName || null,
+      firstBookTitle: body.firstBookTitle || null,
+      author: body.author || null,
+      status: body.status || null,
+      overallScore,
+      comment: body.comment || "",
+      subjectiveScores: body.subjectiveScores || {},
+      positives: Array.isArray(body.positives) ? body.positives : [],
+      negatives: Array.isArray(body.negatives) ? body.negatives : [],
+      ignoredFields: Array.isArray(body.ignoredFields) ? body.ignoredFields : [],
+    });
+    res.json({ reviews });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Kunne ikke gemme anmeldelse" });
+  }
 });
 
 app.patch("/api/series/:name", (req, res) => {

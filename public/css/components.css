@@ -70,6 +70,8 @@ label {
 
 input[type="text"],
 input[type="url"],
+input[type="number"],
+textarea,
 select {
   display: block;
   width: 100%;
@@ -81,6 +83,12 @@ select {
   color: #fff4e8;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 6rem;
+  font: inherit;
 }
 
 select option {
@@ -1016,6 +1024,149 @@ tbody tr:hover {
   opacity: 0.75;
 }
 
+.reviews-shell {
+  max-width: 58rem;
+}
+
+.review-panel {
+  width: 100%;
+}
+
+.review-book-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+}
+
+.review-book-top h2 {
+  margin: 0;
+}
+
+.review-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  color: var(--gold-soft);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.review-section {
+  border-top: 1px solid var(--line);
+  padding-top: 1.1rem;
+  margin-top: 1.1rem;
+}
+
+.review-section h3,
+.review-learning-box h3 {
+  margin: 0 0 0.75rem;
+  color: #fff4e8;
+}
+
+.review-score-fields {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.review-score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid rgba(245, 230, 212, 0.11);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  background: rgba(8, 4, 14, 0.28);
+}
+
+.review-score-scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.review-score-option,
+.review-tag-option,
+.review-unknown {
+  margin: 0;
+}
+
+.review-score-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.review-score-option span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: #f0dcc8;
+  cursor: pointer;
+}
+
+.review-score-option input:checked + span {
+  border-color: var(--gold);
+  background: rgba(232, 176, 96, 0.16);
+  color: #fff4e8;
+}
+
+.review-score-option input:disabled + span {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.review-unknown {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #dcc4b4;
+  font-size: 0.9rem;
+}
+
+.review-checks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.review-tag-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.review-tag-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(245, 230, 212, 0.11);
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  background: rgba(245, 230, 212, 0.04);
+  color: #f0dcc8;
+}
+
+.review-learning-box {
+  margin-top: 1.2rem;
+  border: 1px solid rgba(232, 176, 96, 0.28);
+  border-radius: 6px;
+  padding: 1rem;
+  background: rgba(232, 176, 96, 0.07);
+}
+
+.review-actions {
+  justify-content: space-between;
+}
+
 @media (max-width: 640px) {
   .discovery-card-actions {
     width: 100%;
@@ -1023,6 +1174,12 @@ tbody tr:hover {
 
   .discovery-card-actions .btn {
     width: 100%;
+  }
+
+  .review-book-top,
+  .review-score-row,
+  .review-checks-grid {
+    grid-template-columns: 1fr;
   }
 }
 

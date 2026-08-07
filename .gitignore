@@ -13,5 +13,6 @@ data/backups/
 data/piratereads-cache.json
 data/discovery-cache.json
 data/reading-profile.json
+data/tine-reviews.json
 data/debug-*.json
 data/debug-*.log

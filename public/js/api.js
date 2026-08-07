@@ -9,6 +9,24 @@ export async function getSeries() {
   return res.json();
 }
 
+export async function getTineReviews() {
+  const res = await fetch("/api/tine-reviews");
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Kunne ikke hente anmeldelser");
+  return data;
+}
+
+export async function saveTineReview(payload) {
+  const res = await fetch("/api/tine-reviews", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Kunne ikke gemme anmeldelse");
+  return data;
+}
+
 export async function analyzeSeries(payload) {
   const res = await fetch("/api/analyze", {
     method: "POST",
