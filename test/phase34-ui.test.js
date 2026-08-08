@@ -22,5 +22,6 @@ describe("Fase 3 og 4 i brugerfladen", () => {
     assert.match(listSource, /Indholdsmatch/);
     assert.match(listSource, /Læseprioritet nu/);
     assert.match(listSource, /analysegrundlag/);
+    assert.match(listSource, /Hvor kilderne er uenige/);
   });
 });

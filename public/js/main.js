@@ -180,6 +180,8 @@ function showCandidates(candidates, basePayload) {
           author: c.author,
           series: c.series || null,
           bookNumber: c.bookNumber ?? null,
+          goodreadsUrl: c.goodreadsUrl || null,
+          source: c.source === "Goodreads" ? "piratereads" : c.source || null,
           identityConfidence: c.identityConfidence || "high",
         },
       });
@@ -354,6 +356,8 @@ function showReviewCandidates(candidates, basePayload) {
           author: c.author,
           series: c.series || null,
           bookNumber: c.bookNumber ?? null,
+          goodreadsUrl: c.goodreadsUrl || null,
+          source: c.source === "Goodreads" ? "piratereads" : c.source || null,
           identityConfidence: c.identityConfidence || "high",
         },
       });

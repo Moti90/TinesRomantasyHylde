@@ -379,6 +379,9 @@ function renderWhySections(row) {
     .map((t) => `<li>${escapeHtml(t)}</li>`)
     .join("");
   const uncertainty = meta.uncertainty;
+  const evidence = meta.evidence || {};
+  const conflictThemes = evidence.conflictThemes || [];
+  const conflictObs = (meta.observations || []).filter((o) => o.hasConflict);
   const uncertaintyLabel =
     uncertainty?.level === "strong"
       ? "Stærkt analysegrundlag"
@@ -396,11 +399,28 @@ function renderWhySections(row) {
         uncertainty.staleOrMissingFreshFacts?.length
           ? `Bør opdateres: ${uncertainty.staleOrMissingFreshFacts.join(", ")}`
           : null,
+        conflictThemes.length
+          ? `Kilderne er uenige om: ${conflictThemes.join(", ")}`
+          : null,
       ]
         .filter(Boolean)
         .map((item) => `<li>${escapeHtml(item)}</li>`)
         .join("")
     : "";
+  const conflictItems = conflictObs
+    .slice(0, 6)
+    .map(
+      (o) => `
+        <li>
+          <strong>${escapeHtml(o.label || o.theme || "Tema")}</strong>
+          <span class="conf-inline">Kilderne er uenige</span>
+          <p>${escapeHtml(o.statement || "")}</p>
+          <p class="hint">${escapeHtml(
+            `${o.supportCount || 0} understøtter · ${o.conflictCount || 0} uenig`
+          )}</p>
+        </li>`
+    )
+    .join("");
   const readPriority = meta.readPriority;
   const priorityAdjustments = (readPriority?.adjustments || [])
     .map(
@@ -433,6 +453,14 @@ function renderWhySections(row) {
         ? `<details class="why-block uncertainty-block">
             <summary>${escapeHtml(uncertaintyLabel)}</summary>
             <ul class="foundation-list">${uncertaintyItems}</ul>
+          </details>`
+        : ""
+    }
+    ${
+      conflictItems
+        ? `<details class="why-block conflict-block">
+            <summary>Hvor kilderne er uenige (${conflictObs.length})</summary>
+            <ul class="why-list">${conflictItems}</ul>
           </details>`
         : ""
     }

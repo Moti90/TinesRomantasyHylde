@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { getOpenAIKey } from "./config.js";
 import { researchInputHash } from "./hash.js";
 import {
@@ -124,6 +123,7 @@ export function emptyResearch(identity) {
       goodreads: null,
     },
     reviewConsensus: {},
+    observations: [],
     sources: [],
     researchedAt: new Date().toISOString(),
     meta: {
@@ -136,6 +136,19 @@ export function emptyResearch(identity) {
       partial: true,
       warnings: [],
       searchPlan: [],
+      evidence: {
+        supportingSourceCount: 0,
+        conflictThemeCount: 0,
+        conflictThemes: [],
+        observationCount: 0,
+        batchesIntact: true,
+        batchCounts: {
+          helteprofil: 0,
+          romanceprofil: 0,
+          plotkarakter: 0,
+          helhed: 0,
+        },
+      },
     },
   };
 }
@@ -393,9 +406,18 @@ export function canonicalizeUrl(url) {
 export function isIndustryNoise(url, title = "") {
   const blob = `${title} ${url}`.toLowerCase();
   if (
-    /letter from london|sales up|parties pack|transformational year|financial.reporting|industry-news|adult-announcements|golden time for children|race for harry|pottermore claims|claims sales/i.test(
+    /letter from london|sales up|parties pack|transformational year|financial.reporting|industry-news|adult-announcements|golden time for children|race for harry|pottermore claims|claims sales|rights sold|book deal|publishing deal|advance for|bookscan|bestsellers? list|print run|acquisition announcement|imprint acquires|film rights|tv rights|optioned for|hollywood|netgalley widget|cover reveal party|preorder campaign/i.test(
       blob
     )
+  ) {
+    return true;
+  }
+  // Handels-/branchemagasiner uden egentlig review-path
+  if (
+    /(thebookseller\.com|bookbrunch\.co|publishingperspectives\.com|shelf-awareness\.com\/(article|news)|publishersmarketplace\.com)/i.test(
+      blob
+    ) &&
+    !/\breview\b|starred review|book review/i.test(blob)
   ) {
     return true;
   }
@@ -409,6 +431,8 @@ export function isIndustryNoise(url, title = "") {
     ) {
       return true;
     }
+    // PW deals/news uden review
+    if (/\/pw\/(news|deals|by-topic)\//i.test(blob)) return true;
   }
   return false;
 }
@@ -609,11 +633,130 @@ function sourceValueScore(s) {
   return score;
 }
 
-function isPublisherPr(url, title = "") {
+/** Forfatter-/forlagssider — salgstekst, ikke uafhængig evidens. */
+export function isPublisherPr(url, title = "") {
   const blob = `${title} ${url}`.toLowerCase();
-  return /author\.(com|net|org)|\/publisher\/|forlag|pottermore|bloomsbury\.com/i.test(
-    blob
-  );
+  if (
+    /author\.(com|net|org)|\/publisher\/|forlag|pottermore|bloomsbury\.com|tor\.com\/(blog\/)?announc|orbitbooks\.net|penguinrandomhouse\.com\/books\/|harpercollins\.com\/products/i.test(
+      blob
+    )
+  ) {
+    // Tillad egentlige anmeldelsessider på samme domæner, hvis tydeligt markeret
+    if (/\breview\b|anmeld|book review|starred/i.test(blob)) return false;
+    return true;
+  }
+  return false;
+}
+
+/** Er kilden gyldig romantasy-evidens (ikke PR/branchestøj)? */
+export function isRomanticEvidenceSource(source) {
+  if (!source?.url && !source?.title) return false;
+  if (isIndustryNoise(source.url, source.title)) return false;
+  if (isPublisherPr(source.url, source.title)) return false;
+  if (["catalog", "official", "publisher", "other"].includes(source.type)) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Behold kun kilde-id'er der findes og tæller som romantasy-evidens.
+ */
+export function filterValidSourceIds(ids, sources = []) {
+  const byId = new Map((sources || []).map((s) => [s.id, s]));
+  const out = [];
+  const seen = new Set();
+  for (const id of ids || []) {
+    if (!id || seen.has(id)) continue;
+    const source = byId.get(id);
+    if (!source || !isRomanticEvidenceSource(source)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+const CONSENSUS_THEME_LABELS = {
+  romancefokus: "Romance-fokus",
+  slowBurn: "Slow burn",
+  spice: "Spice",
+  enemiesToLovers: "Enemies to lovers",
+  friendsToLovers: "Friends to lovers",
+  forcedProximity: "Forced proximity",
+  relationType: "Relationstype",
+  protective: "Beskyttende helt",
+  possessiveness: "Possessivitet",
+  touchHerAndDie: "Touch her and die",
+  rhysandLikeTraits: "Rhysand-træk",
+  politicalIntrigue: "Politiske intriger",
+  warMilitary: "Krig/militær",
+  worldbuilding: "Worldbuilding",
+  magicSystem: "Magisystem",
+  pacing: "Tempo",
+  cliffhangers: "Cliffhangers",
+  emotionalIntensity: "Emotionel intensitet",
+  characterGrowth: "Karakterudvikling",
+  epicPlot: "Episk plot",
+};
+
+export function consensusThemeLabel(theme) {
+  return CONSENSUS_THEME_LABELS[theme] || theme;
+}
+
+/**
+ * Let observationslag (ikke fuld claim engine): ét tema → én observation.
+ */
+export function buildObservations(reviewConsensus = {}) {
+  const observations = [];
+  for (const [theme, val] of Object.entries(reviewConsensus || {})) {
+    if (!val || typeof val !== "object") continue;
+    const statement = String(val.finding || "").trim();
+    if (!statement) continue;
+    const supportingSourceIds = Array.isArray(val.supportingSourceIds)
+      ? val.supportingSourceIds
+      : [];
+    const conflictingSourceIds = Array.isArray(val.conflictingSourceIds)
+      ? val.conflictingSourceIds
+      : [];
+    observations.push({
+      id: `obs-${theme}`,
+      theme,
+      label: consensusThemeLabel(theme),
+      statement,
+      consensus: val.consensus || "insufficient",
+      confidence: val.confidence || "low",
+      supportingSourceIds,
+      conflictingSourceIds,
+      hasConflict: conflictingSourceIds.length > 0,
+    });
+  }
+  return observations;
+}
+
+/**
+ * Samlet evidens-meta til UI/transparens.
+ */
+export function buildEvidenceMeta(research) {
+  const sources = research?.sources || [];
+  const consensus = research?.reviewConsensus || {};
+  const observations = research?.observations || buildObservations(consensus);
+  const conflictThemes = observations
+    .filter((o) => o.hasConflict)
+    .map((o) => o.label);
+  const byBatch = (b) => sources.filter((s) => s.batch === b).length;
+  return {
+    supportingSourceCount: sources.filter(isRomanticEvidenceSource).length,
+    conflictThemeCount: conflictThemes.length,
+    conflictThemes,
+    observationCount: observations.length,
+    batchesIntact: BATCH_IDS.every((b) => byBatch(b) >= 0),
+    batchCounts: {
+      helteprofil: byBatch("helteprofil"),
+      romanceprofil: byBatch("romanceprofil"),
+      plotkarakter: byBatch("plotkarakter"),
+      helhed: byBatch("helhed"),
+    },
+  };
 }
 
 function isPlotOnlyNoise(title, summary) {
@@ -821,6 +964,7 @@ function normalizeFact(f) {
 /**
  * Forum alene må ikke give high confidence.
  * Professional+blog bør bære consensus.
+ * PR/branche-id'er fjernes; konflikter markeres eksplicit.
  */
 export function normalizeConsensus(obj, sources = []) {
   const byId = new Map(sources.map((s) => [s.id, s]));
@@ -842,12 +986,14 @@ export function normalizeConsensus(obj, sources = []) {
       ? val.consensus
       : "insufficient";
 
-    const supporting = Array.isArray(val.supportingSourceIds)
-      ? val.supportingSourceIds
-      : [];
-    const conflicting = Array.isArray(val.conflictingSourceIds)
-      ? val.conflictingSourceIds
-      : [];
+    const supporting = filterValidSourceIds(
+      Array.isArray(val.supportingSourceIds) ? val.supportingSourceIds : [],
+      sources
+    );
+    const conflicting = filterValidSourceIds(
+      Array.isArray(val.conflictingSourceIds) ? val.conflictingSourceIds : [],
+      sources
+    ).filter((id) => !supporting.includes(id));
 
     const supportSources = supporting
       .map((id) => byId.get(id))
@@ -875,12 +1021,27 @@ export function normalizeConsensus(obj, sources = []) {
       confidence = "medium";
     }
 
+    // Synlige konflikter: blandede kilder må ikke fremstå som stærk enighed
+    if (conflicting.length > 0) {
+      consensus = "mixed";
+      if (confidence === "high") confidence = "medium";
+    }
+    if (!supporting.length && !conflicting.length) {
+      if (consensus === "strong" || consensus === "moderate") {
+        consensus = "insufficient";
+      }
+      if (confidence === "high") confidence = "low";
+    }
+
     out[key] = {
       finding: val.finding || "",
       consensus,
       confidence,
       supportingSourceIds: supporting,
       conflictingSourceIds: conflicting,
+      hasConflict: conflicting.length > 0,
+      supportCount: supporting.length,
+      conflictCount: conflicting.length,
     };
   }
   return out;
@@ -888,13 +1049,30 @@ export function normalizeConsensus(obj, sources = []) {
 
 export function normalizeResearch(parsed, identity, usageMeta = {}) {
   const base = emptyResearch(identity);
-  const sources = normalizeSources(parsed.sources);
+  // Hvis kalderen har forberedt batchede kilder, bevar dem (intakte id'er/batches)
+  const sources = Array.isArray(usageMeta.lockedSources)
+    ? usageMeta.lockedSources
+    : normalizeSources(parsed.sources);
   const foundation = summarizeSourceFoundation(sources);
   const reviewLike = foundation.reviewLikeSources;
   const partial =
     Boolean(usageMeta.partial) ||
     sources.length < 6 ||
     reviewLike < 2;
+  const reviewConsensus = normalizeConsensus(parsed.reviewConsensus, sources);
+  const observations = buildObservations(reviewConsensus);
+  const evidence = buildEvidenceMeta({
+    sources,
+    reviewConsensus,
+    observations,
+  });
+
+  const conflictWarning =
+    evidence.conflictThemeCount > 0
+      ? `Kilderne er uenige om: ${evidence.conflictThemes.join(", ")}.`
+      : null;
+
+  const { lockedSources: _locked, ...restUsage } = usageMeta;
 
   return {
     ...base,
@@ -921,23 +1099,26 @@ export function normalizeResearch(parsed, identity, usageMeta = {}) {
     ratings: {
       goodreads: normalizeGoodreads(parsed.ratings?.goodreads),
     },
-    reviewConsensus: normalizeConsensus(parsed.reviewConsensus, sources),
+    reviewConsensus,
+    observations,
     sources,
     researchedAt: new Date().toISOString(),
     meta: {
       ...base.meta,
-      ...usageMeta,
+      ...restUsage,
       researchHash: researchInputHash(identity),
       sourceCount: sources.length,
       foundation,
+      evidence,
       partial,
       warnings: [
-        ...(usageMeta.warnings || []),
+        ...(restUsage.warnings || []),
         ...(partial
           ? [
               "Fandt færre anmeldelser end ønsket — vurderingen bygger på et tyndere udvalg.",
             ]
           : []),
+        ...(conflictWarning ? [conflictWarning] : []),
       ],
     },
   };
@@ -1214,7 +1395,7 @@ Regler:
 4) Kilder er batchet: helteprofil (MMC/relation), romanceprofil (spice/romance),
    plotkarakter (plot/udvikling), helhed (læseoplevelse/serie). Behold sources[].batch.
 5) Formålet er indsigt i romantasy-tropes og læseoplevelse. Branchenyheder/lore tæller ikke.
-6) Forhandlertekst er ikke uafhængig anmeldelse.
+6) Forhandlertekst og forlags-PR er ikke uafhængig anmeldelse — brug dem ALDRIG i supportingSourceIds.
 7) Udled reviewConsensus for Tine-relevante temaer (også fravær):
    romancefokus, slowBurn, spice, enemiesToLovers, friendsToLovers, forcedProximity,
    relationType, protective, possessiveness, touchHerAndDie, rhysandLikeTraits,
@@ -1222,10 +1403,18 @@ Regler:
    emotionalIntensity, characterGrowth, epicPlot.
 8) Hver finding i reviewConsensus skal sige noget konkret om bogen (ikke salgstal/PR).
 9) Behold sources som givet (samme id'er + batch). Opdig ikke nye URL'er.
+10) Når kilder modsiger hinanden: sæt conflictingSourceIds og consensus "mixed".
+11) supportingSourceIds/conflictingSourceIds må KUN bruge id'er fra den medsendte sourceliste.
 
 Returnér KUN JSON med identity, facts, ratings.goodreads, reviewConsensus, sources (samme id'er), researchedAt (ISO).
+reviewConsensus.*.supportingSourceIds / conflictingSourceIds: string[]
 sources.type: professional|blog|forum|goodreads|wikipedia|official|publisher|catalog|other
 sources.batch: helteprofil|romanceprofil|plotkarakter|helhed`;
+}
+
+async function createOpenAIClient(apiKey) {
+  const { default: OpenAI } = await import("openai");
+  return new OpenAI({ apiKey });
 }
 
 async function synthesizeResearch(client, args) {
@@ -1270,7 +1459,7 @@ export async function runWebResearch({ identity, catalog, mofibo }) {
     return { research, usage: research.meta };
   }
 
-  const client = new OpenAI({ apiKey: key });
+  const client = await createOpenAIClient(key);
   try {
     fsWriteClearDebug();
   } catch {}
@@ -1341,6 +1530,7 @@ export async function runWebResearch({ identity, catalog, mofibo }) {
     const partial =
       sources.length < 6 || foundation.reviewLikeSources < 2;
 
+    // Lås batchede kilder — syntesen må ikke blande batches eller smide PR ind igen
     const research = normalizeResearch(synth.parsed, identity, {
       promptVersion: RESEARCH_PROMPT_VERSION,
       model: synth.model,
@@ -1354,14 +1544,8 @@ export async function runWebResearch({ identity, catalog, mofibo }) {
       warnings,
       searchPlan: plan.map((p) => p.id),
       foundation,
+      lockedSources: sources,
     });
-
-    // Bevar vores dedupede kilder hvis syntese fortyndede dem
-    if (research.sources.length < sources.length) {
-      research.sources = sources;
-      research.meta.sourceCount = sources.length;
-      research.meta.foundation = summarizeSourceFoundation(sources);
-    }
 
     if (research.meta.partial && !research.meta.warnings.some((w) => w.includes("tyndere"))) {
       research.meta.warnings.push(

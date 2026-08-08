@@ -208,8 +208,8 @@ Fase 1: Implementeret
 Fase 2: Implementeret
 Fase 3: Implementeret
 Fase 4: Implementeret
-Fase 5: Ikke startet
+Fase 5: Implementeret (research-v14 — evidens-id'er, konflikter, PR-filter, let observationslag)
 Fase 6: Delvist (discovery-teaser allerede forbedret)
 Fase 7: Bevidst udskudt
 
-Næste naturlige skridt: Fase 5 og/eller færdiggøre Fase 6.
+Næste naturlige skridt: Færdiggøre Fase 6 (discovery-transparens).

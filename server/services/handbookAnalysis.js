@@ -780,6 +780,19 @@ function buildAnalysisMeta({
     uncertainty,
     readPriority,
     rhysand: assessments["Rhysand-faktoren"] || null,
+    evidence: research?.meta?.evidence || null,
+    observations: Array.isArray(research?.observations)
+      ? research.observations.map((o) => ({
+          id: o.id,
+          theme: o.theme,
+          label: o.label,
+          statement: o.statement,
+          hasConflict: Boolean(o.hasConflict),
+          supportCount: o.supportingSourceIds?.length || 0,
+          conflictCount: o.conflictingSourceIds?.length || 0,
+          confidence: o.confidence || null,
+        }))
+      : [],
     foundation: {
       goodreads: gr
         ? {

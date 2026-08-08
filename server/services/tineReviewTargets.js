@@ -23,22 +23,26 @@ export function mapIdentityToReviewTarget(identity = {}) {
   const series = String(identity.series || "").trim() || null;
   const isSeries = Boolean(series);
   const seriesName = series || title || null;
-  const sourceBookId = [
-    "identity",
-    normalizePart(seriesName),
-    normalizePart(title),
-    normalizePart(author),
-  ].join("|");
+  const goodreadsUrl = String(identity.goodreadsUrl || "").trim() || null;
+  const sourceBookId = goodreadsUrl
+    ? goodreadsUrl
+    : [
+        "identity",
+        normalizePart(seriesName),
+        normalizePart(title),
+        normalizePart(author),
+      ].join("|");
 
   return {
     sourceBookId,
-    source: "identity",
+    source: identity.source === "piratereads" ? "piratereads" : "identity",
     displayTitle: isSeries ? seriesName : title,
     seriesName,
     firstBookTitle: title || seriesName,
     author,
     isSeries,
     bookNumber: identity.bookNumber ?? null,
+    goodreadsUrl,
     identityConfidence:
       identity.identityConfidence || identity.confidence || null,
     identity: {
@@ -46,6 +50,7 @@ export function mapIdentityToReviewTarget(identity = {}) {
       author,
       series,
       bookNumber: identity.bookNumber ?? null,
+      goodreadsUrl,
       identityConfidence:
         identity.identityConfidence || identity.confidence || null,
     },

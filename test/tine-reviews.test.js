@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import {
   isExcludedReviewBook,
   mapPirateReadsBookForReview,
+  searchPirateReadsForReview,
 } from "../server/services/pirateReads.js";
 import { buildLibraryRowFromReviews } from "../server/services/tineReviews.js";
 import { mapIdentityToReviewTarget } from "../server/services/tineReviewTargets.js";
@@ -32,6 +33,50 @@ describe("Goodreads-hjælpere (stadig brugt af discovery)", () => {
     });
     assert.equal(book.seriesName, "The Empyrean");
     assert.equal(book.firstBookTitle, "Iron Flame");
+  });
+
+  it("finder serie via Goodreads-søgning på serienavn", () => {
+    const result = searchPirateReadsForReview(
+      [
+        {
+          book_title: "Iron Flame (The Empyrean, #2)",
+          book_author: "Rebecca Yarros",
+          shelf: "read",
+          book_link: "https://www.goodreads.com/book/show/90202302",
+        },
+        {
+          book_title: "Fourth Wing (The Empyrean, #1)",
+          book_author: "Rebecca Yarros",
+          shelf: "read",
+          book_link: "https://www.goodreads.com/book/show/1",
+        },
+      ],
+      { query: "The Empyrean" }
+    );
+    assert.equal(result?.status, "identified");
+    assert.equal(result.identity.series, "The Empyrean");
+    assert.equal(result.identity.author, "Rebecca Yarros");
+  });
+
+  it("finder forfatter-hits på Goodreads som valgmuligheder", () => {
+    const result = searchPirateReadsForReview(
+      [
+        {
+          book_title: "Mist's Edge (The Broken Lands, #2)",
+          book_author: "T.A. White",
+          shelf: "read",
+        },
+        {
+          book_title: "Pathfinder's Way (The Broken Lands, #1)",
+          book_author: "T.A. White",
+          shelf: "read",
+        },
+      ],
+      { author: "T.A. White" }
+    );
+    assert.equal(result?.status, "ambiguous");
+    assert.equal(result.candidates.length, 1);
+    assert.equal(result.candidates[0].series, "The Broken Lands");
   });
 });
 

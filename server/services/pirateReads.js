@@ -1,9 +1,10 @@
 /**
  * PirateReads (Goodreads-hylder via api.piratereads.com).
- * Bruges til at filtrere discovery-kandidater fra Tines læste / TBR / læser-nu.
+ * Bruges til discovery-filter og anmeldelsessøgning.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dataPath, getDataDir } from "./paths.js";
+import { authorMatch, titleSimilarity } from "./identify.js";
 
 const DATA_DIR = getDataDir();
 const CACHE_PATH = dataPath("piratereads-cache.json");
@@ -274,4 +275,145 @@ export function filterAgainstPirateReads(candidates, index) {
     else kept.push(c);
   }
   return { kept, removed, removedCount: removed.length };
+}
+
+function bookNumberFromTitle(bookTitle) {
+  const m = String(bookTitle || "").match(/#\s*(\d+(?:\.\d+)?)\s*\)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+
+function toReviewCandidate(book, extras = {}) {
+  const { bare, series } = splitGoodreadsTitle(book.book_title);
+  const author = String(book.book_author || "").trim() || null;
+  const bookNumber = bookNumberFromTitle(book.book_title);
+  return {
+    title: bare || String(book.book_title || "").trim() || null,
+    author,
+    series: series || null,
+    bookNumber,
+    year: null,
+    source: extras.source || "Goodreads",
+    identityConfidence: extras.identityConfidence || "high",
+    goodreadsUrl: book.book_link || null,
+    shelf: book.shelf || null,
+  };
+}
+
+function toReviewIdentity(book) {
+  const c = toReviewCandidate(book);
+  return {
+    title: c.title,
+    author: c.author,
+    series: c.series,
+    bookNumber: c.bookNumber,
+    identityConfidence: "high",
+    goodreadsUrl: c.goodreadsUrl,
+    source: "piratereads",
+  };
+}
+
+/**
+ * Søg i Tines Goodreads-hylder (via PirateReads) efter bog/serie/forfatter.
+ * Matcher serienavne i parentes — det OL/Google Books ofte mangler.
+ */
+export function searchPirateReadsForReview(
+  books,
+  { query = "", author = "" } = {}
+) {
+  const q = String(query || "").trim();
+  const authorHint = String(author || "").trim();
+  if (!q && !authorHint) return null;
+
+  const authorOnly = !q && Boolean(authorHint);
+  const scored = [];
+
+  for (const book of books || []) {
+    if (isExcludedReviewBook(book)) continue;
+    const { bare, series } = splitGoodreadsTitle(book.book_title);
+    const rowAuthor = String(book.book_author || "").trim();
+    const seriesScore = q && series ? titleSimilarity(series, q) : 0;
+    const titleScore = q ? titleSimilarity(bare || book.book_title, q) : 0;
+    const fullScore = q ? titleSimilarity(book.book_title, q) : 0;
+    const a = authorMatch(rowAuthor, authorHint || null);
+    let score;
+    if (authorOnly) {
+      score = a.score;
+      if (!a.matched) score = 0;
+    } else {
+      const bestText = Math.max(seriesScore, titleScore, fullScore);
+      score =
+        bestText * (authorHint ? 0.6 : 0.85) +
+        a.score * (authorHint ? 0.4 : 0.15);
+      if (seriesScore >= 0.7) score = Math.max(score, 0.88 + a.score * 0.1);
+      if (authorHint && !a.matched && bestText < 0.95) score *= 0.3;
+    }
+    // Læste bøger først — det er dem anmeldelser typisk handler om
+    if (book.shelf === "read") score += 0.03;
+    if (score >= (authorOnly ? 0.75 : 0.55)) {
+      scored.push({ book, score, seriesScore, titleScore });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  if (!scored.length) return null;
+
+  // Dedup: én kandidat pr. serie (eller pr. bogtitel hvis standalone)
+  const seen = new Set();
+  const unique = [];
+  for (const row of scored) {
+    const { bare, series } = splitGoodreadsTitle(row.book.book_title);
+    const key = series
+      ? `series|${normalizeBookKey(series)}|${normalizeBookKey(row.book.book_author)}`
+      : `book|${normalizeBookKey(bare)}|${normalizeBookKey(row.book.book_author)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(row);
+  }
+
+  const asCandidate = (row) => toReviewCandidate(row.book);
+
+  if (authorOnly) {
+    return {
+      status: "ambiguous",
+      candidates: unique.slice(0, 8).map(asCandidate),
+      userMessage:
+        "Flere bøger/serier på Tines Goodreads. Vælg den rigtige.",
+    };
+  }
+
+  const top = unique[0];
+  if (top.seriesScore >= 0.7) {
+    return {
+      status: "identified",
+      identity: toReviewIdentity(top.book),
+      candidates: unique.slice(0, 5).map(asCandidate),
+    };
+  }
+
+  const rivals = unique.filter(
+    (x, i) =>
+      i > 0 &&
+      x.score >= 0.7 &&
+      Math.abs(x.score - top.score) < 0.12
+  );
+  if (rivals.length || (authorOnly === false && unique.length > 1 && top.score < 0.85)) {
+    // Ved usikkerhed: lad brugeren vælge blandt Goodreads-hits
+    if (rivals.length || top.score < 0.8) {
+      return {
+        status: "ambiguous",
+        candidates: unique.slice(0, 6).map(asCandidate),
+        userMessage: "Flere Goodreads-bøger matcher. Vælg den rigtige.",
+      };
+    }
+  }
+
+  if (top.score >= 0.7) {
+    return {
+      status: "identified",
+      identity: toReviewIdentity(top.book),
+      candidates: unique.slice(0, 5).map(asCandidate),
+    };
+  }
+
+  return null;
 }

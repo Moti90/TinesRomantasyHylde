@@ -37,6 +37,7 @@ import {
   isExcludedReviewBook,
   loadPirateReadsLibrary,
   mapPirateReadsBookForReview,
+  searchPirateReadsForReview,
 } from "./services/pirateReads.js";
 import { identifyBook } from "./services/identify.js";
 import {
@@ -172,6 +173,8 @@ app.post("/api/tine-review-identify", async (req, res) => {
           author: selectedIdentity.author || author || null,
           series: selectedIdentity.series || null,
           bookNumber: selectedIdentity.bookNumber ?? null,
+          goodreadsUrl: selectedIdentity.goodreadsUrl || null,
+          source: selectedIdentity.source || null,
           identityConfidence:
             selectedIdentity.identityConfidence ||
             selectedIdentity.confidence ||
@@ -180,13 +183,44 @@ app.post("/api/tine-review-identify", async (req, res) => {
         candidates: [],
       };
     } else {
-      // Lokalt bibliotek først — serienavne er ofte bedre her end i katalogerne
+      // 1) Goodreads (PirateReads) — samme hylder som før, bedst til anmeldelser
+      let goodreads = null;
+      try {
+        const library = await loadPirateReadsLibrary();
+        goodreads = searchPirateReadsForReview(library.books, { query, author });
+      } catch (err) {
+        console.warn("tine-review-identify: Goodreads-søgning fejlede:", err.message);
+      }
+
+      // 2) Lokalt bibliotek
       const local = matchLocalLibrary({ query, author });
-      if (local?.status === "ambiguous") {
+
+      if (goodreads?.status === "identified") {
+        identityResult = goodreads;
+      } else if (goodreads?.status === "ambiguous") {
+        const seen = new Set();
+        const merged = [];
+        for (const c of [
+          ...(goodreads.candidates || []),
+          ...(local?.candidates || []),
+        ]) {
+          const key = `${String(c.series || c.title || "").toLowerCase()}|${String(
+            c.author || ""
+          ).toLowerCase()}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(c);
+        }
+        identityResult = {
+          ...goodreads,
+          candidates: merged.slice(0, 8),
+        };
+      } else if (local?.status === "ambiguous") {
         identityResult = local;
       } else if (local?.status === "identified" && local.identity?.series) {
         identityResult = local;
       } else {
+        // 3) Open Library / Google Books som fallback
         identityResult = await identifyBook({ query, author });
         if (
           identityResult.status === "not_found" &&
@@ -202,11 +236,15 @@ app.post("/api/tine-review-identify", async (req, res) => {
           identityResult.status === "ambiguous" &&
           local?.candidates?.length
         ) {
-          // Bland lokale seriehits ind først
           const seen = new Set();
           const merged = [];
-          for (const c of [...(local.candidates || []), ...identityResult.candidates]) {
-            const key = `${String(c.series || c.title || "").toLowerCase()}|${String(c.author || "").toLowerCase()}`;
+          for (const c of [
+            ...(local.candidates || []),
+            ...identityResult.candidates,
+          ]) {
+            const key = `${String(c.series || c.title || "").toLowerCase()}|${String(
+              c.author || ""
+            ).toLowerCase()}`;
             if (seen.has(key)) continue;
             seen.add(key);
             merged.push(c);
