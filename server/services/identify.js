@@ -251,18 +251,75 @@ function chooseSeriesName(candidates, queryTitle) {
   return (queryMatch || best).name;
 }
 
+/**
+ * Når kataloget mangler series-felt, men flere titler tydeligt hører til
+ * samme franchise (fx "Harry Potter and the …"), udled serienavn fra søgningen.
+ */
+export function inferSeriesFromQueryCluster(candidates, queryTitle) {
+  const qRaw = String(queryTitle || "").trim();
+  const q = norm(qRaw);
+  if (!q || q.length < 3 || !Array.isArray(candidates) || !candidates.length) {
+    return null;
+  }
+
+  const membership = (c) => {
+    const t = norm(c?.title);
+    const s = norm(c?.series);
+    if (s && (s === q || titleSimilarity(c.series, qRaw) >= 0.85)) return "series";
+    if (!t) return null;
+    if (t === q) return "exact";
+    if (
+      t.startsWith(`${q} and `) ||
+      t.startsWith(`${q} & `) ||
+      t.startsWith(`${q}:`) ||
+      t.startsWith(`${q} - `) ||
+      t.startsWith(`${q} – `) ||
+      t.startsWith(`${q} — `)
+    ) {
+      return "prefix";
+    }
+    return null;
+  };
+
+  const members = candidates.filter((c) => membership(c));
+  if (!members.length) return null;
+
+  const explicit = members.find((c) => membership(c) === "series");
+  if (explicit?.series) return String(explicit.series).trim();
+
+  const prefixOrExact = members.filter((c) => {
+    const m = membership(c);
+    return m === "prefix" || m === "exact";
+  });
+  // Mindst én "Harry Potter and the …" (+ evt. omnibus "Harry Potter")
+  const hasPrefix = prefixOrExact.some((c) => membership(c) === "prefix");
+  const hasExact = prefixOrExact.some((c) => membership(c) === "exact");
+  if (hasPrefix && (prefixOrExact.length >= 2 || hasExact)) {
+    const exactHit = prefixOrExact.find((c) => membership(c) === "exact");
+    return String(exactHit?.title || qRaw).trim();
+  }
+  return null;
+}
+
 function buildIdentityFromCandidates(unique, queryTitle, parsedAuthor, authorOnly) {
   const top = unique[0];
-  const seriesName = chooseSeriesName(unique.slice(0, 8), queryTitle);
+  const seriesName =
+    chooseSeriesName(unique.slice(0, 8), queryTitle) ||
+    inferSeriesFromQueryCluster(unique.slice(0, 12), queryTitle);
   const seriesMatched =
     Boolean(seriesName) &&
     (titleSimilarity(seriesName, queryTitle) >= 0.7 ||
-      unique.some((c) => c._seriesMatched && norm(c.series) === norm(seriesName)));
+      unique.some((c) => c._seriesMatched && norm(c.series) === norm(seriesName)) ||
+      Boolean(inferSeriesFromQueryCluster(unique.slice(0, 12), queryTitle)));
 
   // Serienavn-søgning eller tydelig serie i topresultater → serie-identitet
   if (seriesName && (seriesMatched || (!authorOnly && seriesName && top.series))) {
     const seriesBooks = unique.filter(
-      (c) => c.series && norm(c.series) === norm(seriesName)
+      (c) =>
+        (c.series && norm(c.series) === norm(seriesName)) ||
+        norm(c.title) === norm(seriesName) ||
+        norm(c.title).startsWith(`${norm(seriesName)} and `) ||
+        norm(c.title).startsWith(`${norm(seriesName)} & `)
     );
     const seed = seriesBooks[0] || top;
     return {

@@ -328,7 +328,17 @@ export function searchPirateReadsForReview(
   const scored = [];
 
   for (const book of books || []) {
-    if (isExcludedReviewBook(book)) continue;
+    // Udeluk HP-lignende støj på hylderne — men hvis brugeren eksplicit søger
+    // efter dem, skal serien stadig kunne findes (parentes-serienavn).
+    if (isExcludedReviewBook(book)) {
+      const { bare, series } = splitGoodreadsTitle(book.book_title);
+      const targetsQuery =
+        q &&
+        [book.book_title, bare, series].some(
+          (value) => titleSimilarity(value, q) >= 0.7
+        );
+      if (!targetsQuery) continue;
+    }
     const { bare, series } = splitGoodreadsTitle(book.book_title);
     const rowAuthor = String(book.book_author || "").trim();
     const seriesScore = q && series ? titleSimilarity(series, q) : 0;

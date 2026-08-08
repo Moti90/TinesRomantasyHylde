@@ -39,7 +39,7 @@ import {
   mapPirateReadsBookForReview,
   searchPirateReadsForReview,
 } from "./services/pirateReads.js";
-import { identifyBook } from "./services/identify.js";
+import { identifyBook, titleSimilarity } from "./services/identify.js";
 import {
   enrichIdentityWithLocalSeries,
   mapIdentityToReviewTarget,
@@ -196,7 +196,43 @@ app.post("/api/tine-review-identify", async (req, res) => {
       const local = matchLocalLibrary({ query, author });
 
       if (goodreads?.status === "identified") {
-        identityResult = goodreads;
+        // Goodreads kan ramme én bog uden series-felt — berig/foretræk serie
+        // når lokalt bibliotek eller titel-klynge peger på en serie.
+        let identity = enrichIdentityWithLocalSeries({
+          ...goodreads.identity,
+          source: goodreads.identity?.source || "piratereads",
+        });
+        if (
+          !identity.series &&
+          local?.status === "identified" &&
+          local.identity?.series
+        ) {
+          identity = {
+            ...identity,
+            series: local.identity.series,
+            author: identity.author || local.identity.author,
+          };
+        }
+        // Tydeligt lokalt serienavn-hit vinder over en standalone Goodreads-bog
+        if (
+          local?.status === "identified" &&
+          local.identity?.series &&
+          titleSimilarity(local.identity.series, query) >= 0.75 &&
+          (!identity.series ||
+            titleSimilarity(identity.series, query) <
+              titleSimilarity(local.identity.series, query))
+        ) {
+          identityResult = {
+            status: "identified",
+            identity: local.identity,
+            candidates: local.candidates || goodreads.candidates || [],
+          };
+        } else {
+          identityResult = {
+            ...goodreads,
+            identity,
+          };
+        }
       } else if (goodreads?.status === "ambiguous") {
         const seen = new Set();
         const merged = [];
