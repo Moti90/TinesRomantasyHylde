@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tines Romantasy Hylde</title>
+    <title>Tines Romantasy Liste</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/layout.css" />
     <link rel="stylesheet" href="/css/components.css" />
-    <link rel="stylesheet" href="/css/redesign.css" />
   </head>
   <body>
     <div class="atmosphere" aria-hidden="true"></div>
@@ -41,47 +40,21 @@
     <!-- ========== FORSIDE ========== -->
     <div id="view-home" class="app-view is-active" data-view-panel="home">
       <header class="home-hero reveal">
-        <div class="home-hero-inner">
-          <div class="brand-mark">
-            <span class="flourish" aria-hidden="true">❧</span>
-            <p class="eyebrow">Romantasy efter din smag</p>
-            <span class="flourish" aria-hidden="true">❧</span>
-          </div>
-          <div class="home-title-stack" aria-label="Tines Romantasy Hylde">
-            <p class="title-line">TINES</p>
-            <p class="title-line">ROMANTASY HYLDE</p>
-          </div>
-          <p class="lede home-lede">
-            Din personlige samling af romantasy-bøger, analyseret efter din smag.
-          </p>
-          <div class="home-cta">
-            <button type="button" class="btn primary" id="goto-discovery">
-              Kør søgning
-            </button>
-            <button type="button" class="btn ghost" id="goto-library">
-              Åbn bibliotek
-            </button>
-          </div>
-          <div class="home-stats" id="home-stats" aria-label="Samlingsoversigt">
-            <div class="home-stat">
-              <span class="home-stat-value" id="stat-series">–</span>
-              <span class="home-stat-label">Serier</span>
-            </div>
-            <div class="home-stat">
-              <span class="home-stat-value" id="stat-analyzed">–</span>
-              <span class="home-stat-label">Analyseret</span>
-            </div>
-            <div class="home-stat">
-              <span class="home-stat-value" id="stat-rated">–</span>
-              <span class="home-stat-label">Vurderet af Tine</span>
-            </div>
-            <div class="home-stat">
-              <span class="home-stat-value" id="stat-discovery">–</span>
-              <span class="home-stat-label">Nye forslag</span>
-            </div>
-          </div>
-          <p id="health-line-home" class="health"></p>
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Romantasy efter din smag</p>
+          <span class="flourish" aria-hidden="true">❧</span>
         </div>
+        <h1>Tines Romantasy Liste</h1>
+        <p class="lede home-lede">
+          Sorter serier efter match — ikke efter popularitet.
+        </p>
+        <div class="home-cta">
+          <button type="button" class="btn primary" id="goto-library">
+            Åbn bibliotek
+          </button>
+        </div>
+        <p id="health-line-home" class="health"></p>
       </header>
     </div>
 
@@ -190,28 +163,26 @@
         </div>
       </div>
 
-      <header class="site-header library-page-header reveal">
-        <p class="page-kicker">Samling</p>
-        <h1 class="library-title">BIBLIOTEK</h1>
-        <p class="lede">
-          Et elegant overblik over dine serier — sorteret efter match, ikke
-          popularitet.
-        </p>
+      <header class="site-header reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Bibliotek</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1 class="library-title">Din bogliste</h1>
+        <p class="lede">Søg, tilføj og score serier.</p>
         <p id="health-line" class="health"></p>
+        <div class="header-rule" aria-hidden="true"></div>
       </header>
 
       <main class="shell">
         <section class="panel list-panel reveal delay-1">
-          <div class="library-toolbar">
-            <label class="library-search">
-              <span class="visually-hidden">Søg i biblioteket</span>
-              <input
-                id="library-filter"
-                type="search"
-                placeholder="Søg serie eller forfatter…"
-                autocomplete="off"
-              />
-            </label>
+          <div class="panel-ornament" aria-hidden="true"></div>
+          <div class="list-head">
+            <div>
+              <p class="panel-kicker">Bibliotek</p>
+              <h2>Serier</h2>
+            </div>
             <p id="list-count" class="hint list-count"></p>
           </div>
           <div class="table-wrap">
@@ -221,8 +192,7 @@
                   <th>Status</th>
                   <th>Serie</th>
                   <th>Forfatter</th>
-                  <th>Match</th>
-                  <th>Læs nu</th>
+                  <th>Match / læs nu</th>
                   <th>Rhysand</th>
                   <th>Mofibo</th>
                   <th>Tempo</th>
@@ -232,23 +202,9 @@
               <tbody id="series-body"></tbody>
             </table>
           </div>
-          <div class="library-pagination" id="library-pagination" hidden>
-            <p class="hint" id="library-page-label"></p>
-            <div class="actions">
-              <button type="button" class="btn ghost" id="library-prev">
-                Forrige
-              </button>
-              <button type="button" class="btn ghost" id="library-next">
-                Næste
-              </button>
-            </div>
-          </div>
         </section>
 
         <aside id="detail" class="panel detail-panel hidden">
-          <button type="button" class="btn ghost detail-back" id="close-detail">
-            ← Tilbage til bibliotek
-          </button>
           <div class="detail-top-actions">
             <button type="button" class="btn ghost" id="reanalyze-detail">
               Genanalysér
@@ -264,98 +220,72 @@
             <button type="button" class="linkish danger" id="delete-detail">
               Slet serie
             </button>
+            <button type="button" class="close-detail" id="close-detail">
+              Luk
+            </button>
           </div>
           <p id="reanalyze-status" class="status-msg" role="status"></p>
-
-          <div class="detail-layout">
-            <div class="detail-main">
-              <div class="detail-summary">
-                <div
-                  class="cover-placeholder"
-                  id="detail-cover"
-                  aria-hidden="true"
-                ></div>
-                <div class="detail-summary-text">
-                  <p class="panel-kicker">Serieprofil</p>
-                  <h2 id="detail-title"></h2>
-                  <p id="detail-meta" class="hint detail-meta"></p>
-                </div>
-                <div id="detail-tine" class="detail-gauges tine-hero"></div>
-              </div>
-
-              <div class="detail-quick-meta" id="detail-quick-meta"></div>
-
-              <nav class="detail-tabs" aria-label="Serieindhold">
-                <button type="button" class="detail-tab is-active" data-detail-tab="scores">
-                  Scorer
-                </button>
-                <button type="button" class="detail-tab" data-detail-tab="analyse">
-                  Analyse
-                </button>
-                <button type="button" class="detail-tab" data-detail-tab="why">
-                  Begrundelser
-                </button>
-                <button type="button" class="detail-tab" data-detail-tab="foundation">
-                  Grundlag
-                </button>
-              </nav>
-
-              <div class="detail-tab-panel" data-detail-panel="scores">
-                <div id="detail-scores" class="score-bars score-groups"></div>
-              </div>
-              <div class="detail-tab-panel" data-detail-panel="analyse" hidden>
-                <div id="detail-facts" class="facts-grid"></div>
-              </div>
-              <div class="detail-tab-panel" data-detail-panel="why" hidden>
-                <div id="detail-why" class="detail-extras"></div>
-              </div>
-              <div class="detail-tab-panel" data-detail-panel="foundation" hidden>
-                <div id="detail-foundation" class="detail-extras"></div>
-              </div>
+          <div class="detail-hero">
+            <div>
+              <p class="panel-kicker">Serieprofil</p>
+              <h2 id="detail-title"></h2>
+              <p id="detail-meta" class="hint detail-meta"></p>
             </div>
-
-            <aside class="detail-sidebar own-assessment" aria-label="Tines egen vurdering">
-              <h3>Tines egen vurdering</h3>
-              <p class="hint">Kun du udfylder dette.</p>
-              <p class="own-score-display" id="own-score-display">–</p>
-              <label class="own-score-label">
-                Din score (0–100)
-                <input
-                  id="own-score"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  placeholder="Fx 92"
-                />
-              </label>
-              <label>
-                Note (valgfri)
-                <textarea
-                  id="own-assessment"
-                  rows="4"
-                  placeholder="Fx: Elskede worldbuilding, men tempoet var for langsomt…"
-                ></textarea>
-              </label>
-              <div class="actions">
-                <button type="button" class="btn primary" id="save-own-assessment">
-                  Gem vurdering
-                </button>
-              </div>
-              <p id="own-assessment-msg" class="status-msg" role="status"></p>
-            </aside>
+            <div id="detail-tine" class="tine-hero"></div>
           </div>
+          <h3 class="detail-section-title">Scorer</h3>
+          <div id="detail-scores" class="score-bars"></div>
+          <div id="detail-why" class="detail-extras"></div>
+          <h3 class="detail-section-title">Tines egen vurdering</h3>
+          <div class="own-assessment">
+            <p class="hint">
+              Kun dig — AI udfylder ikke disse felter. Din score hjælper
+              programmet med at ramme din smag bedre næste gang.
+            </p>
+            <label class="own-score-label">
+              Din score (0–100)
+              <input
+                id="own-score"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="Fx 92"
+              />
+            </label>
+            <label>
+              Note (valgfri)
+              <textarea
+                id="own-assessment"
+                rows="4"
+                placeholder="Fx: Elskede worldbuilding, men tempoet var for langsomt…"
+              ></textarea>
+            </label>
+            <div class="actions">
+              <button type="button" class="btn primary" id="save-own-assessment">
+                Gem min vurdering
+              </button>
+            </div>
+            <p id="own-assessment-msg" class="status-msg" role="status"></p>
+          </div>
+          <h3 class="detail-section-title">Fakta & noter</h3>
+          <div id="detail-facts" class="facts-grid"></div>
         </aside>
       </main>
     </div>
 
     <!-- ========== OPDAG NYE (discovery) ========== -->
     <div id="view-discovery" class="app-view" data-view-panel="discovery" hidden>
-      <header class="site-header discovery-header library-page-header reveal">
-        <p class="page-kicker">Recommendation</p>
-        <h1 class="library-title">OPDAG NYE</h1>
+      <header class="site-header discovery-header reveal">
+        <div class="brand-mark">
+          <span class="flourish" aria-hidden="true">❧</span>
+          <p class="eyebrow">Discovery</p>
+          <span class="flourish" aria-hidden="true">❧</span>
+        </div>
+        <h1 class="library-title">Opdag nye</h1>
         <p class="lede">
-          Bøger fundet til dig baseret på dine præferencer og Goodreads-hylder.
+          Inspiration filtreret mod Tines Goodreads-hylder. Hver teaser viser
+          bekræftet match, usikkerhed, risiko og hvor belægget er fundet.
         </p>
         <div class="discovery-toolbar">
           <button type="button" class="btn primary" id="discovery-run">
@@ -364,6 +294,7 @@
           <p id="discovery-meta" class="hint discovery-meta"></p>
         </div>
         <p id="discovery-status" class="status-msg" role="status"></p>
+        <div class="header-rule" aria-hidden="true"></div>
       </header>
 
       <main class="shell discovery-shell">

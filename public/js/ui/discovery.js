@@ -49,111 +49,44 @@ export function renderDiscoveryList(candidates, { onTeaser, onIgnore } = {}) {
   list.innerHTML = rows
     .map((c, i) => {
       const signals = (c.matchedSignals || [])
-        .slice(0, 6)
-        .map((s) => {
-          const label =
-            typeof s === "string" ? s : s?.signal || s?.label || "";
-          return label
-            ? `<span class="signal-tag">${escapeHtml(label)}</span>`
-            : "";
-        })
-        .filter(Boolean)
+        .map((s) => `<span class="signal-tag">${escapeHtml(s)}</span>`)
         .join("");
+      const score = c.discoveryScore ?? 1;
       const hasTeaser = Boolean(c.teaser?.blurb);
-      const basis = c.teaser?.evidenceBasis || "";
-      const evidenceUi = {
-        kildebaseret: {
-          label: "Høj evidens",
-          tone: "kildebaseret",
-          note: "Meget lovende kandidat",
-        },
-        delvist: {
-          label: "Moderat evidens",
-          tone: "delvist",
-          note: "Lovende — tjek teaseren",
-        },
-        tyndt: {
-          label: "Begrænset evidens",
-          tone: "tyndt",
-          note: "Tyndt kildegrundlag",
-        },
-      }[basis] || {
-        label: "Kandidat til analyse",
-        tone: "unknown",
-        note: hasTeaser ? "Teaser klar" : "Åbn teaser for mere",
-      };
-
-      const refs = (c.teaser?.references || [])
-        .map((r) => r?.name)
-        .filter(Boolean)
-        .slice(0, 4);
-      const foundFromSources = (c.sources || [])
-        .map((s) => s?.signal || s?.context)
-        .filter(Boolean)
-        .slice(0, 3);
-      const foundBits = refs.length
-        ? refs
-        : foundFromSources.length
-          ? foundFromSources
-          : (c.teaser?.foundIn || []).slice(0, 3);
-      const foundHtml = foundBits.length
-        ? `<p class="discovery-found">Fundet fordi${
-            refs.length ? " Tine kunne lide" : ""
-          }: ${foundBits
-            .map((x) => `<span class="badge">${escapeHtml(x)}</span>`)
-            .join(" ")}</p>`
-        : "";
-
-      const coverLabel = String(c.title || "?").slice(0, 36);
-
+      const evidenceLabel =
+        c.teaser?.evidenceLabel ||
+        ({
+          kildebaseret: "Kildebaseret",
+          delvist: "Delvist bekræftet",
+          tyndt: "Tyndt kildegrundlag",
+        }[c.teaser?.evidenceBasis] || "");
       return `
-      <li class="discovery-card ui-card" data-idx="${i}">
-        <div class="cover-placeholder" aria-hidden="true">${escapeHtml(
-          coverLabel
-        )}</div>
+      <li class="discovery-card" data-idx="${i}">
         <div class="discovery-card-main">
-          <h3 class="discovery-title">${escapeHtml(c.title)}</h3>
-          <p class="discovery-author">${escapeHtml(
-            c.author || "Ukendt forfatter"
-          )}</p>
-          ${foundHtml}
+          <div class="discovery-card-title-row">
+            <h3 class="discovery-title">${escapeHtml(c.title)}</h3>
+            <span class="discovery-score" title="Antal matchende søgninger">${score}×</span>
+          </div>
+          <p class="discovery-author">${escapeHtml(c.author || "Ukendt forfatter")}</p>
           ${
-            signals
-              ? `<p class="discovery-match-line">Matcher især:</p><div class="signal-tags">${signals}</div>`
+            evidenceLabel
+              ? `<p class="discovery-evidence-pill">${escapeHtml(evidenceLabel)}</p>`
               : ""
           }
           ${
             c.searchUrl
-              ? `<p class="discovery-links"><a class="discovery-search" href="${escapeHtml(
-                  c.searchUrl
-                )}" target="_blank" rel="noopener noreferrer">Søg på Google</a></p>`
+              ? `<p class="discovery-links"><a class="discovery-search" href="${escapeHtml(c.searchUrl)}" target="_blank" rel="noopener noreferrer">Søg på Google</a></p>`
               : ""
           }
+          <div class="signal-tags">${signals || `<span class="hint">Ingen signal-tags</span>`}</div>
         </div>
-        <div class="discovery-card-aside">
-          <div>
-            <span class="evidence-badge ${evidenceUi.tone}">
-              <span class="status-dot ${
-                basis === "kildebaseret"
-                  ? "is-analyzed"
-                  : basis === "delvist"
-                    ? "is-pending"
-                    : ""
-              }"></span>
-              ${escapeHtml(evidenceUi.label)}
-            </span>
-            <p class="discovery-candidate-label">${escapeHtml(
-              evidenceUi.note
-            )}</p>
-          </div>
-          <div class="discovery-card-actions">
-            <button type="button" class="btn primary discovery-teaser" data-idx="${i}">
-              ${hasTeaser ? "Vis teaser" : "Vis teaser"}
-            </button>
-            <button type="button" class="btn ghost discovery-ignore" data-idx="${i}">
-              Ignorér
-            </button>
-          </div>
+        <div class="discovery-card-actions">
+          <button type="button" class="btn primary discovery-teaser" data-idx="${i}">
+            ${hasTeaser ? "Vis teaser" : "Kort teaser"}
+          </button>
+          <button type="button" class="btn ghost discovery-ignore" data-idx="${i}">
+            Ignorér
+          </button>
         </div>
       </li>`;
     })
