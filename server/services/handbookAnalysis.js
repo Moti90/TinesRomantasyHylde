@@ -1,5 +1,4 @@
 import { readFileSync } from "fs";
-import OpenAI from "openai";
 import { COLUMNS, emptySeries } from "./columns.js";
 import { getOpenAIKey } from "./config.js";
 import { getCalibrationAnchors } from "./calibration.js";
@@ -19,6 +18,15 @@ import {
   calculateReadPriority,
   estimateTineScoreFromVibes,
 } from "./decisionScores.js";
+import {
+  normalizeAssessment,
+  applyConsensusFallbacks,
+  applyExplicitSourceRatings,
+  attachPhenomenonEvidence,
+  fillIdentifiedGaps,
+  extractExplicitSourceRatings,
+  findPhenomenonSourceIds,
+} from "./evidenceMapping.js";
 
 const handbook = readFileSync(dataPath("handbook.md"), "utf8");
 
@@ -49,166 +57,6 @@ function factValue(fact) {
   return fact.value ?? null;
 }
 
-const FIELD_TO_BATCH = {
-  "Beskyttende helt(e) (0-5)": "helteprofil",
-  "Bodyguard-vibe (0-5)": "helteprofil",
-  "Touch her and die-vibe (0-5)": "helteprofil",
-  "Rhysand-faktoren": "helteprofil",
-  "Spice/erotik (0-5)": "romanceprofil",
-  "Spice/erotik kvalitet (0-5)": "romanceprofil",
-  "Romance i fokus (0-100%)": "romanceprofil",
-  "Worldbuilding (0-5)": "plotkarakter",
-  "Episk plot (0-5)": "plotkarakter",
-  "Politiske intriger (0-5)": "plotkarakter",
-  "Krig/militær (0-5)": "plotkarakter",
-  "Kvindelig udvikling (0-5)": "plotkarakter",
-  "Karakterudvikling (0-5)": "plotkarakter",
-  "Book hangover (0-5)": "helhed",
-  "Hvor hurtigt griber den? (0-100%)": "helhed",
-};
-
-function batchCountsFromResearch(research) {
-  const counts = { helteprofil: 0, romanceprofil: 0, plotkarakter: 0, helhed: 0 };
-  for (const s of research?.sources || []) {
-    if (counts[s.batch] != null) counts[s.batch] += 1;
-  }
-  return counts;
-}
-
-function normalizeAssessment(a, fieldKey = null, research = null) {
-  const defaultBatch = fieldKey ? FIELD_TO_BATCH[fieldKey] || null : null;
-  const batches = batchCountsFromResearch(research);
-  const identityConfidence =
-    research?.identity?.confidence ||
-    research?.identity?.identityConfidence ||
-    "low";
-  const sourceBatch =
-    ["helteprofil", "romanceprofil", "plotkarakter", "helhed"].includes(
-      a?.sourceBatch
-    )
-      ? a.sourceBatch
-      : defaultBatch;
-  const sourceCount =
-    typeof a?.sourceCount === "number"
-      ? a.sourceCount
-      : sourceBatch
-        ? batches[sourceBatch] || 0
-        : 0;
-
-  if (!a || typeof a !== "object") {
-    return {
-      score: null,
-      confidence: "low",
-      basis: "insufficient",
-      reason: "Ikke verificeret",
-      sourceBatch: defaultBatch,
-      sourceCount: defaultBatch ? batches[defaultBatch] || 0 : 0,
-      evidenceSourceIds: [],
-      conflictingSourceIds: [],
-    };
-  }
-
-  let score = a.score;
-  if (score === "" || score === undefined) score = null;
-  if (typeof score === "string" && score.trim() !== "") {
-    const m = score.match(/(\d+(?:\.\d+)?)/);
-    score = m ? Number(m[1]) : null;
-  }
-  if (typeof score === "number" && Number.isNaN(score)) score = null;
-
-  let confidence = ["high", "medium", "low"].includes(a.confidence)
-    ? a.confidence
-    : "low";
-  let basis = [
-    "source_consensus",
-    "mixed_sources",
-    "synopsis_only",
-    "ai_inference",
-    "insufficient",
-  ].includes(a.basis)
-    ? a.basis
-    : score != null
-      ? "ai_inference"
-      : "insufficient";
-
-  const evidence = Array.isArray(a.evidenceSourceIds)
-    ? a.evidenceSourceIds
-    : [];
-  if (evidence.length <= 1 && confidence === "high") {
-    confidence = "medium";
-  }
-  if (basis === "ai_inference" && confidence === "high") {
-    confidence = "medium";
-  }
-  const allowsModelInference =
-    score != null &&
-    ["ai_inference", "synopsis_only"].includes(basis) &&
-    ["high", "medium"].includes(identityConfidence);
-  if (sourceBatch && sourceCount === 0) {
-    if (allowsModelInference) {
-      confidence = "low";
-    } else {
-      score = null;
-      confidence = "low";
-      basis = "insufficient";
-    }
-  } else if (sourceBatch && sourceCount < 2 && confidence === "high") {
-    confidence = "low";
-  } else if (sourceBatch && sourceCount < 2 && confidence === "medium") {
-    confidence = "low";
-  }
-
-  if (basis === "insufficient" && score == null) {
-    return {
-      score: null,
-      confidence: "low",
-      basis,
-      reason:
-        a.reason ||
-        (sourceBatch && sourceCount === 0
-          ? `Ikke verificeret — ingen kilder i batch "${sourceBatch}".`
-          : "Ikke nok information"),
-      sourceBatch,
-      sourceCount,
-      evidenceSourceIds: evidence,
-      conflictingSourceIds: Array.isArray(a.conflictingSourceIds)
-        ? a.conflictingSourceIds
-        : [],
-    };
-  }
-  if (basis === "insufficient" && score != null) {
-    basis = "ai_inference";
-    if (confidence === "high") confidence = "medium";
-  }
-
-  let reason = String(a.reason || "").slice(0, 500);
-  if (sourceBatch && sourceCount === 0 && allowsModelInference) {
-    const prefix =
-      basis === "synopsis_only"
-        ? "Vurderet ud fra bogbeskrivelsen"
-        : "Vurderet ud fra modelviden";
-    if (!reason.toLowerCase().startsWith(prefix.toLowerCase())) {
-      reason = reason
-        ? `${prefix}: ${reason}`
-        : `${prefix} uden direkte kildebelæg.`;
-    }
-  }
-
-  return {
-    score,
-    confidence,
-    basis,
-    reason,
-    sourceBatch,
-    sourceCount,
-    evidenceSourceIds: evidence,
-    conflictingSourceIds: Array.isArray(a.conflictingSourceIds)
-      ? a.conflictingSourceIds
-      : [],
-    traitsFound: Array.isArray(a.traitsFound) ? a.traitsFound : undefined,
-  };
-}
-
 function sanitizeCatalogForPrompt(catalog) {
   if (!catalog || typeof catalog !== "object") return catalog;
   const {
@@ -232,212 +80,6 @@ function sanitizeCatalogForPrompt(catalog) {
       note: "Disse er IKKE Goodreads. Sæt aldrig Goodreads-score ud fra dem.",
     },
   };
-}
-
-function consensusScoreHint(consensusEntry) {
-  if (!consensusEntry) return null;
-  const c = consensusEntry.consensus;
-  if (c === "strong") return 5;
-  if (c === "moderate") return 4;
-  if (c === "weak") return 2;
-  if (c === "mixed") return 3;
-  if (c === "insufficient") return null;
-  return null;
-}
-
-/** Map research.reviewConsensus → handbook-felter når AI glemmer dem. */
-const CONSENSUS_FIELD_MAP = {
-  worldbuilding: "Worldbuilding (0-5)",
-  politicalIntrigue: "Politiske intriger (0-5)",
-  warMilitary: "Krig/militær (0-5)",
-  protective: "Beskyttende helt(e) (0-5)",
-  touchHerAndDie: "Touch her and die-vibe (0-5)",
-  spice: "Spice/erotik (0-5)",
-  pacing: null, // Tempo er tekstfelt
-  romanceFocus: "Romance i fokus (0-100%)",
-};
-
-function applyConsensusFallbacks(assessments, research) {
-  const cons = research?.reviewConsensus || {};
-  for (const [ck, field] of Object.entries(CONSENSUS_FIELD_MAP)) {
-    if (!field) continue;
-    const current = assessments[field];
-    if (current?.score != null) continue;
-    const hint = consensusScoreHint(cons[ck]);
-    if (hint == null) continue;
-    const isPct = field.includes("0-100");
-    assessments[field] = {
-      score: isPct ? Math.round((hint / 5) * 100) : hint,
-      confidence: cons[ck].confidence === "high" ? "medium" : "low",
-      basis: "source_consensus",
-      reason: cons[ck].finding || "Baseret på research-konsensus.",
-      evidenceSourceIds: cons[ck].supportingSourceIds || [],
-      conflictingSourceIds: cons[ck].conflictingSourceIds || [],
-    };
-  }
-  return assessments;
-}
-
-/**
- * Udled eksplicitte X/5-ratings fra kilde-titel/summary.
- * Flere kilder → gennemsnit (afrundet), ikke "højeste vinder".
- */
-export function extractExplicitSourceRatings(research) {
-  const sources = research?.sources || [];
-  const collected = {};
-
-  const rules = [
-    {
-      field: "Worldbuilding (0-5)",
-      re: /world[\s-]?buildings?\b[^0-9]{0,50}?(\d(?:[.,]\d)?)\s*(?:\/\s*5|out of 5|stars?|stjerner)?/i,
-    },
-    {
-      field: "Karakterudvikling (0-5)",
-      re: /character\s*developments?\b[^0-9]{0,50}?(\d(?:[.,]\d)?)\s*(?:\/\s*5|out of 5|stars?|stjerner)?/i,
-    },
-    {
-      field: "Episk plot (0-5)",
-      re: /plot\s*(?:&|and)?\s*pacings?\b[^0-9]{0,50}?(\d(?:[.,]\d)?)\s*(?:\/\s*5|stars?)?/i,
-    },
-    {
-      field: "Spice/erotik (0-5)",
-      re: /(?:spice(?:\s*(?:level|rating))?|between the sheets|chili\s*peppers?)\b[^0-9]{0,40}?(\d(?:[.,]\d)?)\s*(?:\/\s*5|chili|🌶)?/i,
-    },
-    {
-      field: "Kvindelig udvikling (0-5)",
-      re: /(?:female\s*character|heroine)\s*developments?\b[^0-9]{0,40}?(\d(?:[.,]\d)?)/i,
-    },
-  ];
-
-  for (const s of sources) {
-    const blob = `${s.title || ""} ${s.summary || ""}`;
-    const id = s.id || null;
-    for (const rule of rules) {
-      const m = blob.match(rule.re);
-      if (!m?.[1]) continue;
-      const raw = Number(String(m[1]).replace(",", "."));
-      if (Number.isNaN(raw) || raw < 0 || raw > 5) continue;
-      if (!collected[rule.field]) collected[rule.field] = [];
-      collected[rule.field].push({
-        raw,
-        id,
-        title: String(s.title || s.url || "kilde").slice(0, 60),
-      });
-    }
-  }
-
-  const out = {};
-  for (const [field, hits] of Object.entries(collected)) {
-    if (!hits.length) continue;
-    const avg = hits.reduce((s, h) => s + h.raw, 0) / hits.length;
-    const score = Math.max(0, Math.min(5, Math.round(avg)));
-    const min = Math.min(...hits.map((h) => h.raw));
-    const max = Math.max(...hits.map((h) => h.raw));
-    const spread = max - min;
-    let confidence = "low";
-    if (hits.length >= 2 && spread <= 1) confidence = "medium";
-    if (hits.length >= 3 && spread <= 1) confidence = "high";
-    if (hits.length >= 2 && spread > 2) confidence = "low";
-
-    const ids = [...new Set(hits.map((h) => h.id).filter(Boolean))];
-    const sample = hits
-      .map((h) => `${h.raw}`)
-      .slice(0, 5)
-      .join(", ");
-    out[field] = {
-      score,
-      raw: avg,
-      confidence,
-      basis: spread > 2 ? "mixed_sources" : "source_consensus",
-      reason:
-        hits.length === 1
-          ? `Eksplicit rating i kilde (${hits[0].raw}/5 → ${score}): ${hits[0].title}`
-          : `Gennemsnit af ${hits.length} eksplicitte ratings [${sample}] → ${avg.toFixed(1)} ≈ ${score}.`,
-      evidenceSourceIds: ids,
-      conflictingSourceIds: spread > 2 ? ids.slice(1) : [],
-      sourceCount: hits.length,
-    };
-  }
-  return out;
-}
-
-function isWeakInference(a) {
-  if (!a || a.score == null) return true;
-  if (a.basis === "insufficient") return true;
-  if (a.basis !== "ai_inference") return false;
-  return /serieidentitet|tilgængelig research|ai_inference|sat lavt frem for tomt|estimeret ud fra/i.test(
-    String(a.reason || "")
-  );
-}
-
-/**
- * Foretræk eksplicitte kilde-ratings frem for svag ai_inference / tomme felter.
- */
-function applyExplicitSourceRatings(assessments, research) {
-  const extracted = extractExplicitSourceRatings(research);
-  for (const [field, hit] of Object.entries(extracted)) {
-    if (!isWeakInference(assessments[field])) continue;
-    const batch = FIELD_TO_BATCH[field] || null;
-    assessments[field] = {
-      score: hit.score,
-      confidence: hit.confidence,
-      basis: "source_consensus",
-      reason: hit.reason,
-      sourceBatch: batch,
-      sourceCount: hit.sourceCount,
-      evidenceSourceIds: hit.evidenceSourceIds || [],
-      conflictingSourceIds: [],
-    };
-  }
-  return assessments;
-}
-
-/**
- * Udfyld tomme felter uden at gætte midter-scores.
- * Tom batch → insufficient. Batch med kilder men ingen score → insufficient
- * (ikke auto-3).
- */
-function fillIdentifiedGaps(assessments, research) {
-  const conf = research?.identity?.confidence || "low";
-  const known = conf === "high" || conf === "medium";
-  if (!known) return assessments;
-  const batches = batchCountsFromResearch(research);
-
-  for (const key of SUBJECTIVE_KEYS) {
-    const a = assessments[key];
-    if (a?.score != null) continue;
-
-    const batch = FIELD_TO_BATCH[key];
-    const n = batch ? batches[batch] || 0 : 0;
-
-    if (batch && n === 0) {
-      assessments[key] = {
-        score: null,
-        confidence: "low",
-        basis: "insufficient",
-        reason: `Ikke verificeret — ingen kilder i batch "${batch}".`,
-        sourceBatch: batch,
-        sourceCount: 0,
-        evidenceSourceIds: [],
-        conflictingSourceIds: [],
-      };
-      continue;
-    }
-
-    assessments[key] = {
-      score: null,
-      confidence: "low",
-      basis: "insufficient",
-      reason: batch
-        ? `Ikke verificeret — ${n} kilde(r) i batch "${batch}", men ingen beskriver dette fænomen (heller ikke med andre ord).`
-        : "Ikke nok information",
-      sourceBatch: batch || null,
-      sourceCount: n,
-      evidenceSourceIds: [],
-      conflictingSourceIds: [],
-    };
-  }
-  return assessments;
 }
 
 function isStubTineScore(predicted) {
@@ -511,12 +153,17 @@ SKEL MELLEM FAKTA OG SUBJEKTIVE VURDERINGER:
 - Hvis identiteten er low, eller du reelt ikke har et meningsfuldt grundlag, brug score null, basis "insufficient" og forklar hvorfor.
 - Sæt ALDRIG en standard-midt (fx 3) uden en konkret begrundelse. Gæt ikke "typisk romantasy".
 
-Når du scorer et subjektivt felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.
-Hvis en batch har færre end 2 kilder: hold confidence på low.
+Når du scorer et subjektivt felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score, basis "source_consensus", evidenceSourceIds med kilde-id'erne, og confidence "medium" ved 1–2 fænomen-kilder (high kun ved 3+ og stærk enighed).
+Synonym-eksempler (beskrivelse = belæg):
+- Touch her and die: "would kill for her", "goes feral", "hurt her and die", "dræbe for hende"
+- Bodyguard: "keeps her safe", "guards her", "watching over her", "bodyguard"
+- Beskyttende: "protective MMC", "guardian", "beskytter hende"
+- Rhysand: "respects her agency", "supports her power", "equal partner", "morally grey but loyal"
+Hvis en batch har færre end 2 kilder MEN mindst én kilde beskriver fænomenet: confidence medium er OK. Uden fænomen-belæg: hold confidence på low.
 For hvert assessment: inkluder "sourceBatch" og "sourceCount". reason skal nævne konkret kilde når muligt.
 
 Når batch HAR belæg: udfyld scores (0 = fraværende, ikke "ved ikke").
-basis "source_consensus" når scoren bygger på anmeldelser; "ai_inference" kun hvis du må bruge generel seriekendskab OG reason siger præcist hvad.
+basis "source_consensus" når scoren bygger på anmeldelser eller fænomen-beskrivelser; "ai_inference" kun hvis du må bruge generel seriekendskab OG reason siger præcist hvad.
 Skeln serier: kopiér aldrig tal fra én serie til den næste.
 
 A) FAKTA — kun fra research.facts / ratings.goodreads. Ellers null / not_verified.
@@ -684,9 +331,11 @@ function assessmentsToRow(
   }
   applyConsensusFallbacks(assessments, research);
   applyExplicitSourceRatings(assessments, research);
+  attachPhenomenonEvidence(assessments, research);
   fillIdentifiedGaps(assessments, research);
 
   for (const key of SUBJECTIVE_KEYS) {
+    assessments[key] = normalizeAssessment(assessments[key], key, research);
     const score = assessments[key].score;
     if (score != null) row[key] = score;
     else row[key] = null;
@@ -879,6 +528,7 @@ export async function runHandbookAnalysis({
     return { reused: false, row, meta, analysisHash, fallback: true };
   }
 
+  const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey: key });
   const prompt = buildAnalysisPrompt({ research, catalog, mofibo, query });
 
@@ -892,7 +542,7 @@ export async function runHandbookAnalysis({
         {
           role: "system",
           content:
-            "Du er en deterministisk håndbogs-analytiker. Samme input → samme JSON. Ingen web search. Svar kun med ét JSON-objekt. Sæt aldrig Goodreads fra Open Library eller Google Books. Når du scorer et felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score baseret på din bedste vurdering af det beskrevne. Markér KUN 'Ikke verificeret' hvis INGEN af kilderne overhovedet nævner eller beskriver det pågældende fænomen. Vær pragmatisk – en kilde der siger 'han ville dræbe for hende' er belæg for touch-her-and-die, selvom frasen ikke bruges eksplicit.",
+            "Du er en deterministisk håndbogs-analytiker. Samme input → samme JSON. Ingen web search. Svar kun med ét JSON-objekt. Sæt aldrig Goodreads fra Open Library eller Google Books. Når du scorer et felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (også med andre ord), så sæt score, basis source_consensus, evidenceSourceIds og typisk confidence medium. Markér KUN insufficient hvis INGEN kilder beskriver fænomenet. Eksempel: 'han ville dræbe for hende' = belæg for touch-her-and-die.",
         },
         { role: "user", content: prompt },
       ],
@@ -988,4 +638,7 @@ export {
   estimateTineScoreFromVibes,
   normalizeAssessment,
   applyResearchFacts,
+  findPhenomenonSourceIds,
+  attachPhenomenonEvidence,
+  extractExplicitSourceRatings,
 };

@@ -10,10 +10,8 @@ import {
   normalizeResearch,
   emptyResearch,
 } from "../server/services/webResearch.js";
-import {
-  normalizeAssessment,
-  applyResearchFacts,
-} from "../server/services/handbookAnalysis.js";
+import { normalizeAssessment } from "../server/services/evidenceMapping.js";
+import { applyResearchFacts } from "../server/services/handbookAnalysis.js";
 import { migrateRow, migrateSeriesList } from "../server/services/migrate.js";
 import {
   researchInputHash,

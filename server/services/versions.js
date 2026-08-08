@@ -1,7 +1,7 @@
 /** Fastlåste versioner til cache/stabilitet — bump kun ved bevidste promptændringer. */
 export const HANDBOOK_VERSION = "handbook-v3";
 export const RESEARCH_PROMPT_VERSION = "research-v14";
-export const ANALYSIS_PROMPT_VERSION = "analysis-v13";
+export const ANALYSIS_PROMPT_VERSION = "analysis-v14";
 export const SEARCH_PLAN_VERSION = "batch-v5";
 export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
 
