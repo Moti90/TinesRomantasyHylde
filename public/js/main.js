@@ -273,10 +273,31 @@ async function saveOwnAssessment() {
   }
 }
 
+function updateHomeStats(discoveryCount = null) {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  };
+  const total = series.length;
+  const analyzed = series.filter((row) => {
+    const m = row.Indholdsmatch ?? row["Tine-score"] ?? row["Tines score"];
+    return m != null && m !== "";
+  }).length;
+  const favorites = series.filter((row) => {
+    const m = Number(row.Indholdsmatch ?? row["Tine-score"] ?? 0);
+    return m >= 90;
+  }).length;
+  set("stat-series", total);
+  set("stat-analyzed", analyzed);
+  set("stat-favorites", favorites);
+  if (discoveryCount != null) set("stat-discovery", discoveryCount);
+}
+
 async function refresh() {
   const data = await getSeries();
   series = data.series || [];
   paintList();
+  updateHomeStats();
   if (activeReviewTarget) renderActiveTineReview();
 }
 
@@ -1009,6 +1030,7 @@ function setView(view) {
     if (active) btn.setAttribute("aria-current", "page");
     else btn.removeAttribute("aria-current");
   });
+  document.body.classList.toggle("is-home-view", view === "home");
   if (view !== "library") closeMenus();
   if (view === "discovery") {
     loadDiscovery().catch((err) =>
@@ -1029,8 +1051,8 @@ function setupViews() {
   document.querySelectorAll(".app-nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => setView(btn.dataset.view));
   });
-  document.getElementById("goto-library")?.addEventListener("click", () => {
-    setView("library");
+  document.getElementById("goto-discovery")?.addEventListener("click", () => {
+    setView("discovery");
   });
   let start = "home";
   try {
@@ -1057,11 +1079,13 @@ async function loadDiscovery({ keepStatus = false } = {}) {
     pirateReads: data.pirateReads,
     readingProfile: data.readingProfile,
   });
-  renderDiscoveryList(data.candidates || [], {
+  const candidates = data.candidates || [];
+  updateHomeStats(candidates.length);
+  renderDiscoveryList(candidates, {
     onTeaser: showDiscoveredTeaser,
     onIgnore: ignoreDiscoveredBook,
   });
-  if (!keepStatus && !(data.candidates || []).length) {
+  if (!keepStatus && !candidates.length) {
     setDiscoveryStatus("");
   }
 }
@@ -1130,20 +1154,19 @@ async function init() {
       ? "Klar til analyse"
       : "Analyse ikke klar endnu";
     const healthEl = document.getElementById("health-line");
-    const healthHome = document.getElementById("health-line-home");
     if (healthEl) healthEl.textContent = text;
-    if (healthHome) healthHome.textContent = text;
   } catch {
     const fail = "Serveren svarer ikke endnu";
     const healthEl = document.getElementById("health-line");
-    const healthHome = document.getElementById("health-line-home");
     if (healthEl) healthEl.textContent = fail;
-    if (healthHome) healthHome.textContent = fail;
   }
 
   setupCornerMenus();
   await refresh();
   await loadTineReviews();
+  getDiscoveryList(false)
+    .then((data) => updateHomeStats((data.candidates || []).length))
+    .catch(() => {});
 
   document.getElementById("close-detail").addEventListener("click", () => {
     renderDetail(null);

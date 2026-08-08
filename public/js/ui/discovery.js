@@ -49,40 +49,62 @@ export function renderDiscoveryList(candidates, { onTeaser, onIgnore } = {}) {
   list.innerHTML = rows
     .map((c, i) => {
       const signals = (c.matchedSignals || [])
+        .slice(0, 4)
         .map((s) => `<span class="signal-tag">${escapeHtml(s)}</span>`)
         .join("");
-      const score = c.discoveryScore ?? 1;
       const hasTeaser = Boolean(c.teaser?.blurb);
       const evidenceLabel =
         c.teaser?.evidenceLabel ||
         ({
-          kildebaseret: "Kildebaseret",
-          delvist: "Delvist bekræftet",
-          tyndt: "Tyndt kildegrundlag",
-        }[c.teaser?.evidenceBasis] || "");
+          kildebaseret: "Høj evidens",
+          delvist: "Delvis evidens",
+          tyndt: "Tynd evidens",
+        }[c.teaser?.evidenceBasis] ||
+          (Number(c.discoveryScore) >= 3 ? "Høj evidens" : ""));
+      const foundBits = (c.teaser?.foundIn || c.matchedSignals || [])
+        .slice(0, 2)
+        .map((x) => escapeHtml(x))
+        .join(", ");
+      const coverLabel = escapeHtml(String(c.title || "?").slice(0, 28));
+      const coverUrl = c.coverUrl ? escapeHtml(c.coverUrl) : "";
+      const coverHtml = coverUrl
+        ? `<div class="cover-frame">
+            <img src="${coverUrl}" alt="" loading="lazy" decoding="async"
+              onerror="this.parentElement.classList.add('is-fallback'); this.remove();" />
+            <span class="cover-fallback">${coverLabel}</span>
+          </div>`
+        : `<div class="cover-frame is-fallback" aria-hidden="true">
+            <span class="cover-fallback">${coverLabel}</span>
+          </div>`;
       return `
       <li class="discovery-card" data-idx="${i}">
+        ${coverHtml}
         <div class="discovery-card-main">
-          <div class="discovery-card-title-row">
-            <h3 class="discovery-title">${escapeHtml(c.title)}</h3>
-            <span class="discovery-score" title="Antal matchende søgninger">${score}×</span>
-          </div>
-          <p class="discovery-author">${escapeHtml(c.author || "Ukendt forfatter")}</p>
+          <h3 class="discovery-title">${escapeHtml(c.title)}</h3>
+          <p class="discovery-author">${escapeHtml(
+            c.author || "Ukendt forfatter"
+          )}</p>
           ${
             evidenceLabel
-              ? `<p class="discovery-evidence-pill">${escapeHtml(evidenceLabel)}</p>`
+              ? `<p class="discovery-evidence-pill">${escapeHtml(
+                  evidenceLabel
+                )}</p>`
               : ""
           }
           ${
-            c.searchUrl
-              ? `<p class="discovery-links"><a class="discovery-search" href="${escapeHtml(c.searchUrl)}" target="_blank" rel="noopener noreferrer">Søg på Google</a></p>`
+            foundBits
+              ? `<p class="discovery-found">Fundet fordi: ${foundBits}</p>`
               : ""
           }
-          <div class="signal-tags">${signals || `<span class="hint">Ingen signal-tags</span>`}</div>
+          ${
+            signals
+              ? `<p class="discovery-match-line">Matcher især:</p><div class="signal-tags">${signals}</div>`
+              : ""
+          }
         </div>
         <div class="discovery-card-actions">
           <button type="button" class="btn primary discovery-teaser" data-idx="${i}">
-            ${hasTeaser ? "Vis teaser" : "Kort teaser"}
+            ${hasTeaser ? "Vis teaser" : "Vis teaser"}
           </button>
           <button type="button" class="btn ghost discovery-ignore" data-idx="${i}">
             Ignorér

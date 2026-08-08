@@ -6,8 +6,25 @@ import {
   ignoreDiscovered,
   generateTeaser,
 } from "../services/discovery.js";
+import { lookupCoverUrl } from "../services/covers.js";
 
 const router = Router();
+
+/** GET /api/discover/cover?title=&author= */
+router.get("/cover", async (req, res) => {
+  try {
+    const title = String(req.query.title || "").trim();
+    const author = String(req.query.author || "").trim() || null;
+    if (!title) {
+      return res.status(400).json({ error: "Titel mangler" });
+    }
+    const coverUrl = await lookupCoverUrl(title, author);
+    res.json({ ok: true, coverUrl });
+  } catch (err) {
+    console.error("[discover/cover]", err);
+    res.status(500).json({ error: err.message || "Cover-opslag fejlede" });
+  }
+});
 
 /** GET /api/discover/list?includeAdded=true */
 router.get("/list", async (_req, res) => {

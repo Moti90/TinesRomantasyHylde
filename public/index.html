@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tines Romantasy Liste</title>
+    <title>Tines Romantasy Hylde</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,8 +13,9 @@
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/layout.css" />
     <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="/css/mockup.css" />
   </head>
-  <body>
+  <body class="is-home-view">
     <div class="atmosphere" aria-hidden="true"></div>
 
     <nav class="app-nav" aria-label="Hovednavigation">
@@ -45,16 +46,33 @@
           <p class="eyebrow">Romantasy efter din smag</p>
           <span class="flourish" aria-hidden="true">❧</span>
         </div>
-        <h1>Tines Romantasy Liste</h1>
+        <h1>Tines Romantasy Hylde</h1>
         <p class="lede home-lede">
-          Sorter serier efter match — ikke efter popularitet.
+          Din personlige samling af romantasy-bøger, analyseret efter din smag.
         </p>
         <div class="home-cta">
-          <button type="button" class="btn primary" id="goto-library">
-            Åbn bibliotek
+          <button type="button" class="btn primary" id="goto-discovery">
+            Kør søgning
           </button>
         </div>
-        <p id="health-line-home" class="health"></p>
+        <div class="home-stats" aria-label="Hurtige tal">
+          <div class="home-stat">
+            <span class="home-stat-value" id="stat-series">–</span>
+            <span class="home-stat-label">Serier i bibliotek</span>
+          </div>
+          <div class="home-stat">
+            <span class="home-stat-value" id="stat-analyzed">–</span>
+            <span class="home-stat-label">Analyseret</span>
+          </div>
+          <div class="home-stat">
+            <span class="home-stat-value" id="stat-favorites">–</span>
+            <span class="home-stat-label">Favoritter</span>
+          </div>
+          <div class="home-stat">
+            <span class="home-stat-value" id="stat-discovery">–</span>
+            <span class="home-stat-label">Nye forslag</span>
+          </div>
+        </div>
       </header>
     </div>
 
@@ -226,7 +244,10 @@
           </div>
           <p id="reanalyze-status" class="status-msg" role="status"></p>
           <div class="detail-hero">
-            <div>
+            <div id="detail-cover" class="cover-frame is-fallback" aria-hidden="true">
+              <span class="cover-fallback">Cover</span>
+            </div>
+            <div class="detail-hero-text">
               <p class="panel-kicker">Serieprofil</p>
               <h2 id="detail-title"></h2>
               <p id="detail-meta" class="hint detail-meta"></p>

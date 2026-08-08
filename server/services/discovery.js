@@ -40,6 +40,7 @@ import {
   finalizeTeaser,
   isTeaserCacheFresh,
 } from "./teaserTransparency.js";
+import { enrichWithCovers } from "./covers.js";
 
 const DATA_DIR = getDataDir();
 const DISCOVERED_PATH = dataPath("discovered.json");
@@ -848,6 +849,34 @@ export async function listDiscovered({
   list = [...list]
     .map(enrichCandidate)
     .sort((a, b) => b.discoveryScore - a.discoveryScore);
+
+  try {
+    const beforeCovers = list.map((c) => c.coverUrl || null);
+    const { list: withCovers, updated } = await enrichWithCovers(list, {
+      concurrency: 4,
+    });
+    list = withCovers;
+    if (updated > 0) {
+      // Persistér coverUrl tilbage på gemte kandidater
+      const stored = loadDiscovered();
+      let dirty = false;
+      for (const c of list) {
+        if (!c?.coverUrl) continue;
+        const idx = findCandidateIndex(stored.candidates, c.title, c.author);
+        if (idx >= 0 && !stored.candidates[idx].coverUrl) {
+          stored.candidates[idx].coverUrl = c.coverUrl;
+          dirty = true;
+        }
+      }
+      if (dirty) saveDiscovered(stored);
+    } else {
+      // no-op: beforeCovers kept for clarity / future debug
+      void beforeCovers;
+    }
+  } catch (err) {
+    console.warn("[discovery/list] Covers:", err.message);
+  }
+
   return {
     lastRun: data.lastRun,
     candidates: list,

@@ -120,15 +120,15 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
           <div class="decision-score-cell">
             <span class="decision-score-compact">
               <small>Match</small>
-              <span class="score-pill ${scoreClass(contentMatch)}">${escapeHtml(
+              <span class="score-circle ${scoreClass(contentMatch)}">${escapeHtml(
                 String(contentMatch ?? "–")
               )}</span>
             </span>
             <span class="decision-score-compact">
-              <small>Nu</small>
-              <span class="score-pill ${scoreClass(readPriority)}">${escapeHtml(
-                String(readPriority ?? "–")
-              )}</span>
+              <small>Læs nu</small>
+              <span class="score-circle is-muted ${scoreClass(
+                readPriority
+              )}">${escapeHtml(String(readPriority ?? "–"))}</span>
             </span>
           </div>
         </td>
@@ -171,6 +171,29 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   });
 }
 
+function setDetailCover(seriesName, author, firstBook) {
+  const cover = document.getElementById("detail-cover");
+  if (!cover) return;
+  const label = String(seriesName || "Cover").slice(0, 36);
+  cover.classList.add("is-fallback");
+  cover.innerHTML = `<span class="cover-fallback">${escapeHtml(label)}</span>`;
+  const title = String(firstBook || seriesName || "").trim();
+  if (!title) return;
+  const q = new URLSearchParams({ title });
+  if (author) q.set("author", String(author));
+  fetch(`/api/discover/cover?${q.toString()}`)
+    .then((r) => r.json())
+    .then((data) => {
+      if (!data?.coverUrl) return;
+      cover.classList.remove("is-fallback");
+      cover.innerHTML = `
+        <img src="${escapeAttr(data.coverUrl)}" alt="" loading="lazy" decoding="async"
+          onerror="this.parentElement.classList.add('is-fallback'); this.remove();" />
+        <span class="cover-fallback">${escapeHtml(label)}</span>`;
+    })
+    .catch(() => {});
+}
+
 export function renderDetail(row) {
   const panel = document.getElementById("detail");
   const title = document.getElementById("detail-title");
@@ -194,6 +217,11 @@ export function renderDetail(row) {
     row["Første bog/titel"] || ""
   )}${originBadge(row)}`;
   panel.dataset.seriesName = row["Seriens navn"] || "";
+  setDetailCover(
+    row["Seriens navn"],
+    row.Forfatter,
+    row["Første bog/titel"]
+  );
   if (own) own.value = row["Tines egen vurdering"] || "";
   if (ownScore) {
     ownScore.value =
