@@ -18,7 +18,8 @@ describe("Fase 3 og 4 i brugerfladen", () => {
       new URL("../public/js/ui/list.js", import.meta.url),
       "utf8"
     );
-    assert.match(html, /Match \/ læs nu/);
+    assert.match(html, /<th>Match<\/th>/);
+    assert.match(html, /<th>Læs nu<\/th>/);
     assert.match(listSource, /Indholdsmatch/);
     assert.match(listSource, /Læseprioritet nu/);
     assert.match(listSource, /analysegrundlag/);

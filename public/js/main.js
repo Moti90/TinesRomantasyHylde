@@ -17,7 +17,7 @@ import {
   ignoreDiscovered,
   fetchDiscoveryTeaser,
 } from "./api.js";
-import { renderList, renderDetail } from "./ui/list.js";
+import { renderList, renderDetail, resetListPage } from "./ui/list.js";
 import {
   renderDiscoveryList,
   setDiscoveryMeta,
@@ -224,12 +224,55 @@ async function onDelete(name) {
   }
 }
 
+function getLibraryFilter() {
+  return String(document.getElementById("library-filter")?.value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function filteredSeries() {
+  const q = getLibraryFilter();
+  if (!q) return series;
+  return series.filter((row) => {
+    const blob = [
+      row["Seriens navn"],
+      row.Forfatter,
+      row["Første bog/titel"],
+    ]
+      .join(" ")
+      .toLowerCase();
+    return blob.includes(q);
+  });
+}
+
+function updateHomeStats(discoveryCount = null) {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value == null ? "–" : String(value);
+  };
+  set("stat-series", series.length);
+  set(
+    "stat-analyzed",
+    series.filter(
+      (r) =>
+        r._analysisMeta || r.Indholdsmatch != null || r["Tine-score"] != null
+    ).length
+  );
+  set(
+    "stat-rated",
+    series.filter((r) => r["Tines score"] != null && r["Tines score"] !== "")
+      .length
+  );
+  if (discoveryCount != null) set("stat-discovery", discoveryCount);
+}
+
 function paintList() {
-  renderList(series, {
+  renderList(filteredSeries(), {
     onOpen: (row) => renderDetail(row),
     onStatusChange,
     onDelete,
   });
+  updateHomeStats();
 }
 
 async function saveOwnAssessment() {
@@ -1032,6 +1075,20 @@ function setupViews() {
   document.getElementById("goto-library")?.addEventListener("click", () => {
     setView("library");
   });
+  document.getElementById("goto-discovery")?.addEventListener("click", () => {
+    setView("discovery");
+  });
+  document.getElementById("library-filter")?.addEventListener("input", () => {
+    resetListPage();
+    paintList();
+  });
+  document.addEventListener("library:pager", () => paintList());
+  document.getElementById("own-score")?.addEventListener("input", (e) => {
+    const display = document.getElementById("own-score-display");
+    if (!display) return;
+    const v = String(e.target.value || "").trim();
+    display.textContent = v === "" ? "–" : `${v}/100`;
+  });
   let start = "home";
   try {
     const saved = sessionStorage.getItem("trl-view");
@@ -1057,11 +1114,13 @@ async function loadDiscovery({ keepStatus = false } = {}) {
     pirateReads: data.pirateReads,
     readingProfile: data.readingProfile,
   });
-  renderDiscoveryList(data.candidates || [], {
+  const candidates = data.candidates || [];
+  renderDiscoveryList(candidates, {
     onTeaser: showDiscoveredTeaser,
     onIgnore: ignoreDiscoveredBook,
   });
-  if (!keepStatus && !(data.candidates || []).length) {
+  updateHomeStats(candidates.length);
+  if (!keepStatus && !candidates.length) {
     setDiscoveryStatus("");
   }
 }

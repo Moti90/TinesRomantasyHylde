@@ -7,9 +7,9 @@
   background:
     linear-gradient(
       180deg,
-      rgba(12, 6, 18, 0.42) 0%,
-      rgba(12, 6, 18, 0.28) 35%,
-      rgba(12, 6, 18, 0.55) 100%
+      rgba(12, 6, 18, 0.55) 0%,
+      rgba(12, 6, 18, 0.38) 35%,
+      rgba(12, 6, 18, 0.68) 100%
     ),
     url("/img/romantasy-bg.png") center / cover no-repeat;
 }
@@ -202,9 +202,9 @@
 }
 
 .site-header {
-  width: 100%;
+  width: min(100%, var(--content-max));
   margin: 0 auto;
-  padding: 5.5rem 2rem 1.4rem;
+  padding: 5.5rem var(--content-pad) 1.4rem;
   text-align: center;
 }
 
@@ -264,9 +264,9 @@
 }
 
 .shell {
-  width: 100%;
+  width: min(100%, var(--content-max));
   margin: 0 auto;
-  padding: 0 2rem 4rem;
+  padding: 0 var(--content-pad) 4rem;
   display: grid;
   gap: 1.4rem;
   grid-template-columns: 1fr;

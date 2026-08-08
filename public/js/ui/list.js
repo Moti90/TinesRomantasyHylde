@@ -28,6 +28,39 @@ const SCORE_PCT = [
   "Romance i fokus (0-100%)",
 ];
 
+const SCORE_GROUPS = [
+  {
+    title: "Romance",
+    keys: [
+      "Romance i fokus (0-100%)",
+      "Rhysand-faktoren",
+      "Beskyttende helt(e) (0-5)",
+      "Touch her and die-vibe (0-5)",
+      "Spice/erotik (0-5)",
+      "Spice/erotik kvalitet (0-5)",
+    ],
+  },
+  {
+    title: "Story",
+    keys: [
+      "Episk plot (0-5)",
+      "Worldbuilding (0-5)",
+      "Politiske intriger (0-5)",
+      "Krig/militær (0-5)",
+      "Hvor hurtigt griber den? (0-100%)",
+    ],
+  },
+  {
+    title: "Characters",
+    keys: [
+      "Karakterudvikling (0-5)",
+      "Kvindelig udvikling (0-5)",
+      "Book hangover (0-5)",
+      "Bodyguard-vibe (0-5)",
+    ],
+  },
+];
+
 const HERO_SKIP = new Set([
   "Tine-score",
   "Indholdsmatch",
@@ -93,21 +126,81 @@ function originBadge(row) {
   return `<span class="origin-badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
+const PAGE_SIZE = 20;
+let listPage = 0;
+
+function isAnalyzed(row) {
+  return Boolean(
+    row?._analysisMeta ||
+      row?.Indholdsmatch != null ||
+      row?.["Tine-score"] != null
+  );
+}
+
+function scoreCircle(value, kind) {
+  if (value == null || value === "") {
+    return `<span class="score-circle empty" title="${kind}">–</span>`;
+  }
+  return `<span class="score-circle ${kind}" title="${kind}">${escapeHtml(
+    String(value)
+  )}</span>`;
+}
+
+function crownIcon() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4 4 5-7 5 7 4-4v11H3V8z"/></svg>`;
+}
+
 export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   const body = document.getElementById("series-body");
   const count = document.getElementById("list-count");
-  count.textContent = `${series.length} serier`;
+  const pager = document.getElementById("library-pagination");
+  const pageLabel = document.getElementById("library-page-label");
+  const prevBtn = document.getElementById("library-prev");
+  const nextBtn = document.getElementById("library-next");
+  if (!body) return;
 
-  body.innerHTML = series
+  const total = series.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE) || 1);
+  if (listPage >= pageCount) listPage = pageCount - 1;
+  if (listPage < 0) listPage = 0;
+  const start = listPage * PAGE_SIZE;
+  const pageRows = series.slice(start, start + PAGE_SIZE);
+
+  if (count) {
+    count.textContent = total
+      ? `${total} serier${pageCount > 1 ? ` · side ${listPage + 1}/${pageCount}` : ""}`
+      : "0 serier";
+  }
+
+  if (pager) {
+    pager.hidden = total <= PAGE_SIZE;
+    if (pageLabel) {
+      pageLabel.textContent = `Viser ${total ? start + 1 : 0}–${Math.min(
+        start + PAGE_SIZE,
+        total
+      )} af ${total}`;
+    }
+    if (prevBtn) prevBtn.disabled = listPage <= 0;
+    if (nextBtn) nextBtn.disabled = listPage >= pageCount - 1;
+  }
+
+  body.innerHTML = pageRows
     .map((row, i) => {
+      const absoluteIndex = start + i;
       const name = row["Seriens navn"] || "Ukendt";
       const contentMatch =
         row.Indholdsmatch ?? row["Tine-score"] ?? row["Tines score"] ?? null;
       const readPriority = row["Læseprioritet nu"] ?? null;
+      const analyzed = isAnalyzed(row);
+      const rhys = row["Rhysand-faktoren"];
       return `
-      <tr data-index="${i}">
+      <tr data-index="${absoluteIndex}">
         <td>
-          <select data-status="${escapeAttr(name)}" class="row-status">
+          <span class="status-cell">
+            <span class="status-dot ${analyzed ? "is-analyzed" : "is-pending"}"></span>
+            ${analyzed ? "Analyseret" : "Afventer"}
+          </span>
+          <select data-status="${escapeAttr(name)}" class="row-status" aria-label="Læsestatus for ${escapeAttr(name)}">
             ${statusOptions(row.Status)}
           </select>
         </td>
@@ -116,28 +209,24 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
           ${originBadge(row)}
         </td>
         <td>${escapeHtml(row.Forfatter || "–")}</td>
+        <td>${scoreCircle(contentMatch, "match")}</td>
+        <td>${scoreCircle(readPriority, "read")}</td>
         <td>
-          <div class="decision-score-cell">
-            <span class="decision-score-compact">
-              <small>Match</small>
-              <span class="score-pill ${scoreClass(contentMatch)}">${escapeHtml(
-                String(contentMatch ?? "–")
-              )}</span>
-            </span>
-            <span class="decision-score-compact">
-              <small>Nu</small>
-              <span class="score-pill ${scoreClass(readPriority)}">${escapeHtml(
-                String(readPriority ?? "–")
-              )}</span>
-            </span>
-          </div>
+          <span class="rhysand-cell">
+            ${rhys != null && rhys !== "" ? crownIcon() : ""}
+            ${escapeHtml(String(rhys ?? "–"))}
+          </span>
         </td>
-        <td>${escapeHtml(String(row["Rhysand-faktoren"] ?? "–"))}</td>
         <td>${escapeHtml(displayFact(row["Er serien på Mofibo? (ja, nej, ikke hele serien)"]))}</td>
         <td>${escapeHtml(displayFact(row.Tempo))}</td>
         <td class="row-actions">
-          <button type="button" class="linkish" data-open="${i}">Detaljer</button>
-          <button type="button" class="linkish danger" data-delete="${escapeAttr(name)}">Slet</button>
+          <button type="button" class="btn ghost" data-open="${absoluteIndex}">Detaljer</button>
+          <div class="row-more">
+            <button type="button" class="linkish" data-more="${absoluteIndex}" aria-expanded="false" aria-label="Flere handlinger">⋯</button>
+            <div class="row-more-menu" data-more-menu="${absoluteIndex}" hidden>
+              <button type="button" data-delete="${escapeAttr(name)}">Slet serie</button>
+            </div>
+          </div>
         </td>
       </tr>`;
     })
@@ -157,9 +246,24 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
     });
   });
 
+  body.querySelectorAll("[data-more]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.more;
+      const menu = body.querySelector(`[data-more-menu="${id}"]`);
+      body.querySelectorAll("[data-more-menu]").forEach((m) => {
+        if (m !== menu) m.hidden = true;
+      });
+      if (menu) {
+        menu.hidden = !menu.hidden;
+        btn.setAttribute("aria-expanded", menu.hidden ? "false" : "true");
+      }
+    });
+  });
+
   body.querySelectorAll("tr[data-index]").forEach((tr) => {
     tr.addEventListener("click", (e) => {
-      if (e.target.closest("select, button")) return;
+      if (e.target.closest("select, button, .row-more-menu")) return;
       onOpen(series[Number(tr.dataset.index)]);
     });
   });
@@ -167,6 +271,89 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
   body.querySelectorAll("[data-status]").forEach((sel) => {
     sel.addEventListener("change", () => {
       onStatusChange(sel.dataset.status, sel.value);
+    });
+  });
+
+  if (prevBtn && !prevBtn.dataset.bound) {
+    prevBtn.dataset.bound = "1";
+    prevBtn.addEventListener("click", () => {
+      listPage -= 1;
+      document.dispatchEvent(new CustomEvent("library:pager"));
+    });
+  }
+  if (nextBtn && !nextBtn.dataset.bound) {
+    nextBtn.dataset.bound = "1";
+    nextBtn.addEventListener("click", () => {
+      listPage += 1;
+      document.dispatchEvent(new CustomEvent("library:pager"));
+    });
+  }
+}
+
+export function resetListPage() {
+  listPage = 0;
+}
+
+function coverPlaceholderHtml(name) {
+  const label = String(name || "Serie").trim() || "Serie";
+  return escapeHtml(label.length > 42 ? `${label.slice(0, 40)}…` : label);
+}
+
+function renderScoreGroups(row) {
+  const groups = SCORE_GROUPS.map((group) => {
+    const rows = group.keys
+      .map((key) => {
+        const isPct = key.includes("0-100");
+        return barRow(
+          key,
+          row[key],
+          isPct ? 100 : 5,
+          isPct,
+          row._analysisMeta?.assessments?.[key]
+        );
+      })
+      .filter(Boolean)
+      .join("");
+    return `<section class="score-group"><h3>${escapeHtml(
+      group.title
+    )}</h3>${rows || `<p class="hint">Ingen scorer</p>`}</section>`;
+  }).join("");
+  return groups || `<p class="hint">Ingen scorer endnu</p>`;
+}
+
+function renderQuickMeta(row) {
+  const chips = [
+    ["Rhysand", row["Rhysand-faktoren"] != null ? `${row["Rhysand-faktoren"]}/5` : null],
+    [
+      "Mofibo",
+      row["Er serien på Mofibo? (ja, nej, ikke hele serien)"],
+    ],
+    ["Tempo", row.Tempo],
+  ]
+    .map(([label, value]) => {
+      if (value == null || value === "") return "";
+      return `<div class="meta-chip-card"><span class="label">${escapeHtml(
+        label
+      )}</span><span class="value">${escapeHtml(String(value))}</span></div>`;
+    })
+    .filter(Boolean)
+    .join("");
+  return chips;
+}
+
+export function setupDetailTabs() {
+  const tabs = document.querySelectorAll("[data-detail-tab]");
+  tabs.forEach((tab) => {
+    if (tab.dataset.bound) return;
+    tab.dataset.bound = "1";
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.detailTab;
+      document.querySelectorAll("[data-detail-tab]").forEach((t) => {
+        t.classList.toggle("is-active", t === tab);
+      });
+      document.querySelectorAll("[data-detail-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.detailPanel !== id;
+      });
     });
   });
 }
@@ -179,8 +366,12 @@ export function renderDetail(row) {
   const scores = document.getElementById("detail-scores");
   const facts = document.getElementById("detail-facts");
   const why = document.getElementById("detail-why");
+  const foundation = document.getElementById("detail-foundation");
+  const quickMeta = document.getElementById("detail-quick-meta");
+  const cover = document.getElementById("detail-cover");
   const own = document.getElementById("own-assessment");
   const ownScore = document.getElementById("own-score");
+  const ownDisplay = document.getElementById("own-score-display");
   const ownMsg = document.getElementById("own-assessment-msg");
 
   if (!row) {
@@ -188,18 +379,30 @@ export function renderDetail(row) {
     return;
   }
 
+  setupDetailTabs();
   panel.classList.remove("hidden");
-  title.textContent = row["Seriens navn"] || "Serie";
-  meta.innerHTML = `${escapeHtml(row.Forfatter || "Ukendt forfatter")} · ${escapeHtml(
-    row["Første bog/titel"] || ""
-  )}${originBadge(row)}`;
-  panel.dataset.seriesName = row["Seriens navn"] || "";
+  const seriesName = row["Seriens navn"] || "Serie";
+  title.textContent = seriesName;
+  meta.innerHTML = `${escapeHtml(row.Forfatter || "Ukendt forfatter")}${
+    row["Første bog/titel"]
+      ? ` · ${escapeHtml(row["Første bog/titel"])}`
+      : ""
+  } ${originBadge(row)}`;
+  panel.dataset.seriesName = seriesName;
+  if (cover) cover.innerHTML = coverPlaceholderHtml(seriesName);
+
   if (own) own.value = row["Tines egen vurdering"] || "";
   if (ownScore) {
     ownScore.value =
       row["Tines score"] == null || row["Tines score"] === ""
         ? ""
         : String(row["Tines score"]);
+  }
+  if (ownDisplay) {
+    ownDisplay.textContent =
+      row["Tines score"] == null || row["Tines score"] === ""
+        ? "–"
+        : `${row["Tines score"]}/100`;
   }
   if (ownMsg) {
     ownMsg.textContent = "";
@@ -215,36 +418,27 @@ export function renderDetail(row) {
     row._analysisMeta?.assessments?.["Læseprioritet nu"];
   tine.innerHTML =
     contentMatch == null && readPriority == null
-      ? `<div class="tine-hero-empty">Ingen beslutningsscorer endnu</div>`
+      ? `<div class="tine-hero-empty hint">Ingen beslutningsscorer endnu</div>`
       : `
         ${decisionScoreCard(
-          "Indholdsmatch",
+          "Match",
           contentMatch,
           contentAssess,
           "Hvor godt serien passer til Tines smag."
         )}
         ${decisionScoreCard(
-          "Læseprioritet nu",
+          "Læs nu",
           readPriority,
           priorityAssess,
           "Justeret for tilgængelighed, risici og analysegrundlag."
         )}`;
 
-  const barRows = [
-    ...SCORE_0_5.map((key) =>
-      barRow(key, row[key], 5, false, row._analysisMeta?.assessments?.[key])
-    ),
-    ...SCORE_PCT.map((key) =>
-      barRow(key, row[key], 100, true, row._analysisMeta?.assessments?.[key])
-    ),
-  ].filter(Boolean);
+  if (quickMeta) quickMeta.innerHTML = renderQuickMeta(row);
+  if (scores) scores.innerHTML = renderScoreGroups(row);
 
-  scores.innerHTML =
-    barRows.join("") || `<p class="hint">Ingen scorer endnu</p>`;
-
-  if (why) {
-    why.innerHTML = renderWhySections(row);
-  }
+  const whyParts = renderWhySections(row);
+  if (why) why.innerHTML = whyParts.why || "";
+  if (foundation) foundation.innerHTML = whyParts.foundation || "";
 
   const skipFacts = new Set([
     ...HERO_SKIP,
@@ -278,18 +472,25 @@ export function renderDetail(row) {
     .map((k) => factRow(k, formatFactValue(k, row)))
     .join("");
 
-  facts.innerHTML =
-    groupsHtml +
-    (leftovers
-      ? `<section class="fact-group"><h4>Øvrigt</h4><dl class="fact-list">${leftovers}</dl></section>`
-      : "");
+  if (facts) {
+    facts.innerHTML =
+      groupsHtml +
+      (leftovers
+        ? `<section class="fact-group"><h4>Øvrigt</h4><dl class="fact-list">${leftovers}</dl></section>`
+        : "");
+  }
 
   panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderWhySections(row) {
   const meta = row._analysisMeta;
-  if (!meta) return "";
+  if (!meta) {
+    return {
+      why: `<p class="hint">Ingen analysebegrundelser endnu.</p>`,
+      foundation: `<p class="hint">Intet analysegrundlag endnu.</p>`,
+    };
+  }
 
   const assessments = meta.assessments || {};
   const withReason = Object.entries(assessments).filter(
@@ -303,7 +504,6 @@ function renderWhySections(row) {
       const conf = confidenceLabel(a);
       const support = a.evidenceSourceIds?.length || 0;
       const conflict = a.conflictingSourceIds?.length || 0;
-      // Vis samme tal som scorebaren (rækkefelt), ikke et evt. forældet AI-tal
       const displayScore =
         row[key] != null && row[key] !== "" ? row[key] : a.score;
       const supportText = support
@@ -365,11 +565,11 @@ function renderWhySections(row) {
     gr
       ? `Goodreads-rating: ${formatNumberDa(gr.value)} (${formatNumberDa(gr.ratingCount, 0)} stjerne-ratings — ikke antal læste anmeldelser)`
       : "Goodreads: ikke verificeret",
-    `Helteprofil-kilder: ${f.helteprofil ?? 0} (beskyttende helt, bodyguard, touch her and die, Rhysand, bully)`,
-    `Romanceprofil-kilder: ${f.romanceprofil ?? 0} (spice, romance-fokus, relation)`,
-    `Plot/karakter-kilder: ${f.plotkarakter ?? 0} (episk plot, politiske intriger, krig, udvikling)`,
-    `Helheds-kilder: ${f.helhed ?? 0} (læseoplevelse, serie-kvalitet, sammenligninger)`,
-    `Øvrige faktakilder: ${f.factSources ?? 0} (Goodreads-side, Wikipedia, officielle)`,
+    `Helteprofil-kilder: ${f.helteprofil ?? 0}`,
+    `Romanceprofil-kilder: ${f.romanceprofil ?? 0}`,
+    `Plot/karakter-kilder: ${f.plotkarakter ?? 0}`,
+    `Helheds-kilder: ${f.helhed ?? 0}`,
+    `Øvrige faktakilder: ${f.factSources ?? 0}`,
     `${f.totalSources ?? 0} kilder i det systematiske udvalg`,
     f.researchedAt
       ? `Research: ${new Date(f.researchedAt).toLocaleDateString("da-DK")}`
@@ -435,7 +635,7 @@ function renderWhySections(row) {
     )
     .join("");
 
-  return `
+  const why = `
     ${
       readPriority
         ? `<details class="why-block decision-explanation">
@@ -464,7 +664,7 @@ function renderWhySections(row) {
           </details>`
         : ""
     }
-    <details class="why-block">
+    <details class="why-block" open>
       <summary>Hvorfor denne vurdering?</summary>
       <ul class="why-list">${whyItems || "<li class='hint'>Ingen ekstra begrundelser endnu</li>"}</ul>
       ${
@@ -476,8 +676,10 @@ function renderWhySections(row) {
             }`
           : ""
       }
-    </details>
-    <details class="why-block">
+    </details>`;
+
+  const foundation = `
+    <details class="why-block" open>
       <summary>Grundlag for analysen</summary>
       <ul class="foundation-list">${foundationBits}</ul>
       <p class="disclaimer">${escapeHtml(
@@ -485,6 +687,8 @@ function renderWhySections(row) {
           "Kilder er batchet efter romantasy-felter. Appen har ikke læst alle anmeldelser — kun et systematisk udvalg."
       )}</p>
     </details>`;
+
+  return { why, foundation };
 }
 
 function formatFactValue(key, row) {
