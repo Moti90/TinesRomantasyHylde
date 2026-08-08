@@ -1069,7 +1069,7 @@ async function loadDiscovery({ keepStatus = false } = {}) {
 async function showDiscoveredTeaser(book) {
   setDiscoveryStatus(`Henter teaser for «${book.title}»…`);
   try {
-    // Genbrug kun friske teasers (schema v2 med match-parametre)
+    // Genbrug kun friske teasers (schema v3 med evidens/transparens)
     if (isFreshTeaser(book.teaser)) {
       showTeaserPanel(book, book.teaser);
       setDiscoveryStatus("");

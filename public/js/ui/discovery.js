@@ -53,6 +53,13 @@ export function renderDiscoveryList(candidates, { onTeaser, onIgnore } = {}) {
         .join("");
       const score = c.discoveryScore ?? 1;
       const hasTeaser = Boolean(c.teaser?.blurb);
+      const evidenceLabel =
+        c.teaser?.evidenceLabel ||
+        ({
+          kildebaseret: "Kildebaseret",
+          delvist: "Delvist bekræftet",
+          tyndt: "Tyndt kildegrundlag",
+        }[c.teaser?.evidenceBasis] || "");
       return `
       <li class="discovery-card" data-idx="${i}">
         <div class="discovery-card-main">
@@ -61,6 +68,11 @@ export function renderDiscoveryList(candidates, { onTeaser, onIgnore } = {}) {
             <span class="discovery-score" title="Antal matchende søgninger">${score}×</span>
           </div>
           <p class="discovery-author">${escapeHtml(c.author || "Ukendt forfatter")}</p>
+          ${
+            evidenceLabel
+              ? `<p class="discovery-evidence-pill">${escapeHtml(evidenceLabel)}</p>`
+              : ""
+          }
           ${
             c.searchUrl
               ? `<p class="discovery-links"><a class="discovery-search" href="${escapeHtml(c.searchUrl)}" target="_blank" rel="noopener noreferrer">Søg på Google</a></p>`
@@ -116,7 +128,8 @@ function cleanDisplayText(value) {
 
 function isFreshTeaser(teaser) {
   if (!teaser?.blurb) return false;
-  if (Number(teaser.schemaVersion) < 2) return false;
+  // Fase 6: kræv schema v3 med evidens/fundet-her
+  if (Number(teaser.schemaVersion) < 3) return false;
   for (const key of ["vibe", "whyMatch", "caution"]) {
     const v = teaser[key];
     if (typeof v === "string" && /^(null|undefined)$/i.test(v.trim())) {
@@ -126,14 +139,44 @@ function isFreshTeaser(teaser) {
   return true;
 }
 
-function renderMatchSection(teaser) {
+function foundInLines(teaser, book) {
+  const fromTeaser = Array.isArray(teaser?.foundIn)
+    ? teaser.foundIn.map(cleanDisplayText).filter(Boolean)
+    : [];
+  if (fromTeaser.length) return fromTeaser;
+  return (book?.sources || [])
+    .slice(0, 6)
+    .map((s) =>
+      [cleanDisplayText(s.signal), cleanDisplayText(s.context)]
+        .filter(Boolean)
+        .join(" · ")
+    )
+    .filter(Boolean);
+}
+
+function renderMatchSection(teaser, book) {
   const matched = Array.isArray(teaser?.matchedParams) ? teaser.matchedParams : [];
   const uncertain = Array.isArray(teaser?.uncertainParams)
     ? teaser.uncertainParams
     : [];
   const penalties = Array.isArray(teaser?.penaltyHits) ? teaser.penaltyHits : [];
+  const found = foundInLines(teaser, book);
+  const evidenceLabel =
+    cleanDisplayText(teaser?.evidenceLabel) ||
+    ({
+      kildebaseret: "Kildebaseret",
+      delvist: "Delvist bekræftet",
+      tyndt: "Tyndt kildegrundlag",
+    }[teaser?.evidenceBasis] || "");
 
   const parts = [];
+  if (evidenceLabel) {
+    parts.push(
+      `<p class="teaser-evidence-badge teaser-evidence-${escapeHtml(
+        teaser?.evidenceBasis || "tyndt"
+      )}">${escapeHtml(evidenceLabel)}</p>`
+    );
+  }
   if (matched.length) {
     const items = matched
       .map((row) => {
@@ -152,7 +195,7 @@ function renderMatchSection(teaser) {
       .join("");
     if (items) {
       parts.push(
-        `<div class="teaser-match-block teaser-match-yes"><h4>Matcher Tines parametre</h4><ul>${items}</ul></div>`
+        `<div class="teaser-match-block teaser-match-yes"><h4>Bekræftet match</h4><ul>${items}</ul></div>`
       );
     }
   }
@@ -176,7 +219,33 @@ function renderMatchSection(teaser) {
       .join("");
     if (items) {
       parts.push(
-        `<div class="teaser-match-block teaser-match-no"><h4>Trækker ned</h4><ul>${items}</ul></div>`
+        `<div class="teaser-match-block teaser-match-no"><h4>Trækker ned / risiko</h4><ul>${items}</ul></div>`
+      );
+    }
+  }
+  if (found.length) {
+    const items = found.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
+    parts.push(
+      `<div class="teaser-match-block teaser-found"><h4>Fundet her</h4><ul>${items}</ul></div>`
+    );
+  }
+  const refs = Array.isArray(teaser?.references) ? teaser.references : [];
+  if (refs.length) {
+    const items = refs
+      .map((r) => {
+        const name = cleanDisplayText(r?.name);
+        if (!name) return "";
+        const score =
+          r?.tineScore != null && r.tineScore !== ""
+            ? ` (Tine-score ${escapeHtml(String(r.tineScore))})`
+            : "";
+        return `<li>${escapeHtml(name)}${score}</li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    if (items) {
+      parts.push(
+        `<div class="teaser-match-block teaser-refs"><h4>Minder om i biblioteket</h4><ul>${items}</ul></div>`
       );
     }
   }
@@ -200,7 +269,7 @@ export function showTeaserPanel(book, teaser) {
   const vibe = cleanDisplayText(teaser?.vibe);
   const why = cleanDisplayText(teaser?.whyMatch);
   const caution = cleanDisplayText(teaser?.caution);
-  const matchHtml = renderMatchSection(teaser);
+  const matchHtml = renderMatchSection(teaser, book);
 
   if (titleEl) titleEl.textContent = book?.title || "";
   if (authorEl) authorEl.textContent = book?.author || "Ukendt forfatter";
@@ -218,7 +287,9 @@ export function showTeaserPanel(book, teaser) {
     matchEl.hidden = !matchHtml;
   }
   if (cautionEl) {
-    cautionEl.textContent = caution;
+    cautionEl.textContent = caution
+      ? `Risiko / advarsel: ${caution}`
+      : "";
     cautionEl.hidden = !caution;
   }
   if (linkEl) {

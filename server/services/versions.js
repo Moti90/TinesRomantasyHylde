@@ -3,7 +3,7 @@ export const HANDBOOK_VERSION = "handbook-v3";
 export const RESEARCH_PROMPT_VERSION = "research-v14";
 export const ANALYSIS_PROMPT_VERSION = "analysis-v13";
 export const SEARCH_PLAN_VERSION = "batch-v5";
-export const DISCOVERY_PROMPT_VERSION = "discovery-v1";
+export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
 
 export const RESEARCH_MODEL = process.env.OPENAI_RESEARCH_MODEL || "gpt-4o";
 export const ANALYSIS_MODEL = process.env.OPENAI_ANALYSIS_MODEL || "gpt-4o-mini";

@@ -36,6 +36,10 @@ import {
   listTasteParametersForTeaser,
 } from "./tasteProfile.js";
 import { dataPath, getDataDir } from "./paths.js";
+import {
+  finalizeTeaser,
+  isTeaserCacheFresh,
+} from "./teaserTransparency.js";
 
 const DATA_DIR = getDataDir();
 const DISCOVERED_PATH = dataPath("discovered.json");
@@ -1001,54 +1005,6 @@ function slimReference(ref) {
   };
 }
 
-const TEASER_SCHEMA_VERSION = 2;
-
-/** Rens AI-felter der ofte kommer som strengen "null". */
-function cleanOptionalText(value) {
-  if (value == null) return null;
-  const s = String(value).trim();
-  if (!s) return null;
-  if (/^(null|undefined|none|n\/a|na|ingen|intet)$/i.test(s)) return null;
-  return s;
-}
-
-function normalizeMatchRows(rows) {
-  if (!Array.isArray(rows)) return [];
-  return rows
-    .map((row) => {
-      if (typeof row === "string") {
-        const param = cleanOptionalText(row);
-        return param ? { param, evidence: null } : null;
-      }
-      if (!row || typeof row !== "object") return null;
-      const param = cleanOptionalText(row.param || row.label || row.name);
-      if (!param) return null;
-      return {
-        param,
-        evidence: cleanOptionalText(row.evidence || row.why || row.note),
-      };
-    })
-    .filter(Boolean);
-}
-
-function normalizeStringList(rows) {
-  if (!Array.isArray(rows)) return [];
-  return rows.map(cleanOptionalText).filter(Boolean);
-}
-
-function isTeaserCacheFresh(teaser) {
-  if (!teaser?.blurb) return false;
-  if (Number(teaser.schemaVersion) < TEASER_SCHEMA_VERSION) return false;
-  // Gamle cache med literal "null"
-  for (const key of ["vibe", "whyMatch", "caution"]) {
-    const v = teaser[key];
-    if (typeof v === "string" && /^(null|undefined)$/i.test(v.trim())) {
-      return false;
-    }
-  }
-  return true;
-}
-
 /**
  * Kort teaser/review — ingen tilføjelse til biblioteket.
  * Cacher resultatet på kandidaten i discovered.json.
@@ -1098,14 +1054,14 @@ export async function generateTeaser({
   const tasteBlock = formatTasteProfileForPrompt();
   const paramChecklist = listTasteParametersForTeaser();
   const prompt = `Skriv en kort dansk teaser om denne romantasy-bog til Tine.
-Vær TRANSPARENT: list præcis hvilke af hendes parametre der matcher — kun med belæg i kilderne.
+Vær TRANSPARENT som i analyseflowet: skeln mellem bekræftet match, usikkert, risiko og hvor det er fundet.
 
 ${tasteBlock}
 
 PARAMETER-CHECKLISTE (brug præcis disse labels hvor muligt):
 P1: ${JSON.stringify(paramChecklist.priority1)}
 P2: ${JSON.stringify(paramChecklist.priority2)}
-Trækker ned: ${JSON.stringify(paramChecklist.penalties)}
+Trækker ned / risiko: ${JSON.stringify(paramChecklist.penalties)}
 NO GO: ${JSON.stringify(paramChecklist.noGo)}
 
 Bog: ${candidate.title}
@@ -1127,17 +1083,22 @@ Returnér KUN JSON:
   "blurb": "2–4 sætninger teaser på dansk — stemning, ikke spoilers",
   "vibe": "én kort linje, fx «beskyttende MMC · high fantasy · HEA-vibes»",
   "whyMatch": "1–2 sætninger opsummering",
+  "evidenceBasis": "kildebaseret|delvist|tyndt",
   "matchedParams": [
     { "param": "label fra P1/P2-listen", "evidence": "kort belæg fra kilderne" }
   ],
   "uncertainParams": ["labels vi IKKE kan bekræfte fra kilderne"],
-  "penaltyHits": ["labels fra trækker-ned hvis relevant"],
-  "caution": "kort advarsel ved NO GO / trækker-ned / tynd evidens — ellers udelad feltet eller brug JSON null (ikke teksten null)"
+  "penaltyHits": ["labels fra trækker-ned/risiko hvis relevant"],
+  "foundIn": ["korte linjer om hvilken kilde/signal belægget kommer fra"],
+  "caution": "kort advarsel ved NO GO / risiko / tynd evidens — ellers JSON null"
 }
 
 Regler:
-- matchedParams: KUN parametre med reel belæg. Opdig ikke.
-- uncertainParams: det vigtige fra P1 vi ikke kan se i kilderne (ærlighed > gætværk).
+- matchedParams = Bekræftet match: KUN parametre med reel belæg. Opdig ikke.
+- uncertainParams = Usikkert / ikke bekræftet (ærlighed > gætværk).
+- penaltyHits = Trækker ned / risiko (bully, ufærdig serie, urban fantasy osv.).
+- foundIn = Fundet her — henvis til medsendte kilder/signaler.
+- evidenceBasis: kildebaseret (≥2 bekræftede + flere kilder), delvist, eller tyndt.
 - Ingen spoiler. Ingen opfordring til at tilføje til bibliotek.
 - Brug JSON null eller udelad felter — ALDRIG strengen "null".`;
 
@@ -1148,7 +1109,7 @@ Regler:
       {
         role: "system",
         content:
-          "Du skriver korte, ærlige romantasy-teasers på dansk til Tines smagsprofil. Returnér KUN JSON. Vær transparent om hvilke profil-parametre der matcher. Opdig ikke plot. Flag bully/urban fantasy/ufærdig serie/teenage MC. Brug aldrig strengen null.",
+          "Du skriver korte, ærlige romantasy-teasers på dansk til Tines smagsprofil. Returnér KUN JSON. Brug samme transparenssprog som analysen: bekræftet match, usikkert, risiko, fundet her. Opdig ikke plot. Flag bully/urban fantasy/ufærdig serie/teenage MC. Brug aldrig strengen null.",
       },
       { role: "user", content: prompt },
     ],
@@ -1168,18 +1129,7 @@ Regler:
     throw new Error(`Kunne ikke parse teaser: ${err.message}`);
   }
 
-  const teaser = {
-    schemaVersion: TEASER_SCHEMA_VERSION,
-    blurb: String(parsed.blurb || "").trim(),
-    vibe: cleanOptionalText(parsed.vibe),
-    whyMatch: cleanOptionalText(parsed.whyMatch),
-    matchedParams: normalizeMatchRows(parsed.matchedParams),
-    uncertainParams: normalizeStringList(parsed.uncertainParams),
-    penaltyHits: normalizeStringList(parsed.penaltyHits),
-    caution: cleanOptionalText(parsed.caution),
-    generatedAt: new Date().toISOString(),
-    references: refs.map((r) => ({ name: r.name, tineScore: r.tineScore })),
-  };
+  const teaser = finalizeTeaser(parsed, useSources, refs);
 
   if (!teaser.blurb) {
     throw new Error("Tom teaser fra modellen");

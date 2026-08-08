@@ -209,7 +209,8 @@ Fase 2: Implementeret
 Fase 3: Implementeret
 Fase 4: Implementeret
 Fase 5: Implementeret (research-v14 — evidens-id'er, konflikter, PR-filter, let observationslag)
-Fase 6: Delvist (discovery-teaser allerede forbedret)
+Fase 6: Implementeret (discovery-v2 / teaser schema v3 — bekræftet match, usikkert, risiko, fundet her)
 Fase 7: Bevidst udskudt
 
-Næste naturlige skridt: Færdiggøre Fase 6 (discovery-transparens).
+Næste naturlige skridt: Fase 7 kun hvis I bevidst vil bygge større arkitektur senere.
+

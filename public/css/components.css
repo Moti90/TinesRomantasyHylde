@@ -1126,6 +1126,38 @@ tbody tr:hover {
   color: #e8a090;
 }
 
+.teaser-found h4,
+.teaser-refs h4 {
+  color: #c4b5a0;
+}
+
+.teaser-evidence-badge {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.teaser-evidence-kildebaseret {
+  color: #9dcfb0;
+}
+
+.teaser-evidence-delvist {
+  color: var(--gold-soft);
+}
+
+.teaser-evidence-tyndt {
+  color: #e8a090;
+}
+
+.discovery-evidence-pill {
+  margin: 0.25rem 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--gold-soft);
+  opacity: 0.9;
+}
+
 .teaser-caution {
   margin: 0.5rem 0;
 }
