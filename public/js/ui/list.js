@@ -132,17 +132,17 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
       const readPriority = row["Læseprioritet nu"] ?? null;
       return `
       <tr data-index="${i}">
-        <td>
+        <td data-label="Status">
           <select data-status="${escapeAttr(name)}" class="row-status">
             ${statusOptions(row.Status)}
           </select>
         </td>
-        <td>
+        <td data-label="Serie">
           <span class="series-name">${escapeHtml(name)}</span>
           ${originBadges(row)}
         </td>
-        <td>${escapeHtml(row.Forfatter || "–")}</td>
-        <td>
+        <td data-label="Forfatter">${escapeHtml(row.Forfatter || "–")}</td>
+        <td data-label="Match / læs nu">
           <div class="decision-score-cell">
             <span class="decision-score-compact">
               <small>Match</small>
@@ -158,10 +158,10 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
             </span>
           </div>
         </td>
-        <td>${escapeHtml(String(row["Rhysand-faktoren"] ?? "–"))}</td>
-        <td>${escapeHtml(displayFact(row["Er serien på Mofibo? (ja, nej, ikke hele serien)"]))}</td>
-        <td>${escapeHtml(displayFact(row.Tempo))}</td>
-        <td class="row-actions">
+        <td data-label="Rhysand">${escapeHtml(String(row["Rhysand-faktoren"] ?? "–"))}</td>
+        <td data-label="Mofibo">${escapeHtml(displayFact(row["Er serien på Mofibo? (ja, nej, ikke hele serien)"]))}</td>
+        <td data-label="Tempo">${escapeHtml(displayFact(row.Tempo))}</td>
+        <td class="row-actions" data-label="Handlinger">
           <button type="button" class="linkish" data-open="${i}">Detaljer</button>
           <button type="button" class="linkish danger" data-delete="${escapeAttr(name)}">Slet</button>
         </td>
