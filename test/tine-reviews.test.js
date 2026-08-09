@@ -180,6 +180,21 @@ describe("Nuværende biblioteksoprindelse", () => {
       false
     );
   });
+
+  it("UI markerer Excel-ankre og anmeldelser tydeligt", () => {
+    const html = readFileSync(
+      new URL("../public/index.html", import.meta.url),
+      "utf8"
+    );
+    const listSource = readFileSync(
+      new URL("../public/js/ui/list.js", import.meta.url),
+      "utf8"
+    );
+    assert.match(html, /Anker · Excel/);
+    assert.match(html, /Fra anmeldelse/);
+    assert.match(listSource, /Anker · Excel/);
+    assert.match(listSource, /Har anmeldelse|Fra anmeldelse/);
+  });
 });
 
 describe("Resumé og anmeldelses-UI", () => {

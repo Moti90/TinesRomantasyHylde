@@ -79,18 +79,44 @@ const FACT_GROUPS = [
   },
 ];
 
-function originLabel(row) {
-  if (row?._origin?.type === "tine_reviews") return "Fra Tines anmeldelser";
-  if (row?._origin?.type === "excel") return "Fra Tines Excel-ark";
-  return "";
+function originBadges(row) {
+  const badges = [];
+  if (row?._origin?.type === "excel") {
+    badges.push({
+      cls: "origin-excel",
+      label: "Anker · Excel",
+      title:
+        "Én af Tines 15 pejlemærker fra Excel. Bruges som struktur og kalibrering for hele appen.",
+    });
+  }
+  const reviewCount = Number(row?._tineReviews?.count || 0);
+  if (row?._origin?.type === "tine_reviews" || reviewCount > 0) {
+    badges.push({
+      cls: "origin-review",
+      label:
+        reviewCount > 1
+          ? `Anmeldt (${reviewCount})`
+          : row?._origin?.type === "tine_reviews"
+            ? "Fra anmeldelse"
+            : "Har anmeldelse",
+      title:
+        "Denne serie er knyttet til Tines Anmeldelser. Scorer fra 'kan huske'-felter kan synces hertil.",
+    });
+  }
+  if (!badges.length) return "";
+  return `<span class="origin-badge-row">${badges
+    .map(
+      (b) =>
+        `<span class="origin-badge ${b.cls}" title="${escapeAttr(
+          b.title
+        )}">${escapeHtml(b.label)}</span>`
+    )
+    .join("")}</span>`;
 }
 
+/** @deprecated use originBadges — kept as alias for detail meta */
 function originBadge(row) {
-  const label = originLabel(row);
-  if (!label) return "";
-  const cls =
-    row?._origin?.type === "tine_reviews" ? "origin-review" : "origin-excel";
-  return `<span class="origin-badge ${cls}">${escapeHtml(label)}</span>`;
+  return originBadges(row);
 }
 
 export function renderList(series, { onOpen, onStatusChange, onDelete }) {
@@ -113,7 +139,7 @@ export function renderList(series, { onOpen, onStatusChange, onDelete }) {
         </td>
         <td>
           <span class="series-name">${escapeHtml(name)}</span>
-          ${originBadge(row)}
+          ${originBadges(row)}
         </td>
         <td>${escapeHtml(row.Forfatter || "–")}</td>
         <td>

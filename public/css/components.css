@@ -305,27 +305,53 @@ tbody tr:hover {
   display: block;
 }
 
+.origin-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
 .origin-badge {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  margin-top: 0.3rem;
   border: 1px solid rgba(224, 200, 184, 0.24);
   border-radius: 999px;
-  padding: 0.18rem 0.5rem;
+  padding: 0.18rem 0.55rem;
   color: #c9af9f;
   font-size: 0.7rem;
   line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.origin-badge.origin-excel {
+  border-color: rgba(120, 170, 220, 0.45);
+  color: #c8dff5;
+  background: rgba(70, 110, 160, 0.18);
 }
 
 .origin-badge.origin-review {
-  border-color: rgba(232, 176, 96, 0.42);
+  border-color: rgba(232, 176, 96, 0.45);
   color: var(--gold-soft);
+  background: rgba(232, 176, 96, 0.1);
 }
 
-.detail-meta .origin-badge {
-  display: flex;
+.detail-meta .origin-badge-row {
   margin-top: 0.45rem;
+}
+
+.library-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0 0 0.9rem;
+  line-height: 1.45;
+}
+
+.library-legend .origin-badge {
+  margin: 0;
 }
 
 .score-90 {
