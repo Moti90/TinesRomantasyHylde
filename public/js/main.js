@@ -474,6 +474,27 @@ function setReviewTab(tabName) {
   });
 }
 
+function setReviewSummaryScope(book) {
+  const heading = document.getElementById("review-summary-heading");
+  const scope = document.getElementById("review-summary-scope");
+  const loading = document.getElementById("review-summary-loading");
+  const isSeries = Boolean(book?.isSeries);
+  if (heading) {
+    heading.textContent = isSeries ? "Serie-resumé" : "Bog-resumé";
+  }
+  if (scope) {
+    scope.hidden = false;
+    scope.textContent = isSeries
+      ? "Dette er et resumé af hele serien — ikke kun ét bind."
+      : "Dette er et resumé af den konkrete bog du anmelder.";
+  }
+  if (loading) {
+    loading.textContent = isSeries
+      ? "Henter serie-resumé…"
+      : "Henter bog-resumé…";
+  }
+}
+
 function showReviewSummary(summary, cached = false) {
   const loading = document.getElementById("review-summary-loading");
   const text = document.getElementById("review-summary-short");
@@ -504,17 +525,15 @@ function showReviewSummary(summary, cached = false) {
   }
 }
 
-function resetReviewSummary() {
+function resetReviewSummary(book = null) {
   const loading = document.getElementById("review-summary-loading");
   const text = document.getElementById("review-summary-short");
   const note = document.getElementById("review-summary-note");
   const spoilers = document.getElementById("review-spoilers");
   const points = document.getElementById("review-spoiler-points");
   const source = document.getElementById("review-summary-source");
-  if (loading) {
-    loading.textContent = "Henter et kort resumé…";
-    loading.hidden = false;
-  }
+  setReviewSummaryScope(book || activeReviewTarget);
+  if (loading) loading.hidden = false;
   if (text) {
     text.textContent = "";
     text.hidden = true;
@@ -534,7 +553,7 @@ function resetReviewSummary() {
 async function loadReviewSummary(book) {
   const key = reviewBookKey(book);
   const request = ++reviewSummaryRequest;
-  resetReviewSummary();
+  resetReviewSummary(book);
   if (reviewSummaries.has(key)) {
     showReviewSummary(reviewSummaries.get(key), true);
     return;

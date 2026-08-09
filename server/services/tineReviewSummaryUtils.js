@@ -1,12 +1,20 @@
 import { stableHash } from "./hash.js";
 
-export const REVIEW_SUMMARY_VERSION = "review-summary-v1";
+export const REVIEW_SUMMARY_VERSION = "review-summary-v2";
 
 export function reviewSummaryKey(book) {
+  const isSeries = Boolean(book?.isSeries);
   return stableHash({
     version: REVIEW_SUMMARY_VERSION,
-    sourceBookId: String(book?.sourceBookId || "").trim().toLowerCase(),
-    title: String(book?.firstBookTitle || book?.displayTitle || "")
+    scope: isSeries ? "series" : "book",
+    sourceBookId: isSeries
+      ? ""
+      : String(book?.sourceBookId || "").trim().toLowerCase(),
+    title: String(
+      isSeries
+        ? book?.seriesName || book?.displayTitle || book?.firstBookTitle || ""
+        : book?.firstBookTitle || book?.displayTitle || ""
+    )
       .trim()
       .toLowerCase(),
     author: String(book?.author || "").trim().toLowerCase(),

@@ -344,6 +344,7 @@ app.post("/api/tine-review-summary", async (req, res) => {
         seriesName: body.seriesName || null,
         author: body.author || null,
         goodreadsUrl: body.goodreadsUrl || null,
+        isSeries: Boolean(body.isSeries),
       },
       { force: body.force === true }
     );

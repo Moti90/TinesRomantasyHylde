@@ -555,33 +555,42 @@ function factRow(key, value) {
     </div>`;
 }
 
+function shortDecisionLabel(label) {
+  const raw = String(label || "");
+  if (/indholdsmatch|tine-score/i.test(raw)) return "Match";
+  if (/læseprioritet/i.test(raw)) return "Læs nu";
+  return raw;
+}
+
+function decisionMetaLine(assessment, helpText) {
+  const badge = confidenceBadge(assessment);
+  const help = helpText
+    ? `<p class="decision-score-help">${escapeHtml(helpText)}</p>`
+    : "";
+  if (!badge && !help) return "";
+  return `<div class="decision-score-meta">${help}${badge}</div>`;
+}
+
 function decisionScoreCard(label, score, assessment, helpText) {
+  const short = shortDecisionLabel(label);
+  const meta = decisionMetaLine(assessment, helpText);
   if (score == null) {
     return `
-      <div class="decision-score-card muted-row">
-        <div class="decision-score-top">
+      <div class="decision-score-wrap">
+        <div class="decision-score-card muted-row">
           <span class="decision-score-value">–</span>
-          <span class="decision-score-label">${escapeHtml(label)}</span>
+          <span class="decision-score-label">${escapeHtml(short)}</span>
         </div>
-        <p class="decision-score-help">${escapeHtml(helpText)}</p>
-        <span class="conf-badge conf-low">Kræver ny analyse</span>
+        ${meta || `<div class="decision-score-meta"><span class="conf-badge conf-low">Kræver ny analyse</span></div>`}
       </div>`;
   }
   return `
-    <div class="decision-score-card">
-      <div class="decision-score-top">
+    <div class="decision-score-wrap">
+      <div class="decision-score-card">
         <span class="decision-score-value">${escapeHtml(String(score))}</span>
-        <span class="decision-score-label">${escapeHtml(label)}</span>
+        <span class="decision-score-label">${escapeHtml(short)}</span>
       </div>
-      <div class="bar-track tine-track">
-        <div class="bar-fill tone-${barTone(score)}" style="width:${clamp(
-          score,
-          0,
-          100
-        )}%"></div>
-      </div>
-      <p class="decision-score-help">${escapeHtml(helpText)}</p>
-      ${confidenceBadge(assessment)}
+      ${meta}
     </div>`;
 }
 

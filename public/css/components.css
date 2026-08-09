@@ -367,11 +367,12 @@ tbody tr:hover {
 }
 
 .tine-hero {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(150px, 1fr));
-  gap: 0.75rem;
-  min-width: min(100%, 340px);
-  flex: 0 1 430px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-end;
 }
 
 .decision-score-card {

@@ -197,6 +197,22 @@ describe("Resumé og anmeldelses-UI", () => {
     assert.equal(a, b);
   });
 
+  it("skiller serie-resumé og bog-resumé i cache-nøglen", () => {
+    const seriesKey = reviewSummaryKey({
+      isSeries: true,
+      seriesName: "The Empyrean",
+      firstBookTitle: "Fourth Wing",
+      author: "Rebecca Yarros",
+    });
+    const bookKey = reviewSummaryKey({
+      isSeries: false,
+      seriesName: "The Empyrean",
+      firstBookTitle: "Fourth Wing",
+      author: "Rebecca Yarros",
+    });
+    assert.notEqual(seriesKey, bookKey);
+  });
+
   it("begrænser og renser resuméets spoilerpunkter", () => {
     const summary = normalizeReviewSummary({
       shortSummary: "  Et kort spoilerfrit resumé.  ",
