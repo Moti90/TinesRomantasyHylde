@@ -312,9 +312,14 @@ tbody tr:hover {
 }
 
 .origin-badge.origin-excel {
-  border-color: rgba(120, 170, 220, 0.45);
-  color: #c8dff5;
-  background: rgba(70, 110, 160, 0.18);
+  border-color: #4f8fd9;
+  color: #d7ebff;
+  background: linear-gradient(
+    135deg,
+    rgba(45, 110, 190, 0.55),
+    rgba(30, 75, 150, 0.72)
+  );
+  box-shadow: 0 0 0 1px rgba(100, 170, 255, 0.18);
 }
 
 .origin-badge.origin-review {
