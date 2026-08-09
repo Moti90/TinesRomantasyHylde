@@ -47,6 +47,10 @@ import {
 } from "./services/tineReviewTargets.js";
 import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
 import { backfillDecisionScores } from "./services/decisionScoreBackfill.js";
+import {
+  backfillExcelOrigins,
+  enrichLibrarySeries,
+} from "./services/libraryRoles.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -57,6 +61,13 @@ const upload = multer({
 
 ensureMigratedDatabase();
 backfillDecisionScores();
+{
+  const { list, changed } = backfillExcelOrigins(loadSeries());
+  if (changed > 0) {
+    saveSeries(list);
+    console.log(`[library] Backfildi ${changed} Excel-anker-tags`);
+  }
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3847;
@@ -120,7 +131,10 @@ app.post("/api/settings/openai", (req, res) => {
 });
 
 app.get("/api/series", (_req, res) => {
-  res.json({ series: loadSeries(), statusOrder: STATUS_ORDER });
+  res.json({
+    series: enrichLibrarySeries(loadSeries()),
+    statusOrder: STATUS_ORDER,
+  });
 });
 
 app.get("/api/tine-reviews", (_req, res) => {
@@ -394,7 +408,7 @@ app.post("/api/tine-reviews", (req, res) => {
       negatives: Array.isArray(body.negatives) ? body.negatives : [],
       ignoredFields: Array.isArray(body.ignoredFields) ? body.ignoredFields : [],
     });
-    res.json({ reviews, series: loadSeries() });
+    res.json({ reviews, series: enrichLibrarySeries(loadSeries()) });
   } catch (err) {
     res.status(500).json({ error: err.message || "Kunne ikke gemme anmeldelse" });
   }

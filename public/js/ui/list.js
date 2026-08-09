@@ -79,30 +79,48 @@ const FACT_GROUPS = [
   },
 ];
 
-function originBadges(row) {
+function libraryTagBadges(row) {
+  const fromApi = Array.isArray(row?.libraryTags) ? row.libraryTags : null;
   const badges = [];
-  if (row?._origin?.type === "excel") {
-    badges.push({
-      cls: "origin-excel",
-      label: "Anker · Excel",
-      title:
-        "Én af Tines 15 pejlemærker fra Excel. Bruges som struktur og kalibrering for hele appen.",
-    });
+
+  if (fromApi?.length) {
+    for (const tag of fromApi) {
+      badges.push({
+        cls: tag.tone === "review" ? "origin-review" : "origin-excel",
+        label: tag.label || "Anker",
+        title:
+          tag.title ||
+          "Excel-pejlemærke. Bruges til at fastsætte standardscorer.",
+      });
+    }
+  } else {
+    const isAnchor =
+      row?._origin?.type === "excel" ||
+      row?._scoreReference?.source === "excel";
+    if (isAnchor) {
+      badges.push({
+        cls: "origin-excel",
+        label: "Anker",
+        title:
+          "Excel-pejlemærke. Kun her for at fastsætte standardscorer og kalibrere appens smag.",
+      });
+    }
+    const reviewCount = Number(row?._tineReviews?.count || 0);
+    if (row?._origin?.type === "tine_reviews" || reviewCount > 0) {
+      badges.push({
+        cls: "origin-review",
+        label:
+          reviewCount > 1
+            ? `Anmeldt (${reviewCount})`
+            : row?._origin?.type === "tine_reviews"
+              ? "Fra anmeldelse"
+              : "Har anmeldelse",
+        title:
+          "Denne serie er knyttet til Tines Anmeldelser. Scorer fra 'kan huske'-felter kan synces hertil.",
+      });
+    }
   }
-  const reviewCount = Number(row?._tineReviews?.count || 0);
-  if (row?._origin?.type === "tine_reviews" || reviewCount > 0) {
-    badges.push({
-      cls: "origin-review",
-      label:
-        reviewCount > 1
-          ? `Anmeldt (${reviewCount})`
-          : row?._origin?.type === "tine_reviews"
-            ? "Fra anmeldelse"
-            : "Har anmeldelse",
-      title:
-        "Denne serie er knyttet til Tines Anmeldelser. Scorer fra 'kan huske'-felter kan synces hertil.",
-    });
-  }
+
   if (!badges.length) return "";
   return `<span class="origin-badge-row">${badges
     .map(
@@ -112,6 +130,10 @@ function originBadges(row) {
         )}">${escapeHtml(b.label)}</span>`
     )
     .join("")}</span>`;
+}
+
+function originBadges(row) {
+  return libraryTagBadges(row);
 }
 
 /** @deprecated use originBadges — kept as alias for detail meta */

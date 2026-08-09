@@ -313,13 +313,21 @@ tbody tr:hover {
 
 .origin-badge.origin-excel {
   border-color: #4f8fd9;
-  color: #d7ebff;
+  color: #eaf4ff;
   background: linear-gradient(
     135deg,
-    rgba(45, 110, 190, 0.55),
-    rgba(30, 75, 150, 0.72)
+    rgba(45, 110, 190, 0.7),
+    rgba(30, 75, 150, 0.88)
   );
-  box-shadow: 0 0 0 1px rgba(100, 170, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(100, 170, 255, 0.22);
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 0.22rem 0.7rem;
+}
+
+#series-table .origin-badge-row {
+  display: flex;
+  margin-top: 0.4rem;
 }
 
 .origin-badge.origin-review {

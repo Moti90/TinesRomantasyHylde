@@ -10,6 +10,10 @@ import { buildLibraryRowFromReviews } from "../server/services/tineReviews.js";
 import { mapIdentityToReviewTarget } from "../server/services/tineReviewTargets.js";
 import { loadSeries } from "../server/services/store.js";
 import {
+  enrichLibraryRow,
+  isExcelAnchor,
+} from "../server/services/libraryRoles.js";
+import {
   normalizeReviewSummary,
   reviewSummaryKey,
 } from "../server/services/tineReviewSummaryUtils.js";
@@ -181,6 +185,16 @@ describe("Nuværende biblioteksoprindelse", () => {
     );
   });
 
+  it("sætter Anker-tag på Excel-pejlemærker", () => {
+    const row = enrichLibraryRow({
+      "Seriens navn": "Order of Scorpions",
+      Forfatter: "Ivy Asher",
+    });
+    assert.equal(isExcelAnchor(row), true);
+    assert.equal(row.libraryTags?.[0]?.label, "Anker");
+    assert.equal(row._origin?.type, "excel");
+  });
+
   it("UI markerer Excel-ankre og anmeldelser tydeligt", () => {
     const html = readFileSync(
       new URL("../public/index.html", import.meta.url),
@@ -190,9 +204,9 @@ describe("Nuværende biblioteksoprindelse", () => {
       new URL("../public/js/ui/list.js", import.meta.url),
       "utf8"
     );
-    assert.match(html, /Anker · Excel/);
+    assert.match(html, /origin-badge origin-excel">Anker</);
     assert.match(html, /Fra anmeldelse/);
-    assert.match(listSource, /Anker · Excel/);
+    assert.match(listSource, /libraryTags|label: "Anker"/);
     assert.match(listSource, /Har anmeldelse|Fra anmeldelse/);
   });
 });
