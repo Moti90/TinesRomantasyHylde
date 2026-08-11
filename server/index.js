@@ -56,6 +56,10 @@ import {
   initDatabase,
   pingDatabase,
 } from "./services/db.js";
+import {
+  getMigrationStatus,
+  runSqlMigrations,
+} from "./services/dbMigrate.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -74,8 +78,12 @@ backfillDecisionScores();
   }
 }
 
-// Fase 7 bid 1: forbind til Postgres hvis konfigureret (JSON forbliver aktiv)
+// Fase 7 bid 1+2: forbind + kør SQL-migrationer (JSON forbliver aktiv store)
 await initDatabase();
+{
+  const db = getDatabaseStatus();
+  if (db.connected) await runSqlMigrations();
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3847;
@@ -89,6 +97,7 @@ app.use("/api/discover", discoveryRouter);
 app.get("/api/health", (_req, res) => {
   const ai = getAiStatus();
   const db = getDatabaseStatus();
+  const migrations = getMigrationStatus();
   res.json({
     ok: true,
     ready: hasOpenAIKey(),
@@ -99,6 +108,10 @@ app.get("/api/health", (_req, res) => {
     database: {
       configured: db.configured,
       connected: db.connected,
+      migrations: {
+        latest: migrations.latest,
+        error: migrations.error,
+      },
     },
   });
 });
@@ -117,6 +130,7 @@ app.get("/api/admin/status", async (_req, res) => {
     aiStatus: ai,
     count: loadSeries().length,
     database: getDatabaseStatus(),
+    migrations: getMigrationStatus(),
   });
 });
 
