@@ -3,6 +3,7 @@ import { sortSeries } from "./columns.js";
 import { migrateSeriesList } from "./migrate.js";
 import { sanitizeGoodreadsScore } from "./goodreads.js";
 import { dataPath } from "./paths.js";
+import { scheduleWorksSync } from "./worksSync.js";
 
 const dataFile = dataPath("series.json");
 
@@ -25,6 +26,8 @@ export function saveSeries(list) {
     copyFileSync(dataFile, `${dataFile}.bak`);
   }
   writeFileSync(dataFile, JSON.stringify(cleaned, null, 2), "utf8");
+  // Fase 7 bid 3: soft dual-write til Postgres works (JSON er stadig sandhed)
+  scheduleWorksSync(cleaned);
   return cleaned;
 }
 

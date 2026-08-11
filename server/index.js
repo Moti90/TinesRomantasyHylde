@@ -60,6 +60,10 @@ import {
   getMigrationStatus,
   runSqlMigrations,
 } from "./services/dbMigrate.js";
+import {
+  getWorksSyncStatus,
+  syncAllWorksFromSeries,
+} from "./services/worksSync.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -78,11 +82,14 @@ backfillDecisionScores();
   }
 }
 
-// Fase 7 bid 1+2: forbind + kør SQL-migrationer (JSON forbliver aktiv store)
+// Fase 7 bid 1–3: forbind, migrationer, dual-write works (JSON forbliver aktiv)
 await initDatabase();
 {
   const db = getDatabaseStatus();
-  if (db.connected) await runSqlMigrations();
+  if (db.connected) {
+    await runSqlMigrations();
+    await syncAllWorksFromSeries(loadSeries());
+  }
 }
 
 const app = express();
@@ -98,6 +105,7 @@ app.get("/api/health", (_req, res) => {
   const ai = getAiStatus();
   const db = getDatabaseStatus();
   const migrations = getMigrationStatus();
+  const works = getWorksSyncStatus();
   res.json({
     ok: true,
     ready: hasOpenAIKey(),
@@ -111,6 +119,10 @@ app.get("/api/health", (_req, res) => {
       migrations: {
         latest: migrations.latest,
         error: migrations.error,
+      },
+      works: {
+        count: works.count,
+        ok: works.ok,
       },
     },
   });
@@ -131,6 +143,7 @@ app.get("/api/admin/status", async (_req, res) => {
     count: loadSeries().length,
     database: getDatabaseStatus(),
     migrations: getMigrationStatus(),
+    works: getWorksSyncStatus(),
   });
 });
 

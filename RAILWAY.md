@@ -37,6 +37,10 @@ Appen bruger stadig JSON under `/data` til bibliotek/anmeldelser.
 Ved opstart kører den SQL-migrationer (Fase 7 bid 2) og opretter foundation-tabeller
 (`works`, `claims`, `observations`, `app_meta`) når Postgres er forbundet.
 
+Fase 7 bid 3: soft dual-write — serier fra `series.json` spejles til `works`
+(`canonical_key = series:<navn>`). JSON er stadig sandheden; Postgres-fejl
+stopper ikke appen. Tjek `/api/health` → `database.works`.
+
 ## 4. Volume (vigtigt!)
 Uden volume mistes Tines liste ved hver gendeploy.
 
