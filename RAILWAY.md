@@ -21,8 +21,19 @@ I service → **Variables**:
 | `DATA_DIR` | `/data` |
 | `PIRATEREADS_USER_ID` | `155251530` (valgfri, default er sat) |
 | `NODE_ENV` | `production` |
+| `DATABASE_URL` | sættes automatisk når Postgres er **linked** til app-servicen |
 
 `PORT` sættes automatisk af Railway.
+
+### Postgres (Fase 7 – forbindelse)
+1. Du har allerede en Postgres-service i projektet.
+2. Åbn **app-servicen** → **Variables** → **Add variable** / **Reference**.
+3. Link Postgres, så `DATABASE_URL` (eller `DATABASE_PRIVATE_URL`) kommer ind i appen.
+4. Genstart app-servicen.
+5. Tjek `/api/health` → `database.configured: true` og `database.connected: true`.
+6. Mere detaljer: `/api/admin/status` → feltet `database`.
+
+Indtil næste bid bruger appen stadig JSON under `/data`. Postgres er kun “live ledning”.
 
 ## 4. Volume (vigtigt!)
 Uden volume mistes Tines liste ved hver gendeploy.
@@ -44,6 +55,7 @@ Volume (`/data`) bevarer listen mellem deploys.
 
 ## 7. Tjek
 Åbn `/api/health` — skal vise `ready: true` når OpenAI-nøglen er sat.
+Med Postgres linked: `database.configured: true` og `database.connected: true`.
 
 ## Pris
 Hobby ~$5/md for denne type app + OpenAI-forbrug separat.

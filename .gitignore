@@ -4,6 +4,7 @@ node_modules/
 uploads/
 *.log
 tmp-*.txt
+_npm_bootstrap/
 
 # Hemmeligheder & lokale runtime-filer
 data/config.json

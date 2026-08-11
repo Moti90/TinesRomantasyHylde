@@ -11,4 +11,5 @@ restartPolicyMaxRetries = 10
 # - Variable: OPENAI_API_KEY
 # - Variable: DATA_DIR=/data
 # - Variable (valgfri): PIRATEREADS_USER_ID=155251530
+# - Link Postgres → DATABASE_URL (Fase 7 forbindelse)
 # - Volume mount: mount path /data
