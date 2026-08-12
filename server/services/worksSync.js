@@ -1,6 +1,7 @@
 import { getPool, isDatabaseConfigured } from "./db.js";
 import { seriesCanonicalKey } from "./seriesKeys.js";
 import { syncAllClaimsFromSeries } from "./claimsSync.js";
+import { syncAllObservationsFromSeries } from "./observationsSync.js";
 
 /** @type {{
  *   skipped?: boolean,
@@ -157,8 +158,9 @@ export async function syncAllWorksFromSeries(list) {
       `[works] Synced ${upserted} serie(r) til Postgres` +
         (lastSync.deleted ? ` (slettet ${lastSync.deleted} orphan(s))` : ""),
     );
-    // Fase 7 bid 4: spejl assessments → claims efter works
+    // Fase 7 bid 4–5: spejl assessments → claims, sources → observations
     await syncAllClaimsFromSeries(list);
+    await syncAllObservationsFromSeries(list);
     return getWorksSyncStatus();
   } catch (err) {
     try {

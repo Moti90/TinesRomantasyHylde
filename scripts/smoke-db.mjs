@@ -10,6 +10,7 @@ import {
   syncAllWorksFromSeries,
 } from "../server/services/worksSync.js";
 import { getClaimsSyncStatus } from "../server/services/claimsSync.js";
+import { getObservationsSyncStatus } from "../server/services/observationsSync.js";
 
 await initDatabase();
 const db = getDatabaseStatus();
@@ -24,6 +25,7 @@ console.log(
       migrations: getMigrationStatus(),
       works: getWorksSyncStatus(),
       claims: getClaimsSyncStatus(),
+      observations: getObservationsSyncStatus(),
     },
     null,
     2,

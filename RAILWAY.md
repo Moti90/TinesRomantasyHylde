@@ -44,6 +44,9 @@ stopper ikke appen. Tjek `/api/health` → `database.works`.
 Fase 7 bid 4: soft dual-write — `_analysisMeta.assessments` spejles til `claims`
 (knyttet til `works`). Tjek `/api/health` → `database.claims`.
 
+Fase 7 bid 5: soft dual-write — `_research.sources` + evidence-refs spejles til
+`observations`. Tjek `/api/health` → `database.observations`.
+
 ## 4. Volume (vigtigt!)
 Uden volume mistes Tines liste ved hver gendeploy.
 
