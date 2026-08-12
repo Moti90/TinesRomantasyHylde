@@ -47,6 +47,7 @@ import {
 } from "./services/tineReviewTargets.js";
 import { getTineReviewSummary } from "./services/tineReviewSummaries.js";
 import { backfillDecisionScores } from "./services/decisionScoreBackfill.js";
+import { rebuildLearnedTaste, getLearnedTasteStatus } from "./services/learnedTaste.js";
 import {
   backfillExcelOrigins,
   enrichLibrarySeries,
@@ -75,6 +76,7 @@ const upload = multer({
 });
 
 ensureMigratedDatabase();
+rebuildLearnedTaste();
 backfillDecisionScores();
 {
   const { list, changed } = backfillExcelOrigins(loadSeries());
@@ -158,6 +160,7 @@ app.get("/api/admin/status", async (_req, res) => {
     works: getWorksSyncStatus(),
     claims: getClaimsSyncStatus(),
     observations: getObservationsSyncStatus(),
+    learnedTaste: getLearnedTasteStatus(),
   });
 });
 

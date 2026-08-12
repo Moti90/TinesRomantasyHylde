@@ -2,6 +2,8 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dataPath } from "./paths.js";
 import { emptySeries } from "./columns.js";
 import { loadSeries, upsertSeries } from "./store.js";
+import { rebuildLearnedTaste } from "./learnedTaste.js";
+import { backfillDecisionScores } from "./decisionScoreBackfill.js";
 
 const REVIEWS_FILE = dataPath("tine-reviews.json");
 
@@ -193,6 +195,9 @@ export function upsertTineReview(review) {
   }
   const reviews = saveReviewsFile(data).reviews;
   syncScoredReviewToLibrary(next, reviews);
+  rebuildLearnedTaste(reviews);
+  // Genberegn Indholdsmatch for biblioteket med ny læring
+  backfillDecisionScores({ force: true });
   return reviews;
 }
 

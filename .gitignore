@@ -17,5 +17,6 @@ data/cover-cache.json
 data/reading-profile.json
 data/tine-reviews.json
 data/tine-review-summaries.json
+data/learned-taste.json
 data/debug-*.json
 data/debug-*.log

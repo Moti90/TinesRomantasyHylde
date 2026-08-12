@@ -615,8 +615,11 @@ function decisionMetaLine(assessment, helpText) {
   const help = helpText
     ? `<p class="decision-score-help">${escapeHtml(helpText)}</p>`
     : "";
-  if (!badge && !help) return "";
-  return `<div class="decision-score-meta">${help}${badge}</div>`;
+  const reason = assessment?.reason
+    ? `<p class="decision-score-reason">${escapeHtml(assessment.reason)}</p>`
+    : "";
+  if (!badge && !help && !reason) return "";
+  return `<div class="decision-score-meta">${help}${badge}${reason}</div>`;
 }
 
 function decisionScoreCard(label, score, assessment, helpText) {

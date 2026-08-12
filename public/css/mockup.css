@@ -441,6 +441,13 @@ body.is-home-view #view-home {
   color: rgba(224, 200, 184, 0.78);
 }
 
+.decision-score-meta .decision-score-reason {
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: rgba(224, 200, 184, 0.88);
+}
+
 .decision-score-meta .conf-badge {
   display: inline-flex;
   max-width: 100%;

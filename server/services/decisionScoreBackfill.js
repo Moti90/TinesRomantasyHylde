@@ -2,7 +2,7 @@ import { buildUncertaintyProfile } from "./decisionScores.js";
 import { applyDecisionScoresToRow } from "./decisionScoreSync.js";
 import { loadSeries, saveSeries } from "./store.js";
 
-const DECISION_SCORES_VERSION = 1;
+const DECISION_SCORES_VERSION = 2;
 
 export function backfillDecisionScores({ force = false } = {}) {
   const series = loadSeries();
@@ -10,13 +10,7 @@ export function backfillDecisionScores({ force = false } = {}) {
   const next = series.map((row) => {
     if (row["Tine-score"] == null) return row;
     const currentVersion = row._analysisMeta?.decisionScoresVersion || 0;
-    if (
-      !force &&
-      currentVersion === DECISION_SCORES_VERSION &&
-      row.Indholdsmatch != null &&
-      row["Læseprioritet nu"] != null &&
-      row.Indholdsmatch === row["Tine-score"]
-    ) {
+    if (!force && currentVersion === DECISION_SCORES_VERSION) {
       return row;
     }
 

@@ -18,6 +18,7 @@ import {
   calculateReadPriority,
   estimateTineScoreFromVibes,
 } from "./decisionScores.js";
+import { applyDecisionScoresToRow } from "./decisionScoreSync.js";
 import {
   normalizeAssessment,
   applyConsensusFallbacks,
@@ -352,29 +353,20 @@ function assessmentsToRow(
 
   applyResearchFacts(row, research, mofibo, { existingRow, updateGoodreads });
   const uncertainty = buildUncertaintyProfile(research, assessments);
-  const contentMatch = predicted.score;
-  const readPriority = calculateReadPriority(row, contentMatch, uncertainty);
-  row["Indholdsmatch"] = contentMatch;
-  row["Læseprioritet nu"] = readPriority.score;
+
+  row.Indholdsmatch = predicted.score;
   assessments["Indholdsmatch"] = {
     ...predicted,
     reason: predicted.reason
       ? `Samme smagsberegning som Tine-score. ${predicted.reason}`
       : "Samme smagsberegning som Tine-score.",
   };
-  assessments["Læseprioritet nu"] = {
-    score: readPriority.score,
-    confidence:
-      uncertainty.level === "strong"
-        ? "high"
-        : uncertainty.level === "medium"
-          ? "medium"
-          : "low",
-    basis: "mixed_sources",
-    reason: readPriority.reason,
-    evidenceSourceIds: predicted.evidenceSourceIds || [],
-    conflictingSourceIds: predicted.conflictingSourceIds || [],
-  };
+
+  const analysisMetaStub = { assessments, uncertainty };
+  const synced = applyDecisionScoresToRow(row, analysisMetaStub);
+  const readPriority = synced.readPriority;
+  // assessments already updated by applyDecisionScoresToRow via analysisMetaStub
+  Object.assign(assessments, analysisMetaStub.assessments);
 
   if (!row["Seriens navn"]) {
     row["Seriens navn"] =

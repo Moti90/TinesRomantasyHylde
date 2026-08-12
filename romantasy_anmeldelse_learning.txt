@@ -1,0 +1,125 @@
+Læring fra Tines Anmeldelser (plan)
+===================================
+
+Formål
+------
+Gøre appen tættere på Tines smag, når hun anmelder bøger hun har læst.
+Anmeldelser skal finjustere scoring og discovery — ikke erstatte den
+eksplicitte profil eller Excel-ankrene.
+
+Princip
+-------
+taste-profile.json   (manuel kerne / no-go / favoritter)
+        +
+Excel-ankre          (låste pejlemærker til standardscore)
+        +
+Tines anmeldelser    (levende signaler fra læste bøger)
+        ↓
+Samlet “effektiv smag” til Indholdsmatch + discovery
+
+Excel forbliver facit på anker-serier.
+“Kan ikke huske”-felter indgår ALDRIG i læring.
+
+
+Trin 1 — Afledt smags-signalfil (MVP-kerne)
+------------------------------------------
+Når en anmeldelse gemmes, aggreger kun felter der ikke er ignored:
+
+- gennemsnit pr. scorefelt (Rhysand, spice, worldbuilding, …)
+- hyppige positives / negatives tags
+- høj-score vs lav-score mønstre
+- “vil læse igen” som ekstra vægt
+
+Foreslået fil:
+  data/learned-taste.json
+
+IKKE automatisk overskrivning af taste-profile.json i starten.
+
+Relevant kode i dag:
+  server/services/tineReviews.js
+  data/tine-reviews.json
+  data/taste-profile.json
+
+
+Trin 2 — Brug signalerne i scoring
+----------------------------------
+I handbook-/beslutningsscoring:
+
+1. Start med nuværende Indholdsmatch
+2. Justér med learned-taste signals, fx:
+   - matcher noget hun konsekvent scorer højt → lille plus
+   - rammer noget hun ofte straffer → lille minus
+3. Vis transparent i UI:
+   “+4 fordi du ofte scorer beskyttende MMC højt”
+
+Så ~50 anmeldelser begynder at flytte NYE bøgers score med det samme.
+
+Relevant kode i dag:
+  server/services/handbookAnalysis.js
+  server/services/decisionScores.js
+  server/services/tasteProfile.js
+
+
+Trin 3 — Brug dem i discovery
+-----------------------------
+Discovery-queries/filter får:
+
+- bonus for tropes/tags hun ofte liker
+- bonus for serier der ligner hendes højest scorede anmeldelser
+- penalty for mønstre hun ofte downvoter
+
+Relevant kode i dag:
+  server/services/discovery.js
+  server/services/tasteProfile.js (buildTasteDiscoveryQueries)
+
+
+Trin 4 — Foreslå profil-opdateringer (senere)
+---------------------------------------------
+Når der er nok data (ca. 30–50 anmeldelser):
+
+- UI foreslår: “Du straffer ofte bully — gør det til hard no-go?”
+- Hun godkender → så opdateres taste-profile.json
+
+Profilen forbliver menneskelig og kontrolleret.
+
+
+Vægtning
+--------
+Eksplicit profil + no-go     = højest
+Excel-ankre                  = høj (låst på anker-serier)
+Anmeldelses-mønstre          = medium, stiger med antal
+Enkelt-anmeldelse            = lav alene
+
+Tommelfingerregel:
+  < ~15 anmeldelser  = svag justering
+  ~50 anmeldelser    = meningsfuld finjustering
+  80–150             = mere stabil automatisk profil
+
+
+Hvad vi IKKE gør
+----------------
+- Soft AI der “gætter ny personlighed” uden sporbarhed
+- Overskrive Excel-scorer
+- Lade “kan ikke huske” indgå
+- Kræve 200 anmeldelser før noget virker
+
+
+MVP (anbefalet første leverance)
+--------------------------------
+1. Aggreger anmeldelser → learned-taste.json
+2. Brug som justering på Indholdsmatch
+3. Vis “hvorfor” i detalje/teaser
+4. Senere: godkendte profil-forslag + discovery-bonus
+
+
+Status
+------
+Plan gemt: 2026-08-10
+Implementering: MVP startet 2026-08-12
+  - learned-taste.json aggregator
+  - Indholdsmatch-justering (ikke Excel-ankre)
+  - reason i detalje-UI
+Forudsætning: Tines Anmeldelser UI/API virker allerede (søg, gem, ignore-felter)
+
+Bemærk: Denne fil er IKKE Fase 7. Fase 7 i metodeplanen er kun den
+store arkitektur (PostgreSQL, claims, pairwise ranking, osv.).
