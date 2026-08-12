@@ -64,6 +64,7 @@ import {
   getWorksSyncStatus,
   syncAllWorksFromSeries,
 } from "./services/worksSync.js";
+import { getClaimsSyncStatus } from "./services/claimsSync.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -82,7 +83,7 @@ backfillDecisionScores();
   }
 }
 
-// Fase 7 bid 1–3: forbind, migrationer, dual-write works (JSON forbliver aktiv)
+// Fase 7 bid 1–4: forbind, migrationer, dual-write works+claims (JSON forbliver aktiv)
 await initDatabase();
 {
   const db = getDatabaseStatus();
@@ -106,6 +107,7 @@ app.get("/api/health", (_req, res) => {
   const db = getDatabaseStatus();
   const migrations = getMigrationStatus();
   const works = getWorksSyncStatus();
+  const claims = getClaimsSyncStatus();
   res.json({
     ok: true,
     ready: hasOpenAIKey(),
@@ -123,6 +125,10 @@ app.get("/api/health", (_req, res) => {
       works: {
         count: works.count,
         ok: works.ok,
+      },
+      claims: {
+        count: claims.claimCount,
+        ok: claims.ok,
       },
     },
   });
@@ -144,6 +150,7 @@ app.get("/api/admin/status", async (_req, res) => {
     database: getDatabaseStatus(),
     migrations: getMigrationStatus(),
     works: getWorksSyncStatus(),
+    claims: getClaimsSyncStatus(),
   });
 });
 

@@ -1,4 +1,6 @@
 import { getPool, isDatabaseConfigured } from "./db.js";
+import { seriesCanonicalKey } from "./seriesKeys.js";
+import { syncAllClaimsFromSeries } from "./claimsSync.js";
 
 /** @type {{
  *   skipped?: boolean,
@@ -22,12 +24,6 @@ let syncQueue = Promise.resolve();
 
 export function getWorksSyncStatus() {
   return { ...lastSync };
-}
-
-export function seriesCanonicalKey(seriesName) {
-  const name = String(seriesName || "").trim().toLowerCase();
-  if (!name) return null;
-  return `series:${name}`;
 }
 
 function mapSeriesToWork(row) {
@@ -161,6 +157,8 @@ export async function syncAllWorksFromSeries(list) {
       `[works] Synced ${upserted} serie(r) til Postgres` +
         (lastSync.deleted ? ` (slettet ${lastSync.deleted} orphan(s))` : ""),
     );
+    // Fase 7 bid 4: spejl assessments → claims efter works
+    await syncAllClaimsFromSeries(list);
     return getWorksSyncStatus();
   } catch (err) {
     try {

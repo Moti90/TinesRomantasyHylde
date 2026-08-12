@@ -41,6 +41,9 @@ Fase 7 bid 3: soft dual-write — serier fra `series.json` spejles til `works`
 (`canonical_key = series:<navn>`). JSON er stadig sandheden; Postgres-fejl
 stopper ikke appen. Tjek `/api/health` → `database.works`.
 
+Fase 7 bid 4: soft dual-write — `_analysisMeta.assessments` spejles til `claims`
+(knyttet til `works`). Tjek `/api/health` → `database.claims`.
+
 ## 4. Volume (vigtigt!)
 Uden volume mistes Tines liste ved hver gendeploy.
 
