@@ -4,6 +4,7 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  --view-bg-image: url("/img/romantasy-bg.png");
   background:
     linear-gradient(
       180deg,
@@ -11,7 +12,20 @@
       rgba(12, 6, 18, 0.28) 35%,
       rgba(12, 6, 18, 0.55) 100%
     ),
-    url("/img/romantasy-bg.png") center / cover no-repeat;
+    var(--view-bg-image) center / cover no-repeat;
+  transition: background 0.35s ease;
+}
+
+body[data-app-view="library"] .atmosphere {
+  --view-bg-image: url("/img/romantasy-bg2.png");
+}
+
+body[data-app-view="discovery"] .atmosphere {
+  --view-bg-image: url("/img/romantasy-bg3.png");
+}
+
+body[data-app-view="reviews"] .atmosphere {
+  --view-bg-image: url("/img/romantasy-bg4.png");
 }
 
 .atmosphere::after {

@@ -1050,6 +1050,7 @@ function setView(view) {
     else btn.removeAttribute("aria-current");
   });
   document.body.classList.toggle("is-home-view", view === "home");
+  document.body.dataset.appView = view;
   if (view !== "library") closeMenus();
   if (view === "discovery") {
     loadDiscovery().catch((err) =>
