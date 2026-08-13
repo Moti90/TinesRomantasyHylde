@@ -8,8 +8,8 @@ import {
 import { ANALYSIS_PROMPT_VERSION } from "../server/services/versions.js";
 
 describe("Løsnet evidens-mapping", () => {
-  it("bruger analysis-v14", () => {
-    assert.equal(ANALYSIS_PROMPT_VERSION, "analysis-v14");
+  it("bruger analysis-v16", () => {
+    assert.equal(ANALYSIS_PROMPT_VERSION, "analysis-v16");
   });
 
   it("genkender touch-her-and-die fra synonym-beskrivelse", () => {

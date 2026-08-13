@@ -9,6 +9,11 @@ import {
 import { appendFileSync, mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
 import { dataPath } from "./paths.js";
+import {
+  hasTargetFieldSignal,
+  isGoodreadsDiscussionUrl,
+  isStudyGuideUrl,
+} from "./evidenceRelevance.js";
 
 const DEBUG_LOG = dataPath("debug-research.log");
 
@@ -162,6 +167,305 @@ function extractJson(text) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+export function tryExtractJson(text) {
+  try {
+    return extractJson(text);
+  } catch {
+    return null;
+  }
+}
+
+const FINDING_ITEM_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    url: { type: "string" },
+    title: { type: "string" },
+    summary: { type: "string" },
+    type: { type: "string" },
+  },
+  required: ["url", "title", "summary", "type"],
+};
+
+export const FOCUSED_FIELD_SEARCH_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    findings: { type: "array", items: FINDING_ITEM_SCHEMA },
+  },
+  required: ["findings"],
+};
+
+export const IDENTITY_RESOLUTION_SEARCH_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    pairing: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        fmc: { type: "string" },
+        mmc: { type: "string" },
+        confidence: { type: "string", enum: ["high", "medium", "low"] },
+        basis: { type: "array", items: { type: "string" } },
+        alternatives: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              name: { type: "string" },
+              role: { type: "string" },
+            },
+            required: ["name", "role"],
+          },
+        },
+      },
+      required: ["fmc", "mmc", "confidence", "basis", "alternatives"],
+    },
+    findings: { type: "array", items: FINDING_ITEM_SCHEMA },
+  },
+  required: ["pairing", "findings"],
+};
+
+function focusedSearchSchema(purpose) {
+  return purpose === "identity"
+    ? IDENTITY_RESOLUTION_SEARCH_SCHEMA
+    : FOCUSED_FIELD_SEARCH_SCHEMA;
+}
+
+function focusedSearchSchemaName(purpose) {
+  return purpose === "identity"
+    ? "identity_resolution_search"
+    : "focused_field_search";
+}
+
+function responsesJsonSchemaFormat(purpose) {
+  return {
+    type: "json_schema",
+    name: focusedSearchSchemaName(purpose),
+    strict: true,
+    schema: focusedSearchSchema(purpose),
+  };
+}
+
+function normalizeFinding(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const url = String(raw.url || "").trim();
+  const title = String(raw.title || "").trim();
+  if (!url && !title) return null;
+  return {
+    url: url || null,
+    title: title || "Kilde",
+    summary: String(raw.summary || "").trim(),
+    type: String(raw.type || "").trim() || undefined,
+  };
+}
+
+export function normalizeStructuredPairing(raw) {
+  const src = raw?.pairing || raw?.identity || raw;
+  if (!src || typeof src !== "object") return null;
+  const mmc = String(src.mmc || src.maleLead || "").trim();
+  const fmc = String(src.fmc || src.femaleLead || "").trim();
+  if (!mmc && !fmc) return null;
+  const confidence = ["high", "medium", "low"].includes(src.confidence)
+    ? src.confidence
+    : mmc && fmc
+      ? "medium"
+      : "low";
+  const alternatives = Array.isArray(src.alternatives)
+    ? src.alternatives
+        .map((a) => ({
+          name: String(a?.name || "").trim(),
+          role: String(a?.role || "candidate_mmc").trim() || "candidate_mmc",
+        }))
+        .filter((a) => a.name)
+    : [];
+  const basis = Array.isArray(src.basis)
+    ? src.basis.map((b) => String(b || "").trim()).filter(Boolean)
+    : [];
+  return { mmc, fmc, confidence, basis, alternatives };
+}
+
+export function formatIdentityHintText(pairing) {
+  const p = normalizeStructuredPairing(pairing);
+  if (!p) return "";
+  const strong = p.confidence === "high" || p.confidence === "medium";
+  const parts = [];
+  if (p.fmc && p.mmc && strong) {
+    parts.push(`${p.fmc} and ${p.mmc} are the central romantic pairing.`);
+    parts.push(`${p.mmc} becomes the heroine's endgame partner.`);
+  } else if (p.mmc && strong) {
+    parts.push(`${p.mmc} becomes the heroine's endgame partner.`);
+  } else if (p.mmc) {
+    parts.push(`MMC ${p.mmc} is a candidate male lead.`);
+  }
+  if (p.fmc) parts.push(`${p.fmc} is the heroine.`);
+  for (const alt of p.alternatives) {
+    if (alt.role === "early_love_interest") {
+      parts.push(`${alt.name} is an early love interest.`);
+    } else if (alt.name) {
+      parts.push(`MMC ${alt.name} is also described as a male lead.`);
+    }
+  }
+  return parts.join(" ");
+}
+
+export function tryParseFocusedSearchText(text, { purpose = "field" } = {}) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) {
+    return { ok: false, findings: [], pairing: null, source: null };
+  }
+  let parsed = null;
+  let source = null;
+  try {
+    parsed = JSON.parse(trimmed);
+    source = "structured";
+  } catch {
+    parsed = tryExtractJson(trimmed);
+    source = parsed ? "json_fallback" : null;
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return { ok: false, findings: [], pairing: null, source: null };
+  }
+  const findings = Array.isArray(parsed.findings)
+    ? parsed.findings.map(normalizeFinding).filter(Boolean)
+    : [];
+  const pairing =
+    purpose === "identity" ? normalizeStructuredPairing(parsed) : null;
+  const ok =
+    Array.isArray(parsed.findings) || Boolean(pairing?.mmc || pairing?.fmc);
+  return { ok, findings, pairing, source, parsed };
+}
+
+export function buildFocusedSearchRepairPrompt({
+  text,
+  rawUrls = [],
+  purpose = "field",
+} = {}) {
+  const schemaName = focusedSearchSchemaName(purpose);
+  const example =
+    purpose === "identity"
+      ? `{
+  "pairing": {
+    "fmc": "",
+    "mmc": "",
+    "confidence": "high",
+    "basis": ["later-series central pairing"],
+    "alternatives": [{ "name": "", "role": "early_love_interest" }]
+  },
+  "findings": [
+    { "title": "...", "url": "https://...", "type": "blog", "summary": "..." }
+  ]
+}`
+      : `{
+  "findings": [
+    { "title": "...", "url": "https://...", "type": "blog", "summary": "..." }
+  ]
+}`;
+  return `Your previous answer did not match the required JSON schema.
+
+Return only valid JSON matching this schema (${schemaName}).
+Do not add prose, markdown or explanation.
+
+${example}
+
+Previous output:
+${String(text || "").slice(0, 6000)}
+
+Known URLs from web search:
+${(rawUrls || [])
+  .map((u) => `- ${u.url || u}`)
+  .join("\n") || "(none)"}`;
+}
+
+export async function repairFocusedSearchJson(client, args = {}) {
+  const completion = await client.chat.completions.create({
+    model: ANALYSIS_MODEL,
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "Return only valid JSON matching the required schema. Do not add prose, markdown or explanation.",
+      },
+      {
+        role: "user",
+        content: buildFocusedSearchRepairPrompt(args),
+      },
+    ],
+  });
+  return {
+    text: completion.choices?.[0]?.message?.content || "",
+    inputTokens: completion.usage?.prompt_tokens || 0,
+    outputTokens: completion.usage?.completion_tokens || 0,
+  };
+}
+
+export async function resolveFocusedSearchOutput({
+  text,
+  rawUrls = [],
+  purpose = "field",
+  repair,
+} = {}) {
+  const first = tryParseFocusedSearchText(text, { purpose });
+  if (first.ok) {
+    return {
+      findings: first.findings,
+      pairing: first.pairing,
+      parseStatus: first.source || "structured",
+      retryUsed: false,
+      retryInputTokens: 0,
+      retryOutputTokens: 0,
+    };
+  }
+  if (typeof repair === "function") {
+    let repaired = null;
+    try {
+      repaired = await repair({ text, rawUrls, purpose });
+    } catch {
+      return {
+        findings: [],
+        pairing: null,
+        parseStatus: rawUrls.length ? "raw_only" : "failed",
+        retryUsed: true,
+        retryInputTokens: 0,
+        retryOutputTokens: 0,
+      };
+    }
+    const repairedText =
+      typeof repaired === "string" ? repaired : repaired?.text || "";
+    const second = tryParseFocusedSearchText(repairedText, { purpose });
+    if (second.ok) {
+      return {
+        findings: second.findings,
+        pairing: second.pairing,
+        parseStatus: "repaired",
+        retryUsed: true,
+        retryInputTokens: Number(repaired?.inputTokens) || 0,
+        retryOutputTokens: Number(repaired?.outputTokens) || 0,
+      };
+    }
+    return {
+      findings: [],
+      pairing: null,
+      parseStatus: rawUrls.length ? "raw_only" : "failed",
+      retryUsed: true,
+      retryInputTokens: Number(repaired?.inputTokens) || 0,
+      retryOutputTokens: Number(repaired?.outputTokens) || 0,
+    };
+  }
+  return {
+    findings: [],
+    pairing: null,
+    parseStatus: rawUrls.length ? "raw_only" : "failed",
+    retryUsed: false,
+    retryInputTokens: 0,
+    retryOutputTokens: 0,
+  };
+}
+
 function outputText(response) {
   if (response?.output_text) return response.output_text;
   const parts = [];
@@ -221,18 +525,20 @@ function defaultTypeForFocus(focus, url) {
   return "other";
 }
 
-function focusAllowsSource(focus, type, url) {
-  const u = String(url || "").toLowerCase();
+export function focusAllowsSource(focus, type, url, title = "", summary = "") {
   if (BATCH_IDS.includes(focus)) {
-    // Batch-søgninger: kun anmeldelse-/læser-kilder
-    if (["catalog", "official", "publisher", "wikipedia", "other"].includes(type)) {
+    if (["catalog", "official", "publisher", "wikipedia"].includes(type)) {
       return false;
     }
-    if (type === "forum") {
-      return looksLikeReaderDiscussion(url, "", "");
+    if (isStudyGuideUrl(url)) return true;
+    if (type === "forum" || isGoodreadsDiscussionUrl(url)) {
+      return looksLikeReaderDiscussion(url, title, summary);
     }
     if (type === "professional") {
-      return looksLikeBookInsight(url, "", type);
+      return looksLikeBookInsight(url, title, type);
+    }
+    if (type === "other") {
+      return looksLikeBookInsight(url, title, type);
     }
     return type === "blog" || type === "goodreads" || type === "forum";
   }
@@ -243,43 +549,331 @@ function focusAllowsSource(focus, type, url) {
  * 4 målrettede batches — hver dækker en gruppe håndbogsfelter.
  * Naturlige prompts only (ingen teknisk query).
  */
-export function inferLeadCharactersFromResearch(research) {
+/**
+ * Series-level romantic leads from research text.
+ * Prefers endgame/mate/central pairing language over book-1 love interest.
+ * No series-name hardcoding.
+ */
+export function inferSeriesRomanticLeads(research) {
+  const hintText = formatIdentityHintText(
+    research?.identityHint || research?.structuredPairing
+  );
   const blob = [
+    hintText,
     ...(research?.sources || []).map((s) => `${s.title || ""} ${s.summary || ""}`),
     JSON.stringify(research?.reviewConsensus || {}),
   ]
     .join(" ")
     .replace(/\s+/g, " ");
 
-  const mellem = blob.match(
-    /mellem\s+([A-ZÆØÅ][\w'’-]+)\s+og\s+([A-ZÆØÅ][\w'’-]+)/
-  );
-  if (mellem) {
-    return { fmc: mellem[1], mmc: mellem[2] };
+  const candidates = new Map();
+  const ensure = (raw, roleHint) => {
+    const name = String(raw || "").trim();
+    if (!name || name.length < 2 || name.length > 40) return null;
+    if (!/^[A-ZÆØÅ][\w'’-]+(?:[ -][A-ZÆØÅ][\w'’-]+)?$/.test(name)) return null;
+    const stop = new Set([
+      "The", "A", "An", "He", "She", "His", "Her", "Hero", "Heroine",
+      "Between", "And", "With", "Book", "Series", "Male", "Female",
+      "Later", "Early", "First", "Main", "Central", "Romantic",
+    ]);
+    if (stop.has(name)) return null;
+    if (!candidates.has(name)) {
+      candidates.set(name, {
+        name,
+        mmcScore: 0,
+        fmcScore: 0,
+        early: false,
+        endgame: false,
+        basis: [],
+      });
+    }
+    const c = candidates.get(name);
+    if (roleHint === "mmc") c.mmcScore += 0;
+    if (roleHint === "fmc") c.fmcScore += 0;
+    return c;
+  };
+
+  const add = (name, { mmc = 0, fmc = 0, early = false, endgame = false, basis = "" } = {}) => {
+    const c = ensure(name);
+    if (!c) return;
+    c.mmcScore += mmc;
+    c.fmcScore += fmc;
+    if (early) c.early = true;
+    if (endgame) c.endgame = true;
+    if (basis && !c.basis.includes(basis)) c.basis.push(basis);
+  };
+
+  const sentences = String(blob).split(/(?<=[.!?])\s+|\n+/);
+
+  const ENDGAME =
+    /\b(endgame|eventual (?:partner|husband|wife|mate|love interest)|primary (?:romantic )?(?:lead|pairing|couple)|central (?:romantic )?(?:lead|pairing|couple|dynamic|partner)|main (?:romantic )?(?:pairing|couple|lead)|her mate|his mate|ends? up with|later (?:becomes|books?)|series[- ]level|endelige partner)\b/i;
+  const EARLY =
+    /\b(book\s*(?:one|1)|first book|initially|originally|at first|early (?:love|relationship)|starts? (?:out |off )?(?:dating|with)|first love interest|dates?)\b/i;
+  const NAME = "([A-ZÆØÅ][A-Za-zæøå'’-]*(?:\\s+[A-ZÆØÅ][A-Za-zæøå'’-]*)?)";
+
+  for (const sent of sentences) {
+    const early = EARLY.test(sent);
+    const endgame = ENDGAME.test(sent);
+    const weight = endgame ? 8 : early ? 2 : 3;
+
+    const endWith = sent.match(
+      new RegExp(
+        `\\b(?:endgame(?:\\s+(?:is|with))?|ends?\\s+up\\s+with|eventual\\s+(?:partner|husband|mate)|(?:her|his)\\s+mate|central\\s+romantic\\s+partner(?:\\/endgame)?)\\s+${NAME}`,
+        "i"
+      )
+    );
+    if (endWith?.[1] && /^[A-ZÆØÅ]/.test(endWith[1])) {
+      add(endWith[1], { mmc: 12, endgame: true, basis: "endgame_partner" });
+    }
+
+    const pairing = sent.match(
+      new RegExp(
+        `\\b(?:main|central|primary)\\s+(?:romantic\\s+)?(?:pairing|couple|relationship)\\s+(?:is\\s+|of\\s+)?${NAME}\\s+and\\s+${NAME}`,
+        "i"
+      )
+    );
+    if (pairing?.[1] && pairing?.[2] && /^[A-ZÆØÅ]/.test(pairing[1]) && /^[A-ZÆØÅ]/.test(pairing[2])) {
+      add(pairing[1], { fmc: 6, mmc: 2, endgame: true, basis: "central_pairing" });
+      add(pairing[2], { mmc: 8, fmc: 2, endgame: true, basis: "central_pairing" });
+    }
+
+    const mellem = sent.match(
+      new RegExp(`mellem\\s+${NAME}\\s+og\\s+${NAME}`, "i")
+    );
+    if (mellem?.[1] && /^[A-ZÆØÅ]/.test(mellem[1])) {
+      add(mellem[1], { fmc: endgame ? 6 : 4, basis: "mellem" });
+      add(mellem[2], { mmc: endgame ? 8 : 4, early: early && !endgame, endgame, basis: "mellem" });
+    }
+    const between = sent.match(
+      new RegExp(`\\bbetween\\s+${NAME}\\s+and\\s+${NAME}`, "i")
+    );
+    if (between?.[1] && /^[A-ZÆØÅ]/.test(between[1])) {
+      add(between[1], { fmc: endgame ? 6 : 4, basis: "between" });
+      add(between[2], { mmc: endgame ? 8 : 4, early: early && !endgame, endgame, basis: "between" });
+    }
+
+    const pairingAre = sent.match(
+      new RegExp(
+        `${NAME}\\s+and\\s+${NAME}\\s+are\\s+(?:the\\s+)?(?:central|main|primary)\\s+(?:romantic\\s+)?(?:pairing|couple)`,
+        "i"
+      )
+    );
+    if (
+      pairingAre?.[1] &&
+      pairingAre?.[2] &&
+      /^[A-ZÆØÅ]/.test(pairingAre[1]) &&
+      /^[A-ZÆØÅ]/.test(pairingAre[2])
+    ) {
+      add(pairingAre[1], { fmc: 6, mmc: 2, endgame: true, basis: "central_pairing" });
+      add(pairingAre[2], { mmc: 8, fmc: 2, endgame: true, basis: "central_pairing" });
+    }
+
+    const mmcNamed = sent.match(
+      new RegExp(
+        `\\b(?:MMC|Hero|hero|male lead|Male lead|male protagonist|Male protagonist)(?:\\s+is)?\\s+${NAME}`
+      )
+    );
+    if (mmcNamed) {
+      add(mmcNamed[1], {
+        mmc: weight,
+        early: early && !endgame,
+        endgame,
+        basis: endgame ? "named_mmc_endgame" : "named_mmc",
+      });
+    }
+    const fmcNamed = sent.match(
+      new RegExp(
+        `\\b(?:FMC|Heroine|heroine|female lead|Female lead|female protagonist|Female protagonist)\\s+${NAME}`
+      )
+    );
+    if (fmcNamed) {
+      add(fmcNamed[1], { fmc: weight + 2, basis: "named_fmc" });
+    }
+
+    const isHeroine = sent.match(
+      new RegExp(`${NAME}\\s+is\\s+(?:the\\s+)?(?:heroine|FMC|female lead)`, "i")
+    );
+    if (isHeroine?.[1] && /^[A-ZÆØÅ]/.test(isHeroine[1])) {
+      add(isHeroine[1], { fmc: 8, basis: "named_fmc" });
+    }
+
+    const loveInterest = sent.match(
+      new RegExp(`\\blove interest\\s+(?:is\\s+)?${NAME}`, "i")
+    );
+    if (loveInterest?.[1] && /^[A-ZÆØÅ]/.test(loveInterest[1])) {
+      add(loveInterest[1], {
+        mmc: endgame ? 8 : 3,
+        early: early && !endgame,
+        endgame,
+        basis: endgame ? "love_interest_endgame" : "love_interest",
+      });
+    }
+    const dates = sent.match(new RegExp(`heroine\\s+dates\\s+${NAME}`, "i"));
+    if (dates?.[1] && /^[A-ZÆØÅ]/.test(dates[1])) {
+      add(dates[1], { mmc: 2, early: true, basis: "early_dates" });
+    }
+
+    const relEnds = sent.match(
+      new RegExp(`relationship with\\s+${NAME}\\s+ends`, "i")
+    );
+    if (relEnds?.[1] && /^[A-ZÆØÅ]/.test(relEnds[1])) {
+      add(relEnds[1], { mmc: -4, early: true, basis: "relationship_ended" });
+    }
+
+    const becomes = sent.match(
+      new RegExp(
+        `${NAME}\\s+becomes\\s+(?:the\\s+)?(?:heroine's\\s+)?(?:central\\s+)?(?:endgame\\s+)?(?:eventual\\s+)?(?:romantic\\s+)?(?:partner|lead|endgame)`
+      )
+    );
+    if (becomes) add(becomes[1], { mmc: 12, endgame: true, basis: "becomes_endgame" });
+
+    const established = sent.match(
+      new RegExp(
+        `\\bestablish(?:es|ed)?\\s+${NAME}\\s+as\\s+(?:the\\s+)?(?:heroine's\\s+)?(?:central|endgame|eventual|primary)`,
+        "i"
+      )
+    );
+    if (established?.[1] && /^[A-ZÆØÅ]/.test(established[1])) {
+      add(established[1], { mmc: 12, endgame: true, basis: "endgame_partner" });
+    }
+
+    const asPartner = sent.match(
+      new RegExp(
+        `${NAME}\\s+as\\s+(?:the\\s+)?(?:heroine's\\s+)?(?:central|endgame|eventual)(?:\\/endgame)?\\s+(?:romantic\\s+)?(?:partner|lead)`
+      )
+    );
+    if (asPartner) add(asPartner[1], { mmc: 12, endgame: true, basis: "endgame_partner" });
+
+    const remains = sent.match(
+      new RegExp(
+        `${NAME}\\s+remains\\s+(?:the\\s+)?(?:heroine's\\s+)?(?:primary|central|main)\\s+(?:romantic\\s+)?partner`,
+        "i"
+      )
+    );
+    if (remains?.[1] && /^[A-ZÆØÅ]/.test(remains[1])) {
+      add(remains[1], { mmc: 10, endgame: true, basis: "central_pairing" });
+    }
+
+    const earlyNamed = sent.match(
+      new RegExp(`${NAME}\\s+is\\s+(?:an?\\s+)?early\\s+love\\s+interest`, "i")
+    );
+    if (earlyNamed?.[1] && /^[A-ZÆØÅ]/.test(earlyNamed[1])) {
+      add(earlyNamed[1], { mmc: 1, early: true, basis: "early_dates" });
+    }
   }
-  const between = blob.match(
-    /between\s+([A-Z][\w'’-]+)\s+and\s+([A-Z][\w'’-]+)/i
-  );
-  if (between) {
-    return { fmc: between[1], mmc: between[2] };
+
+  const people = [...candidates.values()];
+  const mmcRanked = [...people].sort((a, b) => b.mmcScore - a.mmcScore);
+  const fmcRanked = [...people].sort((a, b) => b.fmcScore - a.fmcScore);
+  const mmc = mmcRanked[0]?.mmcScore > 0 ? mmcRanked[0] : null;
+  const fmc =
+    fmcRanked[0] && fmcRanked[0].name !== mmc?.name && fmcRanked[0].fmcScore > 0
+      ? fmcRanked[0]
+      : fmcRanked.find((p) => p.name !== mmc?.name && p.fmcScore > 0) || null;
+
+  const runnerUp = mmcRanked.find((p) => p.name !== mmc?.name && p.mmcScore > 0);
+  let confidence = "low";
+  if (mmc && runnerUp && runnerUp.mmcScore > 0) {
+    const gap = mmc.mmcScore - runnerUp.mmcScore;
+    const ratio = runnerUp.mmcScore / mmc.mmcScore;
+    if (mmc.endgame && gap >= 4 && ratio < 0.55) confidence = "high";
+    else if (ratio >= 0.55 || gap <= 3) confidence = "low";
+    else confidence = "medium";
+  } else if (mmc && mmc.endgame) {
+    confidence = "high";
+  } else if (mmc) {
+    confidence = "medium";
   }
-  const namedMmc = blob.match(
-    /\b(?:MMC|hero|male lead)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i
+
+  const alternatives = [];
+  for (const p of mmcRanked) {
+    if (!mmc || p.name === mmc.name) continue;
+    if (fmc && p.name === fmc.name) continue;
+    if (p.mmcScore <= 0 && !p.early) continue;
+    alternatives.push({
+      name: p.name,
+      role: p.early && !p.endgame ? "early_love_interest" : "candidate_mmc",
+    });
+  }
+
+  const pairingShiftMentioned =
+    /\b(early love interest|love triangle|replaced by|relationship with \w+ ends|no longer together|switching (?:romantic )?partners?|later books? (?:she|the heroine) (?:ends up|is with))\b/i.test(
+      blob
+    );
+
+  const seriesLevelBasis = uniqueStrings(
+    (mmc?.basis || []).filter((b) =>
+      [
+        "endgame_partner",
+        "central_pairing",
+        "named_mmc_endgame",
+        "love_interest_endgame",
+        "becomes_endgame",
+      ].includes(b)
+    )
   );
-  const namedFmc = blob.match(
-    /\b(?:FMC|heroine|female lead)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i
-  );
-  const mmc = namedMmc?.[1] || "";
-  const fmc = namedFmc?.[1] || "";
-  if (mmc || fmc) return { mmc, fmc };
-  return { mmc: "", fmc: "" };
+
+  return {
+    mmc: mmc?.name || "",
+    fmc: fmc?.name || "",
+    confidence: mmc || fmc ? confidence : "low",
+    basis: uniqueStrings([...(mmc?.basis || []), ...(fmc?.basis || [])]),
+    alternatives,
+    mmcEarly: Boolean(mmc?.early && !mmc?.endgame),
+    mmcEndgame: Boolean(mmc?.endgame),
+    pairingShiftMentioned,
+    seriesLevelSignals: seriesLevelBasis,
+  };
+}
+
+function uniqueStrings(arr) {
+  return [...new Set((arr || []).filter(Boolean))];
+}
+
+export function inferLeadCharactersFromResearch(research) {
+  const full = inferSeriesRomanticLeads(research);
+  return {
+    mmc: full.mmc,
+    fmc: full.fmc,
+    confidence: full.confidence,
+    basis: full.basis,
+    alternatives: full.alternatives,
+  };
+}
+
+function researchSubject(identity) {
+  const series = String(identity?.series || "").trim();
+  const title = String(identity?.title || series || "book").trim();
+  const author = String(identity?.author || "ukendt forfatter").trim();
+  const isSeries =
+    identity?.isSeries === true ||
+    Boolean(series) ||
+    Boolean(identity?.firstBook && series);
+  if (isSeries) {
+    const seriesTitle = series || title;
+    const first =
+      String(identity?.firstBook || "").trim() ||
+      (title && title.toLowerCase() !== seriesTitle.toLowerCase() ? title : "");
+    const firstBit =
+      first && first.toLowerCase() !== seriesTitle.toLowerCase()
+        ? ` med første bog "${first}"`
+        : "";
+    return {
+      isSeries: true,
+      opener: `Jeg undersøger serien "${seriesTitle}"${firstBit} af ${author}.`,
+      seriesNote: `Prioritér den centrale romantiske dynamik på tværs af serien, ikke blot den første tilsyneladende love interest i bog 1. Spoilers er tilladt i intern research.`,
+    };
+  }
+  return {
+    isSeries: false,
+    opener: `Jeg undersøger bogen "${title}" af ${author}.`,
+    seriesNote: "",
+  };
 }
 
 export function buildSearchPlan(identity) {
-  const title = identity?.title || identity?.series || "book";
-  const author = identity?.author || "ukendt forfatter";
-  const bog = String(title).trim();
-  const forfatter = String(author).trim();
+  const { opener, seriesNote } = researchSubject(identity);
+  const extra = seriesNote ? `\n\n${seriesNote}` : "";
 
   return [
     {
@@ -287,7 +881,7 @@ export function buildSearchPlan(identity) {
       focus: "helteprofil",
       batch: "helteprofil",
       query: "",
-      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser, blogindlæg og diskussioner der beskriver den mandlige hovedperson og hans relation til heltinden.
+      userPrompt: `${opener} Find anmeldelser, blogindlæg og diskussioner der beskriver den mandlige hovedperson og hans relation til heltinden.${extra}
 
 Læs de 6-10 mest detaljerede resultater og for hver der beskriver hans personlighed eller deres dynamik, notér hvad der siges om:
 - Er han beskyttende? Besidderisk? Alpha?
@@ -303,7 +897,7 @@ Returnér 6-10 kilder med URL og et kort resume af hvad de siger om ham.`,
       focus: "romanceprofil",
       batch: "romanceprofil",
       query: "",
-      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find anmeldelser og blogindlæg der diskuterer romancen og spice-niveauet.
+      userPrompt: `${opener} Find anmeldelser og blogindlæg der diskuterer romancen og spice-niveauet.${extra}
 
 Læs de 6-10 mest detaljerede resultater og notér hvad der siges om:
 - Hvor meget fylder romancen i forhold til plottet?
@@ -319,7 +913,7 @@ Returnér 6-10 kilder med URL og resume af hvad de siger om romancen og spice.`,
       focus: "plotkarakter",
       batch: "plotkarakter",
       query: "",
-      userPrompt: `Jeg undersøger bogen "${bog}" af ${forfatter}. Find dybdegående anmeldelser der analyserer plot, karakterudvikling og pacing.
+      userPrompt: `${opener} Find dybdegående anmeldelser der analyserer plot, karakterudvikling og pacing.${extra}
 
 Læs de 6-10 bedste resultater og notér:
 - Er plottet episk eller mere personligt?
@@ -336,7 +930,7 @@ Returnér 6-10 kilder med resume af deres analyse.`,
       focus: "helhed",
       batch: "helhed",
       query: "",
-      userPrompt: `Jeg undersøger serien omkring "${bog}" af ${forfatter}. Find anmeldelser og tråde der beskriver den samlede læseoplevelse.
+      userPrompt: `${opener} Find anmeldelser og tråde der beskriver den samlede læseoplevelse.${extra}
 
 Notér hvad der siges om:
 - Giver den book hangover? Tænker man på den længe efter?
@@ -476,8 +1070,10 @@ export function looksLikeReaderDiscussion(url = "", title = "", summary = "") {
     .toLowerCase()
     .replace(/[_-]+/g, " ");
 
+  if (isGoodreadsDiscussionUrl(url)) return true;
+
   const positive =
-    /\b(book review|review|anmeld|thoughts on|just finished|finished reading|first impressions|dnf|spoiler free|what to expect|tropes?\b|spice level|romance|recommend|worth reading|worth it|rating|reread|should i read|is it (good|worth)|loved this book|hated this book)\b/i;
+    /\b(book review|review|anmeld|thoughts on|just finished|finished reading|first impressions|dnf|spoiler free|what to expect|tropes?\b|spice level|romance|recommend|worth reading|worth it|rating|reread|should i read|is it (good|worth)|loved this book|hated this book|character dynamic|mmc|heroine)\b/i;
 
   const loreNoise =
     /\b(where was|missing for|timeline|plot hole|headcanon|fanfic|fan theory|theor(y|ies)|casting|movie|film only|who would win|easter egg|continuity|retcon|sorting hat|dropped off at|what if .+|plothole)\b/i;
@@ -499,6 +1095,7 @@ export function classifySourceType(url, title, declared) {
   const d = String(declared || "").toLowerCase();
 
   if (u.includes("wikipedia.org")) return "wikipedia";
+  if (isStudyGuideUrl(u)) return "other";
   if (u.includes("fandom.com") || u.includes("explained.today")) return "other";
 
   if (u.includes("reddit.com")) return "forum";
@@ -617,17 +1214,25 @@ function sourceValueScore(s) {
   const type = s.type;
   const url = String(s.url || "");
   const insight = looksLikeBookInsight(url, s.title, type);
+  const reviewish =
+    insight ||
+    type === "forum" ||
+    type === "blog" ||
+    isGoodreadsDiscussionUrl(url) ||
+    /\/review/i.test(url);
   let score = batchWeight(s.batch || s.focus);
   if (type === "forum" && url.includes("reddit.com")) score += 50;
-  else if (type === "forum") score += 35;
+  else if (type === "forum" || isGoodreadsDiscussionUrl(url)) score += 35;
   if (type === "blog" && insight) score += 45;
   if (type === "professional" && insight) score += 48;
-  if (type === "goodreads") score += 15;
+  if (type === "goodreads") score += isGoodreadsDiscussionUrl(url) ? 30 : 15;
   if (type === "wikipedia" || type === "official") score += 8;
   if (type === "catalog" || type === "other") score += 1;
   if (insight) score += 10;
-  // Korte / generiske summaries = lav værdi
-  if (String(s.summary || "").trim().length < 40) score -= 20;
+  const summaryLen = String(s.summary || "").trim().length;
+  if (summaryLen < 40 && !reviewish) score -= 20;
+  else if (summaryLen < 40 && reviewish) score -= 4;
+  if (isStudyGuideUrl(url)) score -= 28;
   if (isIndustryNoise(url, s.title)) score -= 100;
   if (isPublisherPr(url, s.title)) score -= 100;
   return score;
@@ -785,8 +1390,10 @@ const MAX_PER_HOST_PER_BATCH = 3;
 const MAX_GOODREADS_PER_BATCH = 3;
 const MAX_GOODREADS_TOTAL = 12;
 
-export function selectValuableSources(sources) {
+export function selectValuableSources(sources, options = {}) {
   if (!Array.isArray(sources)) return [];
+  const targetFields = options.targetFields || [];
+  const adaptiveFollowUp = options.adaptiveFollowUp === true;
   const byCanon = new Map();
   for (let i = 0; i < sources.length; i++) {
     const s = sources[i] || {};
@@ -867,6 +1474,15 @@ export function selectValuableSources(sources) {
         !looksLikeBookInsight(s.url, s.title, s.type)
       ) {
         continue;
+      }
+    } else if (s.type === "other") {
+      const keepForContent =
+        adaptiveFollowUp && hasTargetFieldSignal(s, targetFields);
+      if (!keepForContent) {
+        const otherKey = `${s.batch || "_"}:other`;
+        const oc = hostCount.get(otherKey) || 0;
+        if (oc >= 2) continue;
+        hostCount.set(otherKey, oc + 1);
       }
     } else {
       continue;
@@ -1124,14 +1740,44 @@ export function normalizeResearch(parsed, identity, usageMeta = {}) {
   };
 }
 
-async function runFocusedSearch(client, { id, focus, query, userPrompt, batch }) {
-  const batchLabel = batch || focus;
+export async function runFocusedSearch(client, {
+  id,
+  focus,
+  query,
+  userPrompt,
+  batch,
+  queryHints = [],
+  maxFindings = 12,
+  purpose = "field",
+  repair,
+} = {}) {
+  const identityPurpose = purpose === "identity";
+  const batchLabel = batch || focus || (identityPurpose ? "series_identity" : "helteprofil");
+  const searchFocus = identityPurpose ? "series_identity" : focus;
   const debugHelte = batchLabel === "helteprofil";
   const debugRomance = batchLabel === "romanceprofil";
-  // Kun naturlig batch-prompt — ingen teknisk søgestreng.
-  const promptText = `${userPrompt}
-
-Returnér JSON:
+  const hintBlock = Array.isArray(queryHints) && queryHints.length
+    ? `\n\nSøgehints (valgfrie — erstat ikke instruktionen ovenfor):\n${queryHints
+        .filter(Boolean)
+        .map((h) => `- ${h}`)
+        .join("\n")}`
+    : "";
+  const schemaPrompt =
+    identityPurpose
+      ? `Returnér KUN JSON med dette schema:
+{
+  "pairing": {
+    "fmc": "",
+    "mmc": "",
+    "confidence": "high|medium|low",
+    "basis": ["later-series central pairing"],
+    "alternatives": [{ "name": "", "role": "early_love_interest" }]
+  },
+  "findings": [
+    { "title": "...", "url": "https://...", "type": "professional|blog|forum|goodreads", "summary": "1-3 sætninger om pairingen. Brug senere bøger/spoilers." }
+  ]
+}`
+      : `Returnér KUN JSON:
 {
   "findings": [
     {
@@ -1141,40 +1787,76 @@ Returnér JSON:
       "summary": "1-3 sætninger — VÆR SPECIFIK om tropes/MMC/spice/plot/worldbuilding. Hvis siden har stjerne-/chili-ratings (fx World-Building 4/5), SKAL de med i summary som tal."
     }
   ]
-}
+}`;
+
+  const promptText = `${userPrompt}${hintBlock}
+
+${schemaPrompt}
 
 Batch-id for denne søgning: ${batchLabel}
-Max 10 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
+Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. Ingen prose, markdown eller forklaring uden for JSON.`;
 
-  const response = await client.responses.create({
+  const input = [
+    {
+      role: "system",
+      content: identityPurpose
+        ? "Du udfører én fokuseret websøgning for at identificere seriens centrale/endgame romantiske pairing. Returnér KUN JSON der matcher schemaet. Brug kun URL'er fra web_search-resultater — opdig ikke links. Spoilers er tilladt og nødvendige. Wiki/fandom, study guides, series/character guides, forfatter-/forlagssider, senere boganmeldelser og læserdiskussioner er relevante. Skip Amazon-butikssider og branchenyheder om rettighedssalg. Antag ikke at bog 1's første love interest er series-level lead."
+        : "Du udfører én fokuseret websøgning til romantasy-vurdering. Returnér KUN JSON der matcher schemaet. Brug kun URL'er fra web_search-resultater — opdig ikke links. Skip Amazon, forhandler, branchenyheder, forlags-PR, fandom-lore og rene Goodreads-udgavesider uden anmeldelsetekst. Prioritér anmeldelser der beskriver læseoplevelse og tropes.",
+    },
+    {
+      role: "user",
+      content: promptText,
+    },
+  ];
+
+  const baseArgs = {
     model: ANALYSIS_MODEL,
     temperature: 0,
     tools: [{ type: "web_search" }],
     tool_choice: "required",
     include: ["web_search_call.action.sources"],
-    input: [
-      {
-        role: "system",
-        content:
-          "Du udfører én fokuseret websøgning til romantasy-vurdering. Returnér KUN JSON. Brug kun URL'er fra web_search-resultater — opdig ikke links. Skip Amazon, forhandler, branchenyheder, forlags-PR, fandom-lore og rene Goodreads-udgavesider uden anmeldelsetekst. Prioritér anmeldelser der beskriver læseoplevelse og tropes.",
-      },
-      {
-        role: "user",
-        content: promptText,
-      },
-    ],
-  });
+    input,
+  };
 
-  const text = outputText(response);
-  let findings = [];
+  let response;
   try {
-    const parsed = extractJson(text);
-    findings = Array.isArray(parsed.findings) ? parsed.findings : [];
+    response = await client.responses.create({
+      ...baseArgs,
+      text: { format: responsesJsonSchemaFormat(purpose) },
+    });
   } catch (err) {
-    console.warn(`Focused search ${id}: JSON-parse fejlede:`, err.message);
+    console.warn(
+      `Focused search ${id}: structured output ikke tilgængelig (${err.message}). Fortsætter uden schema-format.`
+    );
+    response = await client.responses.create(baseArgs);
   }
 
+  const text = outputText(response);
   const rawUrls = extractRawSearchUrls(response);
+  const usage = response.usage || {};
+  let inputTokens = usage.input_tokens || usage.prompt_tokens || 0;
+  let outputTokens = usage.output_tokens || usage.completion_tokens || 0;
+
+  const repairFn =
+    repair === null
+      ? null
+      : repair ||
+        (async (args) => repairFocusedSearchJson(client, args));
+
+  const resolved = await resolveFocusedSearchOutput({
+    text,
+    rawUrls,
+    purpose,
+    repair: repairFn || undefined,
+  });
+  if (resolved.parseStatus === "failed" || resolved.parseStatus === "raw_only") {
+    console.warn(
+      `Focused search ${id}: JSON-parse fejlede (${resolved.parseStatus}${resolved.retryUsed ? ", retry brugt" : ""}). Bevarer ${rawUrls.length} rå URL'er.`
+    );
+  }
+  const findings = resolved.findings || [];
+  inputTokens += resolved.retryInputTokens || 0;
+  outputTokens += resolved.retryOutputTokens || 0;
 
   // === MIDLERTIDIG DEBUG ===
   if (debugHelte) {
@@ -1231,54 +1913,13 @@ Max 10 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
   }
   // === SLUT del 1 DEBUG ===
 
-  const byUrl = new Map();
-  const droppedFocus = [];
-
-  for (const f of findings) {
-    if (!f?.url) continue;
-    const type = classifySourceType(f.url, f.title, f.type);
-    if (!focusAllowsSource(focus, type, f.url)) {
-      droppedFocus.push({
-        stage: "focusAllowsSource/findings",
-        url: f.url,
-        type,
-        title: f.title,
-      });
-      continue;
-    }
-    byUrl.set(f.url, {
-      title: f.title || "Kilde",
-      url: f.url,
-      type,
-      batch: batchLabel,
-      summary: f.summary || "",
-      focus,
-    });
-  }
-
-  for (const raw of rawUrls) {
-    if (byUrl.has(raw.url)) continue;
-    const type = defaultTypeForFocus(focus, raw.url);
-    if (!focusAllowsSource(focus, type, raw.url)) {
-      droppedFocus.push({
-        stage: "focusAllowsSource/raw",
-        url: raw.url,
-        type,
-        title: raw.title,
-      });
-      continue;
-    }
-    byUrl.set(raw.url, {
-      title: raw.title || hostnameTitle(raw.url),
-      url: raw.url,
-      type,
-      batch: batchLabel,
-      summary: `Fundet via ${batchLabel}-søgning`,
-      focus,
-    });
-  }
-
-  const merged = [...byUrl.values()].slice(0, 12);
+  const mergedResult = mergeSearchResultDrafts(findings, rawUrls, {
+    focus: searchFocus,
+    batchLabel,
+  });
+  const droppedFocus = mergedResult.droppedFocus;
+  const cap = Math.max(1, Number(maxFindings) || 12);
+  const merged = mergedResult.drafts.slice(0, cap);
 
   // === MIDLERTIDIG DEBUG filter-trin ===
   if (debugHelte) {
@@ -1323,18 +1964,128 @@ Max 10 findings. Opdig ikke URL'er. Tom liste OK hvis intet relevant.`;
   }
   // === SLUT MIDLERTIDIG DEBUG ===
 
-  const usage = response.usage || {};
   return {
     id,
-    focus,
+    focus: searchFocus,
     batch: batchLabel,
     query,
     findings: merged,
+    rawUrls,
     rawUrlCount: rawUrls.length,
+    pairing: resolved.pairing || null,
+    parseStatus: resolved.parseStatus,
+    retryUsed: Boolean(resolved.retryUsed),
     webSearchCalls: countWebSearchCalls(response),
-    inputTokens: usage.input_tokens || usage.prompt_tokens || 0,
-    outputTokens: usage.output_tokens || usage.completion_tokens || 0,
+    inputTokens,
+    outputTokens,
+    retryInputTokens: resolved.retryInputTokens || 0,
+    retryOutputTokens: resolved.retryOutputTokens || 0,
+    retryCostUsd: Math.round(
+      estimateCostUsd(
+        ANALYSIS_MODEL,
+        resolved.retryInputTokens || 0,
+        resolved.retryOutputTokens || 0
+      ) * 1e6
+    ) / 1e6,
+    purpose: identityPurpose ? "identity" : "field",
   };
+}
+
+function looksLikeHostnameTitle(title) {
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(String(title || "").trim());
+}
+
+function preferDraftTitle(existing, incoming) {
+  const a = String(existing || "").trim();
+  const b = String(incoming || "").trim();
+  if (!a) return b || "Kilde";
+  if (!b) return a;
+  if (looksLikeHostnameTitle(a) && !looksLikeHostnameTitle(b)) return b;
+  if (looksLikeHostnameTitle(b) && !looksLikeHostnameTitle(a)) return a;
+  return b.length > a.length ? b : a;
+}
+
+function preferDraftSummary(existing, incoming) {
+  const a = String(existing || "").trim();
+  const b = String(incoming || "").trim();
+  const generic = (s) => /^Fundet via /i.test(s);
+  if (generic(a) && b && !generic(b)) return b;
+  if (generic(b) && a && !generic(a)) return a;
+  return b.length > a.length ? b : a;
+}
+
+/**
+ * Merge model findings with raw web_search URLs on canonical URL.
+ * Richer model metadata wins over short/raw title+summary.
+ */
+export function mergeSearchResultDrafts(
+  findings = [],
+  rawUrls = [],
+  { focus, batchLabel } = {}
+) {
+  const byKey = new Map();
+  const droppedFocus = [];
+
+  const upsert = (draft, stage) => {
+    if (!draft?.url) return;
+    const type = classifySourceType(draft.url, draft.title, draft.type);
+    if (!focusAllowsSource(focus, type, draft.url, draft.title, draft.summary)) {
+      droppedFocus.push({
+        stage,
+        url: draft.url,
+        type,
+        title: draft.title,
+      });
+      return;
+    }
+    const key = canonicalizeUrl(draft.url) || String(draft.url).toLowerCase();
+    const next = {
+      title: draft.title || "Kilde",
+      url: canonicalizeUrl(draft.url) || draft.url,
+      type,
+      batch: batchLabel,
+      summary: draft.summary || "",
+      focus,
+    };
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, next);
+      return;
+    }
+    byKey.set(key, {
+      ...prev,
+      title: preferDraftTitle(prev.title, next.title),
+      summary: preferDraftSummary(prev.summary, next.summary),
+      type:
+        prev.type === "other" && next.type !== "other" ? next.type : prev.type,
+      url: prev.url || next.url,
+    });
+  };
+
+  for (const f of findings || []) {
+    upsert(
+      {
+        url: f.url,
+        title: f.title,
+        type: f.type,
+        summary: f.summary || "",
+      },
+      "focusAllowsSource/findings"
+    );
+  }
+  for (const raw of rawUrls || []) {
+    upsert(
+      {
+        url: raw.url,
+        title: raw.title || hostnameTitle(raw.url),
+        type: defaultTypeForFocus(focus, raw.url),
+        summary: raw.summary || `Fundet via ${batchLabel}-søgning`,
+      },
+      "focusAllowsSource/raw"
+    );
+  }
+
+  return { drafts: [...byKey.values()], droppedFocus };
 }
 
 function hostnameTitle(url) {
@@ -1417,7 +2168,7 @@ async function createOpenAIClient(apiKey) {
   return new OpenAI({ apiKey });
 }
 
-async function synthesizeResearch(client, args) {
+export async function synthesizeResearch(client, args) {
   const prompt = buildSynthesisPrompt(args);
   const completion = await client.chat.completions.create({
     model: RESEARCH_MODEL,

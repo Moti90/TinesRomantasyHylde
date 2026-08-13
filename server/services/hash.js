@@ -1,5 +1,9 @@
 import { createHash } from "crypto";
-import { RESEARCH_PROMPT_VERSION } from "./versions.js";
+import {
+  ADAPTIVE_VERSION,
+  RESEARCH_PROMPT_VERSION,
+  isAdaptiveResearchEnabled,
+} from "./versions.js";
 
 export function stableHash(value) {
   const json = typeof value === "string" ? value : JSON.stringify(value);
@@ -13,6 +17,7 @@ export function researchInputHash(identity) {
     series: (identity?.series || "").trim().toLowerCase(),
     bookNumber: identity?.bookNumber ?? null,
     promptVersion: RESEARCH_PROMPT_VERSION,
+    adaptiveVersion: isAdaptiveResearchEnabled() ? ADAPTIVE_VERSION : null,
   });
 }
 

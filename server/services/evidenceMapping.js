@@ -1,4 +1,11 @@
 import { SUBJECTIVE_KEYS } from "./decisionScores.js";
+import {
+  evaluateSourceForField,
+  isFieldSpecificEvidence,
+} from "./evidenceRelevance.js";
+import { subjectIdentityFrom } from "./sourceSubject.js";
+
+export { FIELD_PHENOMENON_PATTERNS } from "./evidenceRelevance.js";
 
 export const FIELD_TO_BATCH = {
   "Beskyttende helt(e) (0-5)": "helteprofil",
@@ -26,106 +33,20 @@ export function batchCountsFromResearch(research) {
   return counts;
 }
 
-/**
- * Fænomen-synonymer: kilder behøver ikke håndbogens præcise term —
- * beskrivelse af fænomenet tæller som belæg.
- */
-const FIELD_PHENOMENON_PATTERNS = {
-  "Touch her and die-vibe (0-5)": [
-    /touch her and die/i,
-    /hurt (?:her|them) and die/i,
-    /kill (?:anyone|anybody|him) who (?:touches|hurts|looks)/i,
-    /would (?:kill|murder|die) for (?:her|them|his mate)/i,
-    /goes feral/i,
-    /violent(?:ly)? protect/i,
-    /threaten(?:s|ed|ing)? (?:anyone|anybody|everyone) who/i,
-    /possessive (?:and )?(?:protective|rage)/i,
-    /dr[æe]be for hende/i,
-  ],
-  "Bodyguard-vibe (0-5)": [
-    /\bbodyguard\b/i,
-    /guards? (?:her|them|his mate)/i,
-    /keeps? (?:her|them) safe/i,
-    /watching over (?:her|them)/i,
-    /personal guard/i,
-    /assigned to protect/i,
-    /escort(?:s|ing)? (?:her|them)/i,
-    /shield(?:s|ing)? (?:her|them)/i,
-  ],
-  "Beskyttende helt(e) (0-5)": [
-    /protect(?:ive|s|ing)\b/i,
-    /beskytt/i,
-    /\bguardian\b/i,
-    /looks? after (?:her|them)/i,
-    /caretak/i,
-    /keeps? (?:her|them) safe/i,
-  ],
-  "Rhysand-faktoren": [
-    /\brhysand\b/i,
-    /morally grey/i,
-    /respect(?:s|ful(?:ly)?) (?:her|her agency|her power|her choices)/i,
-    /supports? her (?:power|growth|agency|independence|choices)/i,
-    /empowers? her/i,
-    /equal partner/i,
-  ],
-  "Spice/erotik (0-5)": [
-    /\bspice\b/i,
-    /\bsteamy\b/i,
-    /\berotic\b/i,
-    /explicit (?:sex|scenes?)/i,
-    /fade to black/i,
-    /open door/i,
-    /chili\s*pepper/i,
-  ],
-  "Worldbuilding (0-5)": [
-    /world[\s-]?building/i,
-    /rich world/i,
-    /intricate (?:magic|world)/i,
-    /magic system/i,
-  ],
-  "Episk plot (0-5)": [/\bepic\b/i, /high stakes/i, /grand (?:scale|plot)/i],
-  "Politiske intriger (0-5)": [
-    /political intrigue/i,
-    /court intrigue/i,
-    /politisk/i,
-    /power play/i,
-  ],
-  "Krig/militær (0-5)": [/\b(?:war|battle|military|army|soldier)\b/i, /krig|militær/i],
-  "Karakterudvikling (0-5)": [
-    /character developments?/i,
-    /character arcs?/i,
-    /karakterudvikling/i,
-  ],
-  "Kvindelig udvikling (0-5)": [
-    /heroine(?:'s)? (?:growth|arc|development)/i,
-    /female (?:character )?(?:growth|development|arc)/i,
-    /strong heroine/i,
-  ],
-  "Romance i fokus (0-100%)": [
-    /romance[- ](?:focused|forward|heavy|driven)/i,
-    /\bromantasy\b/i,
-    /romance (?:is|takes) (?:the )?focus/i,
-  ],
-  "Book hangover (0-5)": [
-    /book hangover/i,
-    /couldn'?t put (?:it|the book) down/i,
-  ],
-};
-
-function sourceTextBlob(s) {
-  return `${s?.title || ""} ${s?.summary || ""} ${s?.snippet || ""}`;
-}
-
 export function findPhenomenonSourceIds(fieldKey, research) {
-  const patterns = FIELD_PHENOMENON_PATTERNS[fieldKey];
-  if (!patterns?.length) return [];
   const batch = FIELD_TO_BATCH[fieldKey];
   const sources = research?.sources || [];
+  const context = {
+    research,
+    leadCharacters: research?.seriesIdentity,
+    ...subjectIdentityFrom(research, {}, { leadCharacters: research?.seriesIdentity }),
+  };
   const matched = [];
   for (const s of sources) {
     if (!s?.id) continue;
-    const blob = sourceTextBlob(s);
-    if (patterns.some((re) => re.test(blob))) matched.push(s);
+    if (s.purpose === "identity") continue;
+    const ev = evaluateSourceForField({ source: s, field: fieldKey, context });
+    if (isFieldSpecificEvidence(ev)) matched.push(s);
   }
   matched.sort((a, b) => {
     const pa = a.batch === batch ? 0 : 1;

@@ -1,9 +1,20 @@
 /** Fastlåste versioner til cache/stabilitet — bump kun ved bevidste promptændringer. */
 export const HANDBOOK_VERSION = "handbook-v3";
-export const RESEARCH_PROMPT_VERSION = "research-v14";
-export const ANALYSIS_PROMPT_VERSION = "analysis-v14";
+export const RESEARCH_PROMPT_VERSION = "research-v15";
+export const ANALYSIS_PROMPT_VERSION = "analysis-v16";
 export const SEARCH_PLAN_VERSION = "batch-v5";
 export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
+
+/** Adaptive research intelligence (Bid 1+). Bump when coverage/planner semantics change.
+ * Bid 2 should include this in research/cache invalidation when the loop goes live.
+ * adaptive-v7: subject-aware field evidence + normalized identity confirmation.
+ */
+export const ADAPTIVE_VERSION = "adaptive-v7";
+
+/** One targeted series-identity search before field follow-ups. */
+export const ADAPTIVE_MAX_IDENTITY_SEARCHES = Number(
+  process.env.ADAPTIVE_MAX_IDENTITY_SEARCHES || 1
+);
 
 export const RESEARCH_MODEL = process.env.OPENAI_RESEARCH_MODEL || "gpt-4o";
 export const ANALYSIS_MODEL = process.env.OPENAI_ANALYSIS_MODEL || "gpt-4o-mini";
@@ -14,6 +25,40 @@ export const DISCOVERY_MODEL =
 export const RESEARCH_CACHE_DAYS = Number(process.env.RESEARCH_CACHE_DAYS || 7);
 export const GOODREADS_CACHE_DAYS = Number(process.env.GOODREADS_CACHE_DAYS || 30);
 export const DISCOVERY_CACHE_DAYS = Number(process.env.DISCOVERY_CACHE_DAYS || 7);
+
+export const ADAPTIVE_TARGET_COVERAGE = Number(
+  process.env.ADAPTIVE_TARGET_COVERAGE || 80,
+);
+export const ADAPTIVE_FIELD_MIN_COVERAGE = Number(
+  process.env.ADAPTIVE_FIELD_MIN_COVERAGE || 55,
+);
+export const ADAPTIVE_CRITICAL_FIELD_MIN_COVERAGE = Number(
+  process.env.ADAPTIVE_CRITICAL_FIELD_MIN_COVERAGE || 60,
+);
+export const ADAPTIVE_MAX_JOBS_PER_ROUND = Number(
+  process.env.ADAPTIVE_MAX_JOBS_PER_ROUND || 3,
+);
+export const ADAPTIVE_MAX_FOLLOWUP_ROUNDS = Number(
+  process.env.ADAPTIVE_MAX_FOLLOWUP_ROUNDS || 2,
+);
+export const ADAPTIVE_MAX_ADDITIONAL_WEB_SEARCH_CALLS = Number(
+  process.env.ADAPTIVE_MAX_ADDITIONAL_WEB_SEARCH_CALLS || 6,
+);
+export const ADAPTIVE_MAX_ADDITIONAL_COST_USD = Number(
+  process.env.ADAPTIVE_MAX_ADDITIONAL_COST_USD || 0.25,
+);
+export const ADAPTIVE_MIN_COVERAGE_GAIN = Number(
+  process.env.ADAPTIVE_MIN_COVERAGE_GAIN || 3,
+);
+export const ADAPTIVE_MAX_SOURCES_PER_JOB = Number(
+  process.env.ADAPTIVE_MAX_SOURCES_PER_JOB || 8,
+);
+
+export function isAdaptiveResearchEnabled() {
+  const v = process.env.ADAPTIVE_RESEARCH_ENABLED;
+  if (v == null || String(v).trim() === "") return true;
+  return !["0", "false", "no", "off"].includes(String(v).trim().toLowerCase());
+}
 
 /** Grove prisestimater (USD) til udviklingslog — ikke faktura. */
 export const PRICE_PER_1M = {

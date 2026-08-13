@@ -156,10 +156,17 @@ SKEL MELLEM FAKTA OG SUBJEKTIVE VURDERINGER:
 
 Når du scorer et subjektivt felt: Hvis mindst én kilde beskriver det fænomen feltet handler om (uanset om de bruger håndbogens præcise termer), så sæt en score, basis "source_consensus", evidenceSourceIds med kilde-id'erne, og confidence "medium" ved 1–2 fænomen-kilder (high kun ved 3+ og stærk enighed).
 Synonym-eksempler (beskrivelse = belæg):
-- Touch her and die: "would kill for her", "goes feral", "hurt her and die", "dræbe for hende"
-- Bodyguard: "keeps her safe", "guards her", "watching over her", "bodyguard"
+- Touch her and die: "would kill for her", "goes feral", "hurt her and die", "dræbe for hende" — IKKE blot "he protects her"
+- Bodyguard: "bodyguard", "assigned to protect", "places himself between her and danger" — "protective" alene er IKKE fuld bodyguard-evidens
 - Beskyttende: "protective MMC", "guardian", "beskytter hende"
-- Rhysand: "respects her agency", "supports her power", "equal partner", "morally grey but loyal"
+- Rhysand: kræver flere aspekter fra håndbogen (respekt/agency + beskyttelse uden kontrol / loyalitet). "Morally grey" eller "powerful/ruthless" alene er IKKE Rhysand-faktor
+EVIDENS-DISCIPLIN:
+- Cite only a source as evidence for a subjective field when that source contains information directly or strongly supporting/conflicting that field.
+- Do not cite a generic character/profile source merely because the character appears in it.
+- Do not infer field evidence from generic character descriptions. "Powerful", "dangerous", "ruthless", "dominant" do not by themselves prove protective, bodyguard, touch-her-and-die, respectful, or Rhysand-like.
+- Evidence IDs must support the specific assessment. If you infer from general knowledge, use basis "ai_inference" and empty evidenceSourceIds.
+- For MMC-specific fields (beskyttende, bodyguard, touch-her-and-die, Rhysand-faktor): only cite evidence describing the identified/current MMC. Do not use behaviour from an earlier or alternative love interest as evidence for the target MMC.
+- For FMC fields (kvindelig udvikling): evidence about the heroine herself is valid without MMC mention.
 Hvis en batch har færre end 2 kilder MEN mindst én kilde beskriver fænomenet: confidence medium er OK. Uden fænomen-belæg: hold confidence på low.
 For hvert assessment: inkluder "sourceBatch" og "sourceCount". reason skal nævne konkret kilde når muligt.
 

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "notes": "Ufuldstændig ground truth. Manglende labels = unknown, ikke false. Ingen opdigtede scores.",
+  "series": [
+    {
+      "id": "acotar",
+      "identity": {
+        "title": "A Court of Thorns and Roses",
+        "author": "Sarah J. Maas"
+      },
+      "expectedCharacters": {
+        "mmc": "Rhysand",
+        "fmc": "Feyre"
+      },
+      "fields": {}
+    },
+    {
+      "id": "empyrean",
+      "identity": {
+        "title": "Fourth Wing",
+        "author": "Rebecca Yarros"
+      },
+      "expectedCharacters": {
+        "mmc": "Xaden",
+        "fmc": "Violet"
+      },
+      "fields": {}
+    },
+    {
+      "id": "shadowbound-offline",
+      "identity": {
+        "title": "Shadowbound",
+        "author": "Jane Doe"
+      },
+      "expectedCharacters": {
+        "mmc": "Kael",
+        "fmc": "Lys"
+      },
+      "fields": {
+        "Bodyguard-vibe (0-5)": {
+          "evidenceLabels": {
+            "https://reddit.com/r/RomanceBooks/comments/offaaa111/one": "relevant",
+            "https://www.goodreads.com/review/show/off2": "relevant",
+            "https://off.bookblog.example.com/review": "irrelevant"
+          },
+          "referenceEvidence": [
+            {
+              "url": "https://reddit.com/r/RomanceBooks/comments/offaaa111/one",
+              "fields": ["Bodyguard-vibe (0-5)"],
+              "relevance": "strong"
+            },
+            {
+              "url": "https://www.goodreads.com/review/show/off2",
+              "fields": ["Bodyguard-vibe (0-5)"],
+              "relevance": "strong"
+            },
+            {
+              "url": "https://independent.example.org/missed-bodyguard",
+              "fields": ["Bodyguard-vibe (0-5)"],
+              "relevance": "strong"
+            }
+          ],
+          "notes": "Offline fixture labels til harness-tests. Ikke en rigtig serie."
+        }
+      }
+    }
+  ]
+}

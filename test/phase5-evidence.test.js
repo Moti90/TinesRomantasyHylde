@@ -14,7 +14,7 @@ import { RESEARCH_PROMPT_VERSION } from "../server/services/versions.js";
 
 describe("Fase 5: evidens og konflikter", () => {
   it("bruger research-v14", () => {
-    assert.equal(RESEARCH_PROMPT_VERSION, "research-v14");
+    assert.equal(RESEARCH_PROMPT_VERSION, "research-v15");
   });
 
   it("afviser branchestøj og forlags-PR", () => {

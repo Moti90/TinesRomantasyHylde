@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "description": "Research-quality benchmark cases. Identities only — no invented scores.",
+  "cases": [
+    {
+      "id": "acotar",
+      "category": "VERY_POPULAR",
+      "identity": {
+        "title": "A Court of Thorns and Roses",
+        "author": "Sarah J. Maas",
+        "series": "A Court of Thorns and Roses",
+        "firstBook": "A Court of Thorns and Roses"
+      },
+      "notes": "Meget omtalt romantasy. Også relevant for protective-vs-controlling konflikt."
+    },
+    {
+      "id": "empyrean",
+      "category": "VERY_POPULAR",
+      "identity": {
+        "title": "Fourth Wing",
+        "author": "Rebecca Yarros",
+        "series": "The Empyrean",
+        "firstBook": "Fourth Wing"
+      }
+    },
+    {
+      "id": "dark-olympus",
+      "category": "CONFLICT_HEAVY",
+      "identity": {
+        "title": "Neon Gods",
+        "author": "Katee Robert",
+        "series": "Dark Olympus",
+        "firstBook": "Neon Gods"
+      },
+      "notes": "MMC-dynamik er ofte omdiskuteret (dark/bully vs protective)."
+    },
+    {
+      "id": "hidden-legacy",
+      "category": "POPULAR",
+      "identity": {
+        "title": "Burn for Me",
+        "author": "Ilona Andrews",
+        "series": "Hidden Legacy",
+        "firstBook": "Burn for Me"
+      }
+    },
+    {
+      "id": "mages",
+      "category": "MID_TIER",
+      "identity": {
+        "title": "Reign & Ruin",
+        "author": "J.D. Evans",
+        "series": "Mages of the Wheel",
+        "firstBook": "Reign & Ruin"
+      }
+    },
+    {
+      "id": "bridge-kingdom",
+      "category": "MID_TIER",
+      "identity": {
+        "title": "The Bridge Kingdom",
+        "author": "Danielle L. Jensen",
+        "series": "The Bridge Kingdom",
+        "firstBook": "The Bridge Kingdom"
+      }
+    },
+    {
+      "id": "order-of-scorpions",
+      "category": "NICHE",
+      "identity": {
+        "title": "Order of Scorpions",
+        "author": "Ivy Asher",
+        "series": "Order of Scorpions",
+        "firstBook": "Order of Scorpions"
+      }
+    },
+    {
+      "id": "villains-virtues",
+      "category": "NICHE",
+      "identity": {
+        "title": "Throne in the Dark",
+        "author": "A.K. Caggiano",
+        "series": "Villains & Virtues",
+        "firstBook": "Throne in the Dark"
+      }
+    },
+    {
+      "id": "kushiel",
+      "category": "MULTI_BOOK_DEVELOPMENT",
+      "identity": {
+        "title": "Kushiel's Dart",
+        "author": "Jacqueline Carey",
+        "series": "Kushiel's Legacy",
+        "firstBook": "Kushiel's Dart"
+      }
+    },
+    {
+      "id": "winnowing-flame",
+      "category": "SPARSE_EVIDENCE",
+      "identity": {
+        "title": "The Copper Promise",
+        "author": "Jen Williams",
+        "series": "The Winnowing Flame Trilogy",
+        "firstBook": "The Copper Promise"
+      },
+      "notes": "Mindre romantasy-diskurs end de populære titler — forvent tyndere evidens."
+    }
+  ]
+}

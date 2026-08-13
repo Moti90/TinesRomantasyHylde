@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dataPath } from "./paths.js";
+import { getTineFieldWeight } from "./decisionScores.js";
 
 const LEARNED_PATH = dataPath("learned-taste.json");
 const REVIEWS_PATH = dataPath("tine-reviews.json");
@@ -13,24 +14,6 @@ function readReviewsFromDisk() {
     return [];
   }
 }
-
-const FIELD_WEIGHTS = {
-  "Rhysand-faktoren": 1.4,
-  "Beskyttende helt(e) (0-5)": 1.35,
-  "Bodyguard-vibe (0-5)": 1.35,
-  "Touch her and die-vibe (0-5)": 1.4,
-  "Kvindelig udvikling (0-5)": 1.25,
-  "Karakterudvikling (0-5)": 1.15,
-  "Spice/erotik kvalitet (0-5)": 1.05,
-  "Spice/erotik (0-5)": 0.7,
-  "Book hangover (0-5)": 0.95,
-  "Episk plot (0-5)": 0.85,
-  "Worldbuilding (0-5)": 0.8,
-  "Politiske intriger (0-5)": 0.7,
-  "Krig/militær (0-5)": 0.7,
-  "Romance i fokus (0-100%)": 0.9,
-  "Hvor hurtigt griber den? (0-100%)": 0.6,
-};
 
 const SHORT_LABELS = {
   "Rhysand-faktoren": "Rhysand-faktoren",
@@ -235,7 +218,7 @@ export function applyLearnedTasteAdjustment(row, baseScore) {
     const preferenceStrength = Math.abs(target - max / 2) / (max / 2); // 0..1
     if (preferenceStrength < 0.15) continue;
 
-    const weight = FIELD_WEIGHTS[key] || 0.75;
+    const weight = getTineFieldWeight(key);
     const contrib = (alignment - 0.45) * 2.2 * weight * preferenceStrength;
     raw += contrib;
 

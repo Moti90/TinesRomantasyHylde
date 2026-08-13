@@ -16,6 +16,39 @@ export const SUBJECTIVE_KEYS = [
   "Romance i fokus (0-100%)",
 ];
 
+/**
+ * Shared Tine importance weights for scoring + adaptive research priority.
+ * Keep in sync with handbook vibe scoring — do not duplicate elsewhere.
+ */
+export const TINE_FIELD_WEIGHTS = {
+  "Touch her and die-vibe (0-5)": 1.4,
+  "Rhysand-faktoren": 1.4,
+  "Beskyttende helt(e) (0-5)": 1.35,
+  "Bodyguard-vibe (0-5)": 1.35,
+  "Kvindelig udvikling (0-5)": 1.25,
+  "Karakterudvikling (0-5)": 1.15,
+  "Spice/erotik kvalitet (0-5)": 1.05,
+  "Book hangover (0-5)": 0.95,
+  "Romance i fokus (0-100%)": 0.9,
+  "Episk plot (0-5)": 0.85,
+  "Worldbuilding (0-5)": 0.8,
+  "Spice/erotik (0-5)": 0.7,
+  "Politiske intriger (0-5)": 0.7,
+  "Krig/militær (0-5)": 0.7,
+  "Hvor hurtigt griber den? (0-100%)": 0.6,
+};
+
+/** Fields at/above this weight are critical for research-good-enough checks. */
+export const TINE_CRITICAL_WEIGHT_THRESHOLD = 1.25;
+
+export function getTineFieldWeight(field) {
+  return TINE_FIELD_WEIGHTS[field] ?? 0.75;
+}
+
+export function isCriticalTineField(field) {
+  return getTineFieldWeight(field) >= TINE_CRITICAL_WEIGHT_THRESHOLD;
+}
+
 const UNCERTAINTY_FACTS = [
   ["publishedBookCount", "Antal bøger"],
   ["audiobook", "Lydbog"],
@@ -27,23 +60,24 @@ const UNCERTAINTY_FACTS = [
 
 export function estimateTineScoreFromVibes(row) {
   const keys = [
-    ["Beskyttende helt(e) (0-5)", 1.35],
-    ["Bodyguard-vibe (0-5)", 1.35],
-    ["Touch her and die-vibe (0-5)", 1.4],
-    ["Rhysand-faktoren", 1.4],
-    ["Kvindelig udvikling (0-5)", 1.25],
-    ["Karakterudvikling (0-5)", 1.15],
-    ["Spice/erotik kvalitet (0-5)", 1.05],
-    ["Book hangover (0-5)", 0.95],
-    ["Episk plot (0-5)", 0.85],
-    ["Worldbuilding (0-5)", 0.8],
-    ["Politiske intriger (0-5)", 0.7],
-    ["Krig/militær (0-5)", 0.7],
+    "Beskyttende helt(e) (0-5)",
+    "Bodyguard-vibe (0-5)",
+    "Touch her and die-vibe (0-5)",
+    "Rhysand-faktoren",
+    "Kvindelig udvikling (0-5)",
+    "Karakterudvikling (0-5)",
+    "Spice/erotik kvalitet (0-5)",
+    "Book hangover (0-5)",
+    "Episk plot (0-5)",
+    "Worldbuilding (0-5)",
+    "Politiske intriger (0-5)",
+    "Krig/militær (0-5)",
   ];
   let sum = 0;
   let weight = 0;
   let scored = 0;
-  for (const [key, w] of keys) {
+  for (const key of keys) {
+    const w = getTineFieldWeight(key);
     const n = Number(row[key]);
     if (Number.isNaN(n)) continue;
     sum += Math.max(0, Math.min(5, n)) * w;

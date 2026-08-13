@@ -1,0 +1,223 @@
+{
+  "id": "shadowbound-offline",
+  "category": "MID_TIER",
+  "identity": {
+    "title": "Shadowbound",
+    "author": "Jane Doe",
+    "series": "Shadowbound",
+    "firstBook": "Shadowbound",
+    "mmc": "Kael",
+    "fmc": "Lys"
+  },
+  "baseline": {
+    "research": {
+      "identity": {
+        "title": "Shadowbound",
+        "author": "Jane Doe"
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "url": "https://publisher.example.com/shadowbound",
+          "type": "publisher",
+          "title": "Official description",
+          "summary": "An epic romantasy with a protective hero.",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-2",
+          "url": "https://catalog.example.com/shadowbound",
+          "type": "catalog",
+          "title": "Buy Shadowbound",
+          "summary": "Bestselling romantasy series.",
+          "batch": "helhed"
+        }
+      ],
+      "reviewConsensus": {},
+      "meta": {
+        "webSearchCalls": 4,
+        "estimatedCostUsd": 0.09,
+        "inputTokens": 1200,
+        "outputTokens": 400,
+        "warnings": []
+      }
+    },
+    "analysis": {
+      "meta": {
+        "assessments": {},
+        "estimatedCostUsd": 0.02
+      }
+    }
+  },
+  "adaptive": {
+    "research": {
+      "identity": {
+        "title": "Shadowbound",
+        "author": "Jane Doe"
+      },
+      "sources": [
+        {
+          "id": "source-1",
+          "url": "https://publisher.example.com/shadowbound",
+          "type": "publisher",
+          "title": "Official description",
+          "summary": "An epic romantasy with a protective hero.",
+          "batch": "helteprofil"
+        },
+        {
+          "id": "source-2",
+          "url": "https://catalog.example.com/shadowbound",
+          "type": "catalog",
+          "title": "Buy Shadowbound",
+          "summary": "Bestselling romantasy series.",
+          "batch": "helhed"
+        },
+        {
+          "id": "source-3",
+          "url": "https://reddit.com/r/RomanceBooks/comments/offaaa111/one",
+          "type": "forum",
+          "title": "Kael protective thread",
+          "summary": "He keeps her safe and acts like a bodyguard. Goes feral when Lys is threatened.",
+          "batch": "helteprofil",
+          "adaptiveRound": 1,
+          "followUpJobId": "followup-hero_protective_dynamic-r1-1",
+          "targetFields": [
+            "Bodyguard-vibe (0-5)",
+            "Touch her and die-vibe (0-5)",
+            "Beskyttende helt(e) (0-5)"
+          ],
+          "strategy": "hero_protective_dynamic",
+          "foundInRounds": [1]
+        },
+        {
+          "id": "source-4",
+          "url": "https://www.goodreads.com/review/show/off2",
+          "type": "goodreads",
+          "title": "GR review",
+          "summary": "Watching over her, personal guard energy. Touch her and die.",
+          "batch": "helteprofil",
+          "adaptiveRound": 1,
+          "followUpJobId": "followup-hero_protective_dynamic-r1-1",
+          "targetFields": ["Bodyguard-vibe (0-5)"],
+          "strategy": "hero_protective_dynamic",
+          "foundInRounds": [1]
+        },
+        {
+          "id": "source-5",
+          "url": "https://off.bookblog.example.com/review",
+          "type": "blog",
+          "title": "Worldbuilding recap",
+          "summary": "Rich magic system and court politics. Barely mentions the couple.",
+          "batch": "helteprofil",
+          "adaptiveRound": 1,
+          "followUpJobId": "followup-hero_protective_dynamic-r1-1",
+          "targetFields": ["Bodyguard-vibe (0-5)"],
+          "strategy": "hero_protective_dynamic",
+          "foundInRounds": [1]
+        }
+      ],
+      "reviewConsensus": {},
+      "meta": {
+        "webSearchCalls": 6,
+        "estimatedCostUsd": 0.24,
+        "warnings": [],
+        "adaptive": {
+          "version": "adaptive-v1",
+          "enabled": true,
+          "initialCoverage": 8,
+          "finalCoverage": 54,
+          "targetCoverage": 80,
+          "initialResearchCostUsd": 0.09,
+          "additionalCostUsd": 0.15,
+          "totalResearchCostUsd": 0.24,
+          "additionalWebSearchCalls": 2,
+          "stopReason": "target_reached",
+          "rounds": [
+            {
+              "round": 1,
+              "targetFields": [
+                "Bodyguard-vibe (0-5)",
+                "Touch her and die-vibe (0-5)"
+              ],
+              "jobs": [
+                {
+                  "id": "followup-hero_protective_dynamic-r1-1",
+                  "strategy": "hero_protective_dynamic",
+                  "ok": true,
+                  "webSearchCalls": 2,
+                  "sourceCount": 3
+                }
+              ],
+              "webSearchCalls": 2,
+              "newSources": 3,
+              "newRelevantSources": 2,
+              "coverageBefore": 8,
+              "coverageAfter": 54,
+              "coverageGain": 46,
+              "criticalFieldsResolved": ["Bodyguard-vibe (0-5)"],
+              "costUsd": 0.15
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "analysis": {
+      "meta": {
+        "assessments": {
+          "Bodyguard-vibe (0-5)": {
+            "score": 4,
+            "confidence": "high",
+            "basis": "source_consensus",
+            "evidenceSourceIds": ["source-3", "source-4", "source-5"],
+            "conflictingSourceIds": [],
+            "sourceCount": 3,
+            "sourceBatch": "helteprofil"
+          },
+          "Touch her and die-vibe (0-5)": {
+            "score": 4,
+            "confidence": "medium",
+            "basis": "source_consensus",
+            "evidenceSourceIds": ["source-3", "source-4"],
+            "conflictingSourceIds": [],
+            "sourceCount": 2,
+            "sourceBatch": "helteprofil"
+          },
+          "Beskyttende helt(e) (0-5)": {
+            "score": 4,
+            "confidence": "medium",
+            "basis": "source_consensus",
+            "evidenceSourceIds": ["source-3"],
+            "conflictingSourceIds": [],
+            "sourceCount": 1,
+            "sourceBatch": "helteprofil"
+          }
+        },
+        "estimatedCostUsd": 0.03
+      }
+    },
+    "followUpJobs": [
+      {
+        "id": "followup-hero_protective_dynamic-r1-1",
+        "strategy": "hero_protective_dynamic",
+        "round": 1,
+        "fields": [
+          "Beskyttende helt(e) (0-5)",
+          "Bodyguard-vibe (0-5)",
+          "Touch her and die-vibe (0-5)"
+        ],
+        "targetFields": [
+          "Beskyttende helt(e) (0-5)",
+          "Bodyguard-vibe (0-5)",
+          "Touch her and die-vibe (0-5)"
+        ],
+        "userPrompt": "Find læseranmeldelser der specifikt beskriver hvordan Kael reagerer når Lys er i fare i \"Shadowbound\" af Jane Doe.",
+        "queryHints": [
+          "\"Shadowbound\" Kael protective heroine review",
+          "\"Shadowbound\" bodyguard protective reddit"
+        ],
+        "leadCharacters": { "mmc": "Kael", "fmc": "Lys" }
+      }
+    ]
+  }
+}

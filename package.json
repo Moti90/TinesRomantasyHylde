@@ -9,7 +9,8 @@
     "import:excel": "node server/scripts/import-excel.js",
     "discovery": "node scripts/run-discovery.mjs",
     "discovery:dna": "node scripts/run-discovery.mjs --dna",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test --test-concurrency=1 test/**/*.test.js",
+    "benchmark:research": "node scripts/researchBenchmark.js"
   },
   "engines": {
     "node": ">=18"

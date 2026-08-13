@@ -8,6 +8,7 @@ import {
   getCachedResearch,
   saveResearchCache,
 } from "./researchCache.js";
+import { runAdaptiveResearch, shouldRunAdaptiveResearch } from "./adaptiveResearchLoop.js";
 import { loadSeries, upsertSeries } from "./store.js";
 import { sanitizeGoodreadsScore } from "./goodreads.js";
 import {
@@ -166,13 +167,31 @@ export async function analyzeNewSeries(opts) {
   }
 
   progress("analyze", "Vurderer efter Tines håndbog");
-  const analysis = await runHandbookAnalysis({
+  let analysis = await runHandbookAnalysis({
     research,
     catalog,
     mofibo,
     query: searchQuery,
     updateGoodreads: true,
   });
+
+  if (shouldRunAdaptiveResearch({ researchCacheHit, mode: "analyze" })) {
+    progress("research", "Søger efter manglende evidens");
+    try {
+      const adapted = await runAdaptiveResearch({
+        identity,
+        initialResearch: research,
+        initialAnalysis: analysis,
+        catalog,
+        mofibo,
+      });
+      research = adapted.research;
+      analysis = adapted.analysis;
+      saveResearchCache(identity, research);
+    } catch (err) {
+      console.warn("Adaptive research skipped:", err.message);
+    }
+  }
 
   progress("save", "Gemmer analysen");
   let row = analysis.row;
@@ -366,10 +385,11 @@ export async function refreshSeriesResearch(name) {
   const catalog = await researchSeries(searchQuery);
   const mofibo = await checkMofibo(identity.title || name);
 
-  const { research } = await runWebResearch({ identity, catalog, mofibo });
+  const { research: fresh } = await runWebResearch({ identity, catalog, mofibo });
+  let research = fresh;
   saveResearchCache(identity, research);
 
-  const analysis = await runHandbookAnalysis({
+  let analysis = await runHandbookAnalysis({
     research,
     catalog,
     mofibo,
@@ -378,6 +398,23 @@ export async function refreshSeriesResearch(name) {
     existingRow: existing,
     updateGoodreads: true,
   });
+
+  if (shouldRunAdaptiveResearch({ researchCacheHit: false, mode: "refresh" })) {
+    try {
+      const adapted = await runAdaptiveResearch({
+        identity,
+        initialResearch: research,
+        initialAnalysis: analysis,
+        catalog,
+        mofibo,
+      });
+      research = adapted.research;
+      analysis = adapted.analysis;
+      saveResearchCache(identity, research);
+    } catch (err) {
+      console.warn("Adaptive research skipped:", err.message);
+    }
+  }
 
   let row = mergePreserve(existing, analysis.row, { preserveGoodreads: false });
   row["Seriens navn"] = existing["Seriens navn"] || row["Seriens navn"];

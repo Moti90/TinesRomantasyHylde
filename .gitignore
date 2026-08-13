@@ -20,3 +20,7 @@ data/tine-review-summaries.json
 data/learned-taste.json
 data/debug-*.json
 data/debug-*.log
+
+# Benchmark-kørsler (kan indeholde fulde research-dumps)
+benchmark/output/**
+!benchmark/output/.gitkeep
