@@ -303,7 +303,8 @@ body[data-app-view="reviews"] .atmosphere {
   }
 
   .corner-bar {
-    padding: 3.4rem 0.75rem 0;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .corner-trigger {
@@ -311,8 +312,15 @@ body[data-app-view="reviews"] .atmosphere {
     padding: 0.55rem 0.9rem;
   }
 
+  /* Kun når corner-bar er fixed (tablet/desktop) — på mobil er den static og har egen top-padding */
   .site-header {
     padding-top: 5.2rem;
+  }
+
+  @media (max-width: 900px) {
+    .site-header {
+      padding-top: 1.2rem;
+    }
   }
 
   .atmosphere {
