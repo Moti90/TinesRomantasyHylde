@@ -671,9 +671,11 @@ export function criticalFieldStopQualitySatisfied({
   score = null,
 } = {}) {
   if (score == null) return false;
+  // directSources only include strong-tier directs after C.1.3 quality mapping.
   if (directSources.length >= 1) return true;
-  const independentSupporting = supportingSources.filter(
-    (s) => classifySourceRole(s) !== "study_guide"
-  );
+  const independentSupporting = supportingSources.filter((s) => {
+    const role = classifySourceRole(s);
+    return role !== "study_guide" && role !== "encyclopedia";
+  });
   return independentSupporting.length >= 2;
 }

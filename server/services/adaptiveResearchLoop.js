@@ -40,12 +40,18 @@ import {
 } from "./versions.js";
 import {
   classifySourceType,
-  isIndustryNoise,
-  isPublisherPr,
   normalizeResearch,
   runFocusedSearch,
   synthesizeResearch,
 } from "./webResearch.js";
+import {
+  aggregateRoundSourceFlow,
+  buildJobSourceFlow,
+  classifyPrepareRejection,
+  emptyPrepareDropReasons,
+  formatSourceFlowLog,
+  publicSourceFlow,
+} from "./sourceFlow.js";
 import {
   assessRetrievalYield,
   buildFallbackQueryHints,
@@ -253,20 +259,27 @@ function summarizeEvidenceTrace(traces = []) {
   };
 }
 
-export function prepareFollowUpSources(findings, job, round) {
+export function prepareFollowUpSourcesDiagnostic(findings, job, round) {
   const targetFields = job?.targetFields || job?.fields || [];
   const cap = Math.max(1, Number(ADAPTIVE_MAX_SOURCES_PER_JOB) || 8);
   const out = [];
   const seen = new Set();
+  const dropReasons = emptyPrepareDropReasons();
+  const list = findings || [];
 
-  for (const f of findings || []) {
-    if (!f?.url && !f?.title) continue;
+  for (let i = 0; i < list.length; i++) {
+    const f = list[i];
+    if (out.length >= cap) {
+      dropReasons.cap += list.length - i;
+      break;
+    }
+    const reason = classifyPrepareRejection(f, { seen, skipCatalogPr: false });
+    if (reason) {
+      dropReasons[reason] = (dropReasons[reason] || 0) + 1;
+      continue;
+    }
     const type = classifySourceType(f.url, f.title, f.type);
-    if (["catalog", "official", "publisher"].includes(type)) continue;
-    if (isIndustryNoise(f.url, f.title)) continue;
-    if (isPublisherPr(f.url, f.title)) continue;
     const key = sourceIdentityKey({ url: f.url, id: f.title });
-    if (key && seen.has(key)) continue;
     if (key) seen.add(key);
     const row = {
       title: f.title || "Kilde",
@@ -285,9 +298,12 @@ export function prepareFollowUpSources(findings, job, round) {
       retrievalStrategy: f.retrievalStrategy || null,
     };
     out.push(attachSubjectHintsToSource(row, job?.leadCharacters || {}));
-    if (out.length >= cap) break;
   }
-  return out;
+  return { sources: out, dropReasons };
+}
+
+export function prepareFollowUpSources(findings, job, round) {
+  return prepareFollowUpSourcesDiagnostic(findings, job, round).sources;
 }
 
 async function createOpenAIClient(apiKey) {
@@ -295,17 +311,26 @@ async function createOpenAIClient(apiKey) {
   return new OpenAI({ apiKey });
 }
 
-export function prepareIdentitySources(findings, job) {
+export function prepareIdentitySourcesDiagnostic(findings, job) {
   const cap = Math.max(1, Number(ADAPTIVE_MAX_SOURCES_PER_JOB) || 8);
   const out = [];
   const seen = new Set();
+  const dropReasons = emptyPrepareDropReasons();
+  const list = findings || [];
 
-  for (const f of findings || []) {
-    if (!f?.url && !f?.title) continue;
+  for (let i = 0; i < list.length; i++) {
+    const f = list[i];
+    if (out.length >= cap) {
+      dropReasons.cap += list.length - i;
+      break;
+    }
+    const reason = classifyPrepareRejection(f, { seen, skipCatalogPr: true });
+    if (reason) {
+      dropReasons[reason] = (dropReasons[reason] || 0) + 1;
+      continue;
+    }
     const type = classifySourceType(f.url, f.title, f.type);
-    if (isIndustryNoise(f.url, f.title)) continue;
     const key = sourceIdentityKey({ url: f.url, id: f.title });
-    if (key && seen.has(key)) continue;
     if (key) seen.add(key);
     out.push({
       title: f.title || "Kilde",
@@ -324,9 +349,12 @@ export function prepareIdentitySources(findings, job) {
       retrievalAttempt: f.retrievalAttempt || null,
       retrievalStrategy: f.retrievalStrategy || null,
     });
-    if (out.length >= cap) break;
   }
-  return out;
+  return { sources: out, dropReasons };
+}
+
+export function prepareIdentitySources(findings, job) {
+  return prepareIdentitySourcesDiagnostic(findings, job).sources;
 }
 
 function round6(n) {
@@ -354,12 +382,16 @@ function repairCostUsd(result) {
   );
 }
 
-function prepareJobSources(findings, job, round) {
+function prepareJobSourcesDiagnostic(findings, job, round) {
   const isIdentity =
     job?.strategy === "series_identity_resolution" || job?.purpose === "identity";
   return isIdentity
-    ? prepareIdentitySources(findings, job)
-    : prepareFollowUpSources(findings, job, round);
+    ? prepareIdentitySourcesDiagnostic(findings, job)
+    : prepareFollowUpSourcesDiagnostic(findings, job, round);
+}
+
+function prepareJobSources(findings, job, round) {
+  return prepareJobSourcesDiagnostic(findings, job, round).sources;
 }
 
 /**
@@ -375,6 +407,8 @@ export async function executeFocusedJobWithFallback({
   remainingCostUsd = Infinity,
   runSearch = runFocusedSearch,
   client,
+  research = null,
+  existingSources = null,
 } = {}) {
   const isIdentity =
     job?.strategy === "series_identity_resolution" || job?.purpose === "identity";
@@ -391,6 +425,16 @@ export async function executeFocusedJobWithFallback({
   const focus = isIdentity ? "series_identity" : job?.batchHint || "helteprofil";
   const batch = focus;
   const purpose = isIdentity ? "identity" : "field";
+  const leads = job?.leadCharacters || research?.seriesIdentity || {};
+  const existing = existingSources || research?.sources || [];
+  const evalContext = {
+    research: research || {},
+    identity,
+    leadCharacters: leads,
+    ...subjectIdentityFrom(research || {}, identity || {}, {
+      leadCharacters: leads,
+    }),
+  };
 
   const runOnce = (overrides = {}) =>
     runSearch(client, {
@@ -409,7 +453,12 @@ export async function executeFocusedJobWithFallback({
     userPrompt: job?.userPrompt || "",
     queryHints: job?.queryHints || flattenRetrievalApproaches(approaches),
   });
-  const primaryPrepared = prepareJobSources(primary.findings, job, round);
+  const primaryPreparedDiag = prepareJobSourcesDiagnostic(
+    primary.findings,
+    job,
+    round
+  );
+  const primaryPrepared = primaryPreparedDiag.sources;
   const primaryYield = assessRetrievalYield({
     rawUrlCount: primary.rawUrlCount ?? (primary.rawUrls || []).length,
     mergedCount: (primary.findings || []).length,
@@ -431,7 +480,7 @@ export async function executeFocusedJobWithFallback({
   let fallbackTriggered = false;
   let fallbackBlockedByBudget = false;
   let combined = primary;
-  let prepared = primaryPrepared;
+  let preparedDiag = primaryPreparedDiag;
   let fallbackCost = 0;
   let fallbackRepair = 0;
   let finalYield = primaryYield;
@@ -466,11 +515,11 @@ export async function executeFocusedJobWithFallback({
       fallbackCost = searchCostUsd(fallback);
       fallbackRepair = repairCostUsd(fallback);
       combined = mergeRetrievalAttempts(primary, fallback);
-      prepared = prepareJobSources(combined.findings, job, round);
+      preparedDiag = prepareJobSourcesDiagnostic(combined.findings, job, round);
       finalYield = assessRetrievalYield({
         rawUrlCount: combined.rawUrlCount ?? (combined.rawUrls || []).length,
         mergedCount: (combined.findings || []).length,
-        preparedCount: prepared.length,
+        preparedCount: preparedDiag.sources.length,
         parseStatus: combined.parseStatus,
       });
       attempts.push(
@@ -497,6 +546,22 @@ export async function executeFocusedJobWithFallback({
   });
   const retryCost = round6(primaryRepair + fallbackRepair);
   const totalSearchCost = round6(primaryCost + fallbackCost);
+  const prepared = preparedDiag.sources;
+  const sourceFlow = buildJobSourceFlow({
+    rawUrls: combined.rawUrls || [],
+    modelFindingCount: Number(combined.modelFindingCount) || 0,
+    mergedDraftsBeforeCap:
+      combined.mergedDraftsBeforeCap || combined.findings || [],
+    returnedFindings: combined.findings || [],
+    prepared,
+    cappedDrafts: combined.cappedDrafts || [],
+    droppedFocus: combined.droppedFocus || [],
+    prepareDropReasons: preparedDiag.dropReasons,
+    existingSources: existing,
+    targetFields: job?.targetFields || job?.fields || [],
+    context: evalContext,
+    includeSourceDetails: isAdaptiveDebugEnabled(),
+  });
 
   return {
     sources: prepared,
@@ -520,6 +585,7 @@ export async function executeFocusedJobWithFallback({
     fallbackTriggered,
     fallbackBlockedByBudget,
     retrievalYield: finalYield.level,
+    sourceFlow,
   };
 }
 
@@ -837,6 +903,9 @@ export async function runAdaptiveResearch({
         result?.fallbackSearchCostUsd ?? 0;
       identityResolution.totalSearchCostUsd =
         result?.totalSearchCostUsd ?? identityResolution.costUsd;
+      identityResolution.sourceFlow = result?.sourceFlow
+        ? publicSourceFlow(result.sourceFlow)
+        : null;
       identityResolution.jobs = [
         {
           jobId: job.id,
@@ -980,6 +1049,37 @@ export async function runAdaptiveResearch({
             );
           }
           succeeded += 1;
+          const sourceFlow =
+            result?.sourceFlow ||
+            buildJobSourceFlow({
+              rawUrls: result?.rawUrls || [],
+              modelFindingCount: Number(result?.modelFindingCount) || 0,
+              mergedDraftsBeforeCap:
+                result?.mergedDraftsBeforeCap || result?.findings || [],
+              returnedFindings: result?.findings || result?.sources || [],
+              prepared: result?.sources || [],
+              cappedDrafts: result?.cappedDrafts || [],
+              droppedFocus: result?.droppedFocus || [],
+              existingSources: research.sources || [],
+              targetFields: job?.targetFields || job?.fields || [],
+              context: {
+                research,
+                identity,
+                leadCharacters:
+                  research.seriesIdentity || job?.leadCharacters,
+                ...subjectIdentityFrom(research, identity || {}, {
+                  leadCharacters:
+                    research.seriesIdentity || job?.leadCharacters,
+                }),
+              },
+              includeSourceDetails: isAdaptiveDebugEnabled(),
+            });
+          adaptiveLog(formatSourceFlowLog(job.id, sourceFlow));
+          if (isAdaptiveDebugEnabled() && sourceFlow.sourceDetails?.length) {
+            adaptiveLog(
+              `source flow details:\n${JSON.stringify(sourceFlow.sourceDetails, null, 2)}`
+            );
+          }
           jobTrace.push({
             id: job.id,
             strategy: job.strategy,
@@ -998,6 +1098,7 @@ export async function runAdaptiveResearch({
             primarySearchCostUsd: result?.primarySearchCostUsd ?? null,
             fallbackSearchCostUsd: result?.fallbackSearchCostUsd ?? 0,
             totalSearchCostUsd: result?.totalSearchCostUsd ?? null,
+            sourceFlow: publicSourceFlow(sourceFlow),
           });
         } catch (err) {
           const message = err?.message || String(err);
@@ -1102,6 +1203,7 @@ export async function runAdaptiveResearch({
         conflictsAfter: conflictsBefore,
         costUsd: roundCost,
         evidenceTrace,
+        roundSourceFlow: aggregateRoundSourceFlow(jobTrace),
         ...roundRetrievalDiagnostics(jobTrace, {
           addedCount: added.length,
           relevantCount: relevant.length,

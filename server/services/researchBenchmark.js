@@ -33,8 +33,9 @@ import {
   namesReferToSamePerson,
   subjectIdentityFrom,
 } from "./sourceSubject.js";
+import { summarizeSourceFlow } from "./sourceFlow.js";
 
-export const BENCHMARK_VERSION = "benchmark-v4";
+export const BENCHMARK_VERSION = "benchmark-v5"; // C.1.3: field-aware coverageEligible + subject-rejection flag uses same population
 
 export const FAILURE_FLAGS = [
   "NO_EVIDENCE_FOUND",
@@ -51,6 +52,12 @@ export const FAILURE_FLAGS = [
   "QUERY_LOW_YIELD",
   "TOO_EXPENSIVE",
   "WRONG_SUBJECT_EVIDENCE",
+];
+
+export const DIAGNOSTIC_FLAGS = [
+  "RELEVANT_SOURCE_CAPPED",
+  "FIELD_RELEVANT_LOW_QUALITY",
+  "SUBJECT_REJECTION_HEAVY",
 ];
 
 const RELEVANT_LABELS = new Set(["relevant", "strong", "yes", "true"]);
@@ -596,6 +603,15 @@ export function summarizeRetrieval(adaptiveMeta = {}) {
     (acc, j) => acc + (Number(j.totalSearchCostUsd) || 0),
     0
   );
+  const sourceFlows = [];
+  if (adaptiveMeta.identityResolution?.sourceFlow) {
+    sourceFlows.push(adaptiveMeta.identityResolution.sourceFlow);
+  }
+  for (const round of adaptiveMeta.rounds || []) {
+    for (const j of round.jobs || []) {
+      if (j.sourceFlow) sourceFlows.push(j.sourceFlow);
+    }
+  }
   return {
     jobCount: n,
     zeroRetrievalRate: n ? round4(zero / n) : null,
@@ -608,6 +624,7 @@ export function summarizeRetrieval(adaptiveMeta = {}) {
     costPerRelevantSource: relevant ? round4(searchCost / relevant) : null,
     searchCalls,
     searchCostUsd: round4(searchCost),
+    sourceFlow: summarizeSourceFlow(sourceFlows),
   };
 }
 
@@ -813,6 +830,42 @@ export function detectFailureFlags({
     push(
       "WRONG_SUBJECT_EVIDENCE",
       `${wrong.wrongSubjectEvidenceCount} field-relevant source(s) bound to the wrong character`
+    );
+  }
+
+  const sourceFlows = [];
+  if (adaptiveMeta?.identityResolution?.sourceFlow) {
+    sourceFlows.push(adaptiveMeta.identityResolution.sourceFlow);
+  }
+  for (const round of adaptiveMeta?.rounds || []) {
+    if (round.roundSourceFlow) {
+      if ((round.roundSourceFlow.cappedFieldRelevantCount || 0) >= 1) {
+        push(
+          "RELEVANT_SOURCE_CAPPED",
+          `${round.roundSourceFlow.cappedFieldRelevantCount} diagnostically field-relevant source(s) after maxFindings cap`,
+          false
+        );
+      }
+    }
+    for (const j of round.jobs || []) {
+      if (j.sourceFlow) sourceFlows.push(j.sourceFlow);
+    }
+  }
+  const flow = summarizeSourceFlow(sourceFlows);
+  if ((flow.lowCoverageQualityCount || 0) >= 1) {
+    push(
+      "FIELD_RELEVANT_LOW_QUALITY",
+      `${flow.lowCoverageQualityCount} subject-valid source(s) below field-aware coverage quality`,
+      false
+    );
+  }
+  const fieldRelevant = Number(flow.fieldRelevantCount) || 0;
+  const subjectRejected = Number(flow.subjectRejectedCount) || 0;
+  if (fieldRelevant >= 2 && subjectRejected / fieldRelevant >= 0.5) {
+    push(
+      "SUBJECT_REJECTION_HEAVY",
+      `${subjectRejected}/${fieldRelevant} raw field-relevant sources rejected by subject guard`,
+      false
     );
   }
 
@@ -1102,6 +1155,7 @@ export function evaluateSeriesBenchmark({
     followUpJobs,
     cost,
     flags,
+    sourceFlow: retrieval.sourceFlow || summarizeSourceFlow([]),
     adaptiveMeta,
     remainingGaps: (adaptive.intelligence.gaps || []).map((g) => ({
       field: g.field,
@@ -1204,6 +1258,24 @@ export function summarizeRun(results = []) {
             ) / results.length
           )
         : null,
+      sourceFlow: summarizeSourceFlow(
+        results.flatMap((r) => {
+          const meta = r.adaptiveMeta || {};
+          const flows = [];
+          if (meta.identityResolution?.sourceFlow) {
+            flows.push(meta.identityResolution.sourceFlow);
+          }
+          for (const round of meta.rounds || []) {
+            for (const j of round.jobs || []) {
+              if (j.sourceFlow) flows.push(j.sourceFlow);
+            }
+          }
+          if (!flows.length && r.sourceFlow?.rawUrlCount != null) {
+            flows.push(r.sourceFlow);
+          }
+          return flows;
+        })
+      ),
     },
   };
 }

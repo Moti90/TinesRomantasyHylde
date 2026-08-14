@@ -575,6 +575,24 @@ export function mergeRetrievalAttempts(primary = {}, fallback = {}) {
       ...(primary.searchQueries || []),
       ...(fallback.searchQueries || []),
     ]),
+    droppedFocus: [
+      ...(primary.droppedFocus || []),
+      ...(fallback.droppedFocus || []),
+    ],
+    mergedDraftsBeforeCap: [
+      ...(primary.mergedDraftsBeforeCap || []),
+      ...(fallback.mergedDraftsBeforeCap || []),
+    ],
+    cappedDrafts: [...(primary.cappedDrafts || []), ...(fallback.cappedDrafts || [])],
+    modelFindingCount:
+      (Number(primary.modelFindingCount) || 0) +
+      (Number(fallback.modelFindingCount) || 0),
+    mergedBeforeCapCount:
+      (Number(primary.mergedBeforeCapCount) || 0) +
+      (Number(fallback.mergedBeforeCapCount) || 0),
+    returnedFindingCount: findings.length,
+    cappedCount:
+      (Number(primary.cappedCount) || 0) + (Number(fallback.cappedCount) || 0),
   };
 }
 
@@ -590,7 +608,13 @@ export function retrievalAttemptRecord({
     attempt,
     strategy,
     rawUrlCount: Number(result.rawUrlCount ?? result.rawUrls?.length) || 0,
-    mergedCount: (result.findings || []).length,
+    mergedCount: Number(result.returnedFindingCount ?? result.findings?.length) || 0,
+    mergedBeforeCapCount: Number(result.mergedBeforeCapCount) || 0,
+    returnedFindingCount:
+      Number(result.returnedFindingCount ?? result.findings?.length) || 0,
+    modelFindingCount: Number(result.modelFindingCount) || 0,
+    cappedCount: Number(result.cappedCount) || 0,
+    focusRejected: (result.droppedFocus || []).length,
     preparedCount,
     parseStatus: result.parseStatus || null,
     webSearchCalls: Number(result.webSearchCalls) || 0,

@@ -141,7 +141,11 @@ describe("adaptive source identity", () => {
       }),
       research: researchWith(sources),
     });
-    assert.equal(cov.directEvidenceCount, 1);
+    assert.equal(
+      cov.directEvidenceCount + cov.supportingEvidenceCount,
+      1,
+      "canonical Goodreads book page counts once, as usable supporting"
+    );
   });
 });
 

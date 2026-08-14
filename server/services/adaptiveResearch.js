@@ -26,6 +26,7 @@ import {
   isReaderExperienceSource,
   isStudyGuideUrl,
 } from "./evidenceRelevance.js";
+import { evaluateEvidenceQualityForField } from "./evidenceQuality.js";
 import {
   ADAPTIVE_CRITICAL_FIELD_MIN_COVERAGE,
   ADAPTIVE_FIELD_MIN_COVERAGE,
@@ -432,6 +433,17 @@ export function subjectiveSourceQuality(source) {
   return 0.4;
 }
 
+/**
+ * Global type-quality floor used by round relevance (`isFollowUpSourceRelevant`)
+ * and benchmark heuristics. Coverage no longer uses this as the only gate;
+ * see evaluateEvidenceQualityForField (C.1.3).
+ */
+export const SUBJECTIVE_COVERAGE_QUALITY_MIN = 0.5;
+
+export function isSubjectiveCoverageQuality(source) {
+  return subjectiveSourceQuality(source) >= SUBJECTIVE_COVERAGE_QUALITY_MIN;
+}
+
 export function calculateEvidenceDiversity(sources) {
   const byKey = new Map();
   for (const s of sources || []) {
@@ -513,25 +525,33 @@ function collectDirectEvidence(field, claim, research, subjectContext = {}) {
     add(src, "phenomenon");
   }
 
-  const items = [...byKey.values()];
+  const items = [...byKey.values()].map((item) => ({
+    ...item,
+    fieldQuality: evaluateEvidenceQualityForField({
+      source: item.source,
+      field,
+      relevance: item.evaluation?.relevance,
+    }),
+  }));
   const byLevel = (level) =>
     items.filter((item) => item.evaluation?.relevance === level);
-  const strongEnough = (item) => subjectiveSourceQuality(item.source) >= 0.5;
 
-  const direct = byLevel("direct").filter(strongEnough);
-  const supporting = byLevel("supporting").filter(strongEnough);
+  const direct = items.filter(
+    (item) => item.fieldQuality.coverageBucket === "direct"
+  );
+  const supporting = items.filter(
+    (item) => item.fieldQuality.coverageBucket === "supporting"
+  );
   const contextual = byLevel("contextual");
   const rejected = items.filter(
     (item) =>
       item.evaluation?.relevance === "none" ||
-      (item.evaluation?.relevance === "direct" && !strongEnough(item)) ||
-      (item.evaluation?.relevance === "supporting" && !strongEnough(item))
+      (isFieldSpecificEvidence(item.evaluation) && !item.fieldQuality.eligible)
   );
   const fieldSpecific = [...direct, ...supporting];
   const weak = items.filter(
     (item) =>
-      isFieldSpecificEvidence(item.evaluation) &&
-      subjectiveSourceQuality(item.source) < 0.5
+      isFieldSpecificEvidence(item.evaluation) && !item.fieldQuality.eligible
   );
 
   return {

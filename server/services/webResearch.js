@@ -549,6 +549,16 @@ export function focusAllowsSource(focus, type, url, title = "", summary = "") {
   return true;
 }
 
+/** Diagnostic-only: why focusAllowsSource returned false. Does not change the filter. */
+export function classifyFocusRejectReason(focus, type, url, title = "", summary = "") {
+  if (focusAllowsSource(focus, type, url, title, summary)) return null;
+  if (["catalog", "official", "publisher"].includes(type)) return "catalog";
+  if (type === "wikipedia") return "wikipedia";
+  if (type === "forum" || isGoodreadsDiscussionUrl(url)) return "redditHeuristic";
+  if (type === "other") return "wikiLore";
+  return "other";
+}
+
 /**
  * 4 målrettede batches — hver dækker en gruppe håndbogsfelter.
  * Naturlige prompts only (ingen teknisk query).
@@ -1917,7 +1927,9 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
   });
   const droppedFocus = mergedResult.droppedFocus;
   const cap = Math.max(1, Number(maxFindings) || 12);
-  const merged = mergedResult.drafts.slice(0, cap);
+  const mergedBeforeCap = mergedResult.drafts;
+  const merged = mergedBeforeCap.slice(0, cap);
+  const cappedDrafts = mergedBeforeCap.slice(cap);
 
   // === MIDLERTIDIG DEBUG filter-trin ===
   if (debugHelte) {
@@ -1974,6 +1986,13 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
     findings: merged,
     rawUrls,
     rawUrlCount: rawUrls.length,
+    modelFindingCount: findings.length,
+    mergedBeforeCapCount: mergedBeforeCap.length,
+    returnedFindingCount: merged.length,
+    cappedCount: cappedDrafts.length,
+    droppedFocus,
+    cappedDrafts,
+    mergedDraftsBeforeCap: mergedBeforeCap,
     pairing: resolved.pairing || null,
     parseStatus: resolved.parseStatus,
     retryUsed: Boolean(resolved.retryUsed),
@@ -2038,6 +2057,13 @@ export function mergeSearchResultDrafts(
         url: draft.url,
         type,
         title: draft.title,
+        reason: classifyFocusRejectReason(
+          focus,
+          type,
+          draft.url,
+          draft.title,
+          draft.summary
+        ),
       });
       return;
     }

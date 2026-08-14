@@ -9,8 +9,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  * Bid 2 should include this in research/cache invalidation when the loop goes live.
  * adaptive-v7: subject-aware field evidence + normalized identity confirmation.
  * adaptive-v8: diversified retrieval approaches + one low-yield web_search fallback per focused job.
+ * adaptive-v9: field-aware source quality (role × field class) for coverage eligibility.
  */
-export const ADAPTIVE_VERSION = "adaptive-v8";
+export const ADAPTIVE_VERSION = "adaptive-v9";
 
 /** One targeted series-identity search before field follow-ups. */
 export const ADAPTIVE_MAX_IDENTITY_SEARCHES = Number(
