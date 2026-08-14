@@ -5,15 +5,19 @@ import {
   ANALYSIS_MODEL,
   RESEARCH_PROMPT_VERSION,
   estimateCostUsd,
+  isAdaptiveDebugEnabled,
 } from "./versions.js";
 import { appendFileSync, mkdirSync, writeFileSync } from "fs";
 import { dirname } from "path";
 import { dataPath } from "./paths.js";
 import {
-  hasTargetFieldSignal,
   isGoodreadsDiscussionUrl,
   isStudyGuideUrl,
 } from "./evidenceRelevance.js";
+import {
+  diversityInstruction,
+  extractWebSearchQueries,
+} from "./searchRetrieval.js";
 
 const DEBUG_LOG = dataPath("debug-research.log");
 
@@ -1392,8 +1396,6 @@ const MAX_GOODREADS_TOTAL = 12;
 
 export function selectValuableSources(sources, options = {}) {
   if (!Array.isArray(sources)) return [];
-  const targetFields = options.targetFields || [];
-  const adaptiveFollowUp = options.adaptiveFollowUp === true;
   const byCanon = new Map();
   for (let i = 0; i < sources.length; i++) {
     const s = sources[i] || {};
@@ -1476,14 +1478,10 @@ export function selectValuableSources(sources, options = {}) {
         continue;
       }
     } else if (s.type === "other") {
-      const keepForContent =
-        adaptiveFollowUp && hasTargetFieldSignal(s, targetFields);
-      if (!keepForContent) {
-        const otherKey = `${s.batch || "_"}:other`;
-        const oc = hostCount.get(otherKey) || 0;
-        if (oc >= 2) continue;
-        hostCount.set(otherKey, oc + 1);
-      }
+      const otherKey = `${s.batch || "_"}:other`;
+      const oc = hostCount.get(otherKey) || 0;
+      if (oc >= 2) continue;
+      hostCount.set(otherKey, oc + 1);
     } else {
       continue;
     }
@@ -1757,7 +1755,7 @@ export async function runFocusedSearch(client, {
   const debugHelte = batchLabel === "helteprofil";
   const debugRomance = batchLabel === "romanceprofil";
   const hintBlock = Array.isArray(queryHints) && queryHints.length
-    ? `\n\nSøgehints (valgfrie — erstat ikke instruktionen ovenfor):\n${queryHints
+    ? `\n\nSøgehints (valgfrie — erstat ikke instruktionen ovenfor):\n${diversityInstruction()}\n${queryHints
         .filter(Boolean)
         .map((h) => `- ${h}`)
         .join("\n")}`
@@ -1933,33 +1931,37 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
       });
     }
     const asDrafts = merged.map((m) => ({ ...m, batch: batchLabel }));
-    const afterSelect = selectValuableSources(asDrafts);
-    debugLog("\n--- selectValuableSources kun på denne batch ---");
-    debugLog("Før:", asDrafts.length, "| Efter:", afterSelect.length);
-    if (asDrafts.length > afterSelect.length) {
-      const keptUrls = new Set(afterSelect.map((s) => s.url));
-      asDrafts
-        .filter((d) => !keptUrls.has(canonicalizeUrl(d.url) || d.url))
-        .forEach((d) => {
-          debugLog(`  DROPPET af selectValuableSources: ${d.url} (${d.type})`);
-          debugLog(
-            `    title=${d.title} | summaryLen=${String(d.summary || "").length}`
-          );
-          debugLog(
-            `    industry=${isIndustryNoise(d.url, d.title)} loreForum=${
-              d.type === "forum" &&
-              !looksLikeReaderDiscussion(d.url, d.title, d.summary)
-            } plotOnly=${isPlotOnlyNoise(d.title, d.summary)} publisherPr=${isPublisherPr(d.url, d.title)}`
-          );
-        });
+    if (isAdaptiveDebugEnabled()) {
+      const afterSelect = selectValuableSources(asDrafts);
+      debugLog("\n--- selectValuableSources kun på denne batch (debug) ---");
+      debugLog("Før:", asDrafts.length, "| Efter:", afterSelect.length);
+      if (asDrafts.length > afterSelect.length) {
+        const keptUrls = new Set(afterSelect.map((s) => s.url));
+        asDrafts
+          .filter((d) => !keptUrls.has(canonicalizeUrl(d.url) || d.url))
+          .forEach((d) => {
+            debugLog(`  DROPPET af selectValuableSources: ${d.url} (${d.type})`);
+            debugLog(
+              `    title=${d.title} | summaryLen=${String(d.summary || "").length}`
+            );
+            debugLog(
+              `    industry=${isIndustryNoise(d.url, d.title)} loreForum=${
+                d.type === "forum" &&
+                !looksLikeReaderDiscussion(d.url, d.title, d.summary)
+              } plotOnly=${isPlotOnlyNoise(d.title, d.summary)} publisherPr=${isPublisherPr(d.url, d.title)}`
+            );
+          });
+      }
     }
     debugLog("========== SLUT HELTEPROFIL DEBUG ==========\n");
   } else if (debugRomance) {
     debugLog("Efter focusAllowsSource (merged):", merged.length);
-    const afterSelect = selectValuableSources(
-      merged.map((m) => ({ ...m, batch: batchLabel }))
-    );
-    debugLog("Efter selectValuableSources:", afterSelect.length);
+    if (isAdaptiveDebugEnabled()) {
+      const afterSelect = selectValuableSources(
+        merged.map((m) => ({ ...m, batch: batchLabel }))
+      );
+      debugLog("Efter selectValuableSources (debug):", afterSelect.length);
+    }
     debugLog("--- slut romanceprofil debug ---\n");
   }
   // === SLUT MIDLERTIDIG DEBUG ===
@@ -1976,6 +1978,7 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
     parseStatus: resolved.parseStatus,
     retryUsed: Boolean(resolved.retryUsed),
     webSearchCalls: countWebSearchCalls(response),
+    searchQueries: extractWebSearchQueries(response),
     inputTokens,
     outputTokens,
     retryInputTokens: resolved.retryInputTokens || 0,

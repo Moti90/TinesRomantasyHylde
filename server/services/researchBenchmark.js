@@ -34,7 +34,7 @@ import {
   subjectIdentityFrom,
 } from "./sourceSubject.js";
 
-export const BENCHMARK_VERSION = "benchmark-v3";
+export const BENCHMARK_VERSION = "benchmark-v4";
 
 export const FAILURE_FLAGS = [
   "NO_EVIDENCE_FOUND",
@@ -495,23 +495,120 @@ export function queryEffectiveness(rounds = [], jobs = []) {
     const relevant = Number(round.newRelevantSources) || 0;
     const gain = Number(round.coverageGain) || 0;
     const cost = Number(round.costUsd) || 0;
+    const jobRows = round.jobs || [];
+    const attempts = jobRows.flatMap((j) => j.retrievalAttempts || []);
+    const primaryAttempt = attempts.find((a) => a.attempt === 1);
+    const fallbackAttempt = attempts.find((a) => a.attempt === 2);
+    const rawUrlsPrimary = jobRows.reduce((n, j) => {
+      const a = (j.retrievalAttempts || []).find((x) => x.attempt === 1);
+      return n + (Number(a?.rawUrlCount ?? (j.rawUrlCount || 0)) || 0);
+    }, 0);
+    const rawUrlsFallback = jobRows.reduce((n, j) => {
+      const a = (j.retrievalAttempts || []).find((x) => x.attempt === 2);
+      return n + (Number(a?.rawUrlCount) || 0);
+    }, 0);
+    const uniqueSources = Number(round.newSources) || 0;
+    const preparedSources = jobRows.reduce(
+      (n, j) => n + (Number(j.preparedCount ?? j.sourceCount) || 0),
+      0
+    );
+    const direct = Number(round.evidenceTrace?.directCount) || 0;
+    const supporting = Number(round.evidenceTrace?.supportingCount) || 0;
+    const contextual = Number(round.evidenceTrace?.contextualCount) || 0;
     return {
       round: round.round,
-      strategy: (round.jobs || []).map((j) => j.strategy),
+      strategy: jobRows.map((j) => j.strategy),
       targetFields: round.targetFields || [],
-        jobs: roundJobs.length ? roundJobs : round.jobs || [],
+      jobs: roundJobs.length ? roundJobs : jobRows,
       webSearchCalls: calls,
-      sourcesReturned: Number(round.newSources) || 0,
-      uniqueSourcesAdded: Number(round.newSources) || 0,
+      searchCalls: calls,
+      sourcesReturned: uniqueSources,
+      uniqueSourcesAdded: uniqueSources,
       relevantSourcesAdded: relevant,
       coverageGain: gain,
       criticalFieldsResolved: round.criticalFieldsResolved || [],
       costUsd: cost,
+      searchCostUsd: jobRows.reduce(
+        (n, j) => n + (Number(j.totalSearchCostUsd) || 0),
+        0
+      ),
       relevantSourcesPerSearchCall: calls ? round4(relevant / calls) : null,
       coverageGainPerSearchCall: calls ? round4(gain / calls) : null,
       coverageGainPerDollar: cost ? round4(gain / cost) : null,
+      retrievalAttempts: attempts,
+      rawUrlsPrimary: primaryAttempt ? Number(primaryAttempt.rawUrlCount) || 0 : rawUrlsPrimary,
+      rawUrlsFallback: fallbackAttempt ? Number(fallbackAttempt.rawUrlCount) || 0 : rawUrlsFallback,
+      uniqueSources,
+      duplicateSources: Math.max(0, rawUrlsPrimary + rawUrlsFallback - uniqueSources),
+      preparedSources,
+      directEvidence: direct,
+      supportingEvidence: supporting,
+      contextualEvidence: contextual,
+      newRelevantSources: relevant,
+      fallbackTriggered: Boolean(round.fallbackTriggered),
+      fallbackRecovered: Boolean(round.fallbackRecovered),
+      retrievalStatus: round.retrievalStatus || null,
+      evidenceOutcome: round.evidenceOutcome || null,
     };
   });
+}
+
+export function summarizeRetrieval(adaptiveMeta = {}) {
+  const jobs = [];
+  const identity = adaptiveMeta.identityResolution || {};
+  if (identity.triggered || (identity.retrievalAttempts || []).length) {
+    jobs.push({
+      retrievalAttempts: identity.retrievalAttempts || [],
+      retrievalStatus: identity.retrievalStatus || null,
+      webSearchCalls: identity.searchCalls || 0,
+      fallbackTriggered: Boolean(identity.fallbackTriggered),
+      totalSearchCostUsd: identity.totalSearchCostUsd ?? identity.costUsd,
+    });
+  }
+  for (const round of adaptiveMeta.rounds || []) {
+    for (const j of round.jobs || []) {
+      jobs.push({
+        ...j,
+        evidenceOutcome: round.evidenceOutcome,
+        newRelevantSources: round.newRelevantSources,
+        evidenceTrace: round.evidenceTrace,
+      });
+    }
+  }
+  const n = jobs.length;
+  const zero = jobs.filter((j) => j.retrievalStatus === "retrieval_zero").length;
+  const fallbacks = jobs.filter(
+    (j) =>
+      Boolean(j.fallbackTriggered) ||
+      (j.retrievalAttempts || []).some((a) => a.attempt === 2)
+  ).length;
+  const recovered = jobs.filter((j) => j.retrievalStatus === "fallback_recovered").length;
+  const searchCalls = jobs.reduce((acc, j) => acc + (Number(j.webSearchCalls) || 0), 0);
+  const relevant = (adaptiveMeta.rounds || []).reduce(
+    (acc, r) => acc + (Number(r.newRelevantSources) || 0),
+    0
+  );
+  const directSupporting = (adaptiveMeta.rounds || []).reduce((acc, r) => {
+    const t = r.evidenceTrace || {};
+    return acc + (Number(t.directCount) || 0) + (Number(t.supportingCount) || 0);
+  }, 0);
+  const searchCost = jobs.reduce(
+    (acc, j) => acc + (Number(j.totalSearchCostUsd) || 0),
+    0
+  );
+  return {
+    jobCount: n,
+    zeroRetrievalRate: n ? round4(zero / n) : null,
+    fallbackRate: n ? round4(fallbacks / n) : null,
+    fallbackRecoveryRate: fallbacks ? round4(recovered / fallbacks) : null,
+    evidencePerSearchCall: searchCalls ? round4(relevant / searchCalls) : null,
+    directSupportingPerSearchCall: searchCalls
+      ? round4(directSupporting / searchCalls)
+      : null,
+    costPerRelevantSource: relevant ? round4(searchCost / relevant) : null,
+    searchCalls,
+    searchCostUsd: round4(searchCost),
+  };
 }
 
 export function costReport({ baseline, adaptiveMeta } = {}) {
@@ -871,7 +968,22 @@ export function renderReviewMarkdown(result) {
     lines.push(
       `Result: ${q.relevantSourcesAdded} relevant sources, coverage ${q.coverageGain >= 0 ? "gain " : ""}${q.coverageGain}`
     );
+    if (q.evidenceOutcome || q.retrievalStatus) {
+      lines.push(
+        `Retrieval: ${q.retrievalStatus || "n/a"} · evidence: ${q.evidenceOutcome || "n/a"} · fallback ${q.fallbackTriggered ? (q.fallbackRecovered ? "recovered" : "triggered") : "no"}`
+      );
+    }
   }
+
+  lines.push("");
+  lines.push("## RETRIEVAL");
+  const ret = result.retrieval || {};
+  lines.push(
+    `zeroRetrievalRate: ${ret.zeroRetrievalRate ?? "n/a"} · fallbackRate: ${ret.fallbackRate ?? "n/a"} · fallbackRecoveryRate: ${ret.fallbackRecoveryRate ?? "n/a"}`
+  );
+  lines.push(
+    `evidencePerSearchCall: ${ret.evidencePerSearchCall ?? "n/a"} · directSupportingPerSearchCall: ${ret.directSupportingPerSearchCall ?? "n/a"} · costPerRelevantSource: ${ret.costPerRelevantSource ?? "n/a"}`
+  );
 
   lines.push("");
   lines.push("## COST");
@@ -935,6 +1047,7 @@ export function evaluateSeriesBenchmark({
     characters.usedInQueries = identityMeta.after;
   }
   const queries = queryEffectiveness(adaptiveMeta.rounds || [], followUpJobs);
+  const retrieval = summarizeRetrieval(adaptiveMeta);
   const cost = costReport({ baseline, adaptiveMeta });
   const comparison = compareBaselineAdaptive(baseline, adaptive);
   const wrongSubjectEvidence = collectWrongSubjectEvidence({
@@ -985,6 +1098,7 @@ export function evaluateSeriesBenchmark({
     fields,
     characters,
     queries,
+    retrieval,
     followUpJobs,
     cost,
     flags,
@@ -1061,5 +1175,35 @@ export function summarizeRun(results = []) {
         0
       )
     ),
+    retrieval: {
+      zeroRetrievalRate: results.length
+        ? round4(
+            results.reduce((acc, r) => acc + (r.retrieval?.zeroRetrievalRate || 0), 0) /
+              results.length
+          )
+        : null,
+      fallbackRate: results.length
+        ? round4(
+            results.reduce((acc, r) => acc + (r.retrieval?.fallbackRate || 0), 0) /
+              results.length
+          )
+        : null,
+      fallbackRecoveryRate: results.length
+        ? round4(
+            results.reduce(
+              (acc, r) => acc + (r.retrieval?.fallbackRecoveryRate || 0),
+              0
+            ) / results.length
+          )
+        : null,
+      evidencePerSearchCall: results.length
+        ? round4(
+            results.reduce(
+              (acc, r) => acc + (r.retrieval?.evidencePerSearchCall || 0),
+              0
+            ) / results.length
+          )
+        : null,
+    },
   };
 }

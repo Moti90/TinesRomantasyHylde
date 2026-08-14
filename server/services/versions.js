@@ -8,8 +8,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
 /** Adaptive research intelligence (Bid 1+). Bump when coverage/planner semantics change.
  * Bid 2 should include this in research/cache invalidation when the loop goes live.
  * adaptive-v7: subject-aware field evidence + normalized identity confirmation.
+ * adaptive-v8: diversified retrieval approaches + one low-yield web_search fallback per focused job.
  */
-export const ADAPTIVE_VERSION = "adaptive-v7";
+export const ADAPTIVE_VERSION = "adaptive-v8";
 
 /** One targeted series-identity search before field follow-ups. */
 export const ADAPTIVE_MAX_IDENTITY_SEARCHES = Number(
@@ -57,6 +58,13 @@ export const ADAPTIVE_MAX_SOURCES_PER_JOB = Number(
 export function isAdaptiveResearchEnabled() {
   const v = process.env.ADAPTIVE_RESEARCH_ENABLED;
   if (v == null || String(v).trim() === "") return true;
+  return !["0", "false", "no", "off"].includes(String(v).trim().toLowerCase());
+}
+
+export function isAdaptiveDebugEnabled() {
+  if (process.env.NODE_ENV === "production") return false;
+  const v = process.env.ADAPTIVE_DEBUG;
+  if (v == null || String(v).trim() === "") return false;
   return !["0", "false", "no", "off"].includes(String(v).trim().toLowerCase());
 }
 

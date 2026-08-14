@@ -35,6 +35,7 @@ import {
   ANALYSIS_MODEL,
   RESEARCH_MODEL,
   estimateCostUsd,
+  isAdaptiveDebugEnabled,
   isAdaptiveResearchEnabled,
 } from "./versions.js";
 import {
@@ -45,6 +46,18 @@ import {
   runFocusedSearch,
   synthesizeResearch,
 } from "./webResearch.js";
+import {
+  assessRetrievalYield,
+  buildFallbackQueryHints,
+  buildFallbackUserPrompt,
+  buildRetrievalApproaches,
+  canAffordRetrievalFallback,
+  classifyEvidenceOutcome,
+  flattenRetrievalApproaches,
+  mergeRetrievalAttempts,
+  retrievalAttemptRecord,
+  retrievalStatusAfterAttempts,
+} from "./searchRetrieval.js";
 
 export function shouldRunAdaptiveResearch({
   researchCacheHit = false,
@@ -60,6 +73,45 @@ export function shouldRunAdaptiveResearch({
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function combineJobRetrievalStatus(statuses = []) {
+  const list = (statuses || []).filter(Boolean);
+  if (!list.length) return null;
+  if (list.every((s) => s === "retrieval_zero")) return "retrieval_zero";
+  if (list.includes("fallback_recovered")) return "fallback_recovered";
+  if (list.includes("fallback_low") && !list.includes("primary_usable")) {
+    return "fallback_low";
+  }
+  if (list.includes("budget_blocked_fallback")) return "budget_blocked_fallback";
+  if (list.includes("primary_usable")) return "primary_usable";
+  return list[0];
+}
+
+function roundRetrievalDiagnostics(jobTrace = [], { addedCount, relevantCount, draftCount } = {}) {
+  const rawUrlCount = jobTrace.reduce(
+    (n, j) => n + (Number(j.rawUrlCount) || 0),
+    0
+  );
+  const mergedCount = jobTrace.reduce(
+    (n, j) => n + (Number(j.mergedCount) || 0),
+    0
+  );
+  const retrievalStatus = combineJobRetrievalStatus(
+    jobTrace.map((j) => j.retrievalStatus)
+  );
+  return {
+    retrievalStatus,
+    evidenceOutcome: classifyEvidenceOutcome({
+      retrievalStatus,
+      addedCount,
+      relevantCount,
+      rawUrlCount,
+      mergedCount: mergedCount || draftCount || 0,
+    }),
+    fallbackTriggered: jobTrace.some((j) => j.fallbackTriggered),
+    fallbackRecovered: retrievalStatus === "fallback_recovered",
+  };
 }
 
 function assessmentsOf(analysis) {
@@ -229,6 +281,8 @@ export function prepareFollowUpSources(findings, job, round) {
       strategy: job?.strategy || null,
       adaptiveStrategies: job?.strategy ? [job.strategy] : [],
       foundInRounds: [round],
+      retrievalAttempt: f.retrievalAttempt || null,
+      retrievalStrategy: f.retrievalStrategy || null,
     };
     out.push(attachSubjectHintsToSource(row, job?.leadCharacters || {}));
     if (out.length >= cap) break;
@@ -267,53 +321,217 @@ export function prepareIdentitySources(findings, job) {
       strategy: "series_identity_resolution",
       adaptiveStrategies: ["series_identity_resolution"],
       foundInRounds: [0],
+      retrievalAttempt: f.retrievalAttempt || null,
+      retrievalStrategy: f.retrievalStrategy || null,
     });
     if (out.length >= cap) break;
   }
   return out;
 }
 
-export async function defaultExecuteFollowUpJob({ job, identity, round = 1 }) {
+function round6(n) {
+  return Math.round((Number(n) || 0) * 1e6) / 1e6;
+}
+
+function searchCostUsd(result) {
+  if (result?.searchCostUsd != null) return Number(result.searchCostUsd) || 0;
+  const retryIn = Number(result?.retryInputTokens) || 0;
+  const retryOut = Number(result?.retryOutputTokens) || 0;
+  const input = Math.max(0, (Number(result?.inputTokens) || 0) - retryIn);
+  const output = Math.max(0, (Number(result?.outputTokens) || 0) - retryOut);
+  const computed = estimateCostUsd(ANALYSIS_MODEL, input, output);
+  if (computed > 0) return computed;
+  if (result?.costUsd != null) return Number(result.costUsd) || 0;
+  return 0;
+}
+
+function repairCostUsd(result) {
+  if (result?.retryCostUsd != null) return Number(result.retryCostUsd) || 0;
+  return estimateCostUsd(
+    ANALYSIS_MODEL,
+    result?.retryInputTokens || 0,
+    result?.retryOutputTokens || 0
+  );
+}
+
+function prepareJobSources(findings, job, round) {
+  const isIdentity =
+    job?.strategy === "series_identity_resolution" || job?.purpose === "identity";
+  return isIdentity
+    ? prepareIdentitySources(findings, job)
+    : prepareFollowUpSources(findings, job, round);
+}
+
+/**
+ * One focused Responses/web_search, plus at most one broadened fallback
+ * when retrieval yield is zero/low. Parse repair is inside runFocusedSearch
+ * and does not count as a retrieval attempt.
+ */
+export async function executeFocusedJobWithFallback({
+  job,
+  identity,
+  round = 1,
+  remainingSearchCalls = Infinity,
+  remainingCostUsd = Infinity,
+  runSearch = runFocusedSearch,
+  client,
+} = {}) {
+  const isIdentity =
+    job?.strategy === "series_identity_resolution" || job?.purpose === "identity";
+  const approaches =
+    job?.retrievalApproaches ||
+    buildRetrievalApproaches({
+      identity,
+      series: job?.series || {},
+      leadCharacters: job?.leadCharacters || {},
+      targetFields: job?.targetFields || job?.fields || [],
+      strategy: job?.strategy || "",
+      purpose: isIdentity ? "identity" : job?.purpose || "field",
+    });
+  const focus = isIdentity ? "series_identity" : job?.batchHint || "helteprofil";
+  const batch = focus;
+  const purpose = isIdentity ? "identity" : "field";
+
+  const runOnce = (overrides = {}) =>
+    runSearch(client, {
+      id: overrides.id || job?.id,
+      focus,
+      query: "",
+      userPrompt: overrides.userPrompt,
+      batch,
+      queryHints: overrides.queryHints ?? job?.queryHints ?? [],
+      maxFindings: ADAPTIVE_MAX_SOURCES_PER_JOB,
+      purpose,
+    });
+
+  const primary = await runOnce({
+    id: job?.id,
+    userPrompt: job?.userPrompt || "",
+    queryHints: job?.queryHints || flattenRetrievalApproaches(approaches),
+  });
+  const primaryPrepared = prepareJobSources(primary.findings, job, round);
+  const primaryYield = assessRetrievalYield({
+    rawUrlCount: primary.rawUrlCount ?? (primary.rawUrls || []).length,
+    mergedCount: (primary.findings || []).length,
+    preparedCount: primaryPrepared.length,
+    parseStatus: primary.parseStatus,
+  });
+  const primaryCost = searchCostUsd(primary);
+  const primaryRepair = repairCostUsd(primary);
+  const attempts = [
+    retrievalAttemptRecord({
+      attempt: 1,
+      strategy: "primary",
+      result: primary,
+      preparedCount: primaryPrepared.length,
+      yieldLevel: primaryYield.level,
+    }),
+  ];
+
+  let fallbackTriggered = false;
+  let fallbackBlockedByBudget = false;
+  let combined = primary;
+  let prepared = primaryPrepared;
+  let fallbackCost = 0;
+  let fallbackRepair = 0;
+  let finalYield = primaryYield;
+
+  const affordFallback = canAffordRetrievalFallback({
+    remainingSearchCalls,
+    primaryWebSearchCalls: primary.webSearchCalls || 0,
+  });
+  const remainingCostAfterPrimary =
+    remainingCostUsd == null || !Number.isFinite(Number(remainingCostUsd))
+      ? Infinity
+      : Number(remainingCostUsd) - primaryCost - primaryRepair;
+
+  if (primaryYield.shouldFallback) {
+    if (!affordFallback || remainingCostAfterPrimary <= 0) {
+      fallbackBlockedByBudget = true;
+    } else {
+      fallbackTriggered = true;
+      const fallbackPrompt = buildFallbackUserPrompt({
+        identity,
+        series: job?.series || {},
+        leadCharacters: job?.leadCharacters || {},
+        strategy: job?.strategy || "",
+        targetFields: job?.targetFields || job?.fields || [],
+        purpose,
+      });
+      const fallback = await runOnce({
+        id: `${job?.id || "job"}-fallback`,
+        userPrompt: fallbackPrompt,
+        queryHints: buildFallbackQueryHints(approaches),
+      });
+      fallbackCost = searchCostUsd(fallback);
+      fallbackRepair = repairCostUsd(fallback);
+      combined = mergeRetrievalAttempts(primary, fallback);
+      prepared = prepareJobSources(combined.findings, job, round);
+      finalYield = assessRetrievalYield({
+        rawUrlCount: combined.rawUrlCount ?? (combined.rawUrls || []).length,
+        mergedCount: (combined.findings || []).length,
+        preparedCount: prepared.length,
+        parseStatus: combined.parseStatus,
+      });
+      attempts.push(
+        retrievalAttemptRecord({
+          attempt: 2,
+          strategy: "broad_fallback",
+          result: fallback,
+          preparedCount: prepareJobSources(fallback.findings, job, round).length,
+          yieldLevel: assessRetrievalYield({
+            rawUrlCount: fallback.rawUrlCount ?? (fallback.rawUrls || []).length,
+            mergedCount: (fallback.findings || []).length,
+            preparedCount: prepareJobSources(fallback.findings, job, round).length,
+            parseStatus: fallback.parseStatus,
+          }).level,
+        })
+      );
+    }
+  }
+
+  const retrievalStatus = retrievalStatusAfterAttempts({
+    fallbackTriggered,
+    fallbackBlockedByBudget,
+    finalYield,
+  });
+  const retryCost = round6(primaryRepair + fallbackRepair);
+  const totalSearchCost = round6(primaryCost + fallbackCost);
+
+  return {
+    sources: prepared,
+    pairing: combined.pairing || null,
+    parseStatus: combined.parseStatus || null,
+    retryUsed: Boolean(combined.retryUsed),
+    rawUrls: combined.rawUrls || [],
+    findings: combined.findings || [],
+    webSearchCalls: combined.webSearchCalls || 0,
+    inputTokens: combined.inputTokens || 0,
+    outputTokens: combined.outputTokens || 0,
+    retryInputTokens: combined.retryInputTokens || 0,
+    retryOutputTokens: combined.retryOutputTokens || 0,
+    retryCostUsd: retryCost,
+    primarySearchCostUsd: round6(primaryCost),
+    fallbackSearchCostUsd: round6(fallbackCost),
+    totalSearchCostUsd: totalSearchCost,
+    costUsd: round6(totalSearchCost + retryCost),
+    retrievalAttempts: attempts,
+    retrievalStatus,
+    fallbackTriggered,
+    fallbackBlockedByBudget,
+    retrievalYield: finalYield.level,
+  };
+}
+
+export async function defaultExecuteFollowUpJob(opts = {}) {
   const key = getOpenAIKey();
   if (!key) throw new Error("missing_api_key");
   const client = await createOpenAIClient(key);
-  const isIdentity = job?.strategy === "series_identity_resolution";
-  const result = await runFocusedSearch(client, {
-    id: job.id,
-    focus: isIdentity ? "series_identity" : job.batchHint || "helteprofil",
-    query: "",
-    userPrompt: job.userPrompt,
-    batch: isIdentity ? "series_identity" : job.batchHint || "helteprofil",
-    queryHints: job.queryHints || [],
-    maxFindings: ADAPTIVE_MAX_SOURCES_PER_JOB,
-    purpose: isIdentity ? "identity" : "field",
+  return executeFocusedJobWithFallback({
+    ...opts,
+    client,
+    runSearch: runFocusedSearch,
   });
-  return {
-    sources: isIdentity
-      ? prepareIdentitySources(result.findings, job)
-      : prepareFollowUpSources(result.findings, job, round),
-    pairing: result.pairing || null,
-    parseStatus: result.parseStatus || null,
-    retryUsed: Boolean(result.retryUsed),
-    rawUrls: result.rawUrls || [],
-    webSearchCalls: result.webSearchCalls || 0,
-    inputTokens: result.inputTokens || 0,
-    outputTokens: result.outputTokens || 0,
-    retryInputTokens: result.retryInputTokens || 0,
-    retryOutputTokens: result.retryOutputTokens || 0,
-    retryCostUsd:
-      result.retryCostUsd ??
-      estimateCostUsd(
-        ANALYSIS_MODEL,
-        result.retryInputTokens || 0,
-        result.retryOutputTokens || 0
-      ),
-    costUsd: estimateCostUsd(
-      ANALYSIS_MODEL,
-      result.inputTokens || 0,
-      result.outputTokens || 0
-    ),
-  };
 }
 
 export async function rebuildResearchFromSources({
@@ -401,13 +619,6 @@ async function defaultAnalyze({ research, catalog, mofibo, identity }) {
 function adaptiveLog(...args) {
   if (process.env.NODE_ENV === "production") return;
   console.log("[adaptive]", ...args);
-}
-
-function isAdaptiveLoopDebug() {
-  if (process.env.NODE_ENV === "production") return false;
-  const v = process.env.ADAPTIVE_DEBUG;
-  if (v == null || String(v).trim() === "") return false;
-  return !["0", "false", "no", "off"].includes(String(v).trim().toLowerCase());
 }
 
 function stopFromIntelligence(intelligence) {
@@ -565,6 +776,8 @@ export async function runAdaptiveResearch({
         catalog,
         mofibo,
         round: 0,
+        remainingSearchCalls: maxSearch - additionalSearch,
+        remainingCostUsd: maxCost - additionalCost,
       });
       const calls = Number(result?.webSearchCalls) || 0;
       const cost = Number(result?.costUsd) || 0;
@@ -587,6 +800,9 @@ export async function runAdaptiveResearch({
         strategy: "series_identity_resolution",
       }));
       if (!drafts.length && (result?.rawUrls || []).length) {
+        // Defensive: mocked executeFollowUpJob and focusAllowsSource-empty
+        // findings can still carry raw URLs. runFocusedSearch already merges
+        // raw URLs into findings, so this is a no-op on the normal path.
         drafts = prepareIdentitySources(
           (result.rawUrls || []).map((u) => asRawFinding(u, "series_identity")),
           job
@@ -612,11 +828,22 @@ export async function runAdaptiveResearch({
       identityResolution.parseStatus = result?.parseStatus || null;
       identityResolution.retryUsed = Boolean(result?.retryUsed);
       identityResolution.rawUrlCount = (result?.rawUrls || []).length;
+      identityResolution.retrievalAttempts = result?.retrievalAttempts || [];
+      identityResolution.retrievalStatus = result?.retrievalStatus || null;
+      identityResolution.fallbackTriggered = Boolean(result?.fallbackTriggered);
+      identityResolution.primarySearchCostUsd =
+        result?.primarySearchCostUsd ?? null;
+      identityResolution.fallbackSearchCostUsd =
+        result?.fallbackSearchCostUsd ?? 0;
+      identityResolution.totalSearchCostUsd =
+        result?.totalSearchCostUsd ?? identityResolution.costUsd;
       identityResolution.jobs = [
         {
           jobId: job.id,
           parseStatus: result?.parseStatus || null,
           retryUsed: Boolean(result?.retryUsed),
+          retrievalAttempts: result?.retrievalAttempts || [],
+          retrievalStatus: result?.retrievalStatus || null,
         },
       ];
     } catch (err) {
@@ -729,6 +956,8 @@ export async function runAdaptiveResearch({
             catalog,
             mofibo,
             round,
+            remainingSearchCalls: maxSearch - additionalSearch - roundSearch,
+            remainingCostUsd: maxCost - additionalCost - roundCost,
           });
           const calls = Number(result?.webSearchCalls) || 0;
           const cost = Number(result?.costUsd) || 0;
@@ -738,6 +967,8 @@ export async function runAdaptiveResearch({
           roundOut += Number(result?.outputTokens) || 0;
           roundDrafts.push(...(result?.sources || []));
           if (!(result?.sources || []).length && (result?.rawUrls || []).length) {
+            // Same defensive backfill as identity: custom/mocked jobs may
+            // return rawUrls without prepared sources.
             roundDrafts.push(
               ...prepareFollowUpSources(
                 (result.rawUrls || []).map((u) =>
@@ -758,6 +989,15 @@ export async function runAdaptiveResearch({
             parseStatus: result?.parseStatus || null,
             retryUsed: Boolean(result?.retryUsed),
             rawUrlCount: (result?.rawUrls || []).length,
+            mergedCount: (result?.findings || []).length,
+            preparedCount: (result?.sources || []).length,
+            retrievalAttempts: result?.retrievalAttempts || null,
+            retrievalStatus: result?.retrievalStatus || null,
+            fallbackTriggered: Boolean(result?.fallbackTriggered),
+            fallbackBlockedByBudget: Boolean(result?.fallbackBlockedByBudget),
+            primarySearchCostUsd: result?.primarySearchCostUsd ?? null,
+            fallbackSearchCostUsd: result?.fallbackSearchCostUsd ?? 0,
+            totalSearchCostUsd: result?.totalSearchCostUsd ?? null,
           });
         } catch (err) {
           const message = err?.message || String(err);
@@ -793,6 +1033,11 @@ export async function runAdaptiveResearch({
           conflictsBefore,
           conflictsAfter: conflictsBefore,
           costUsd: roundCost,
+          ...roundRetrievalDiagnostics(jobTrace, {
+            addedCount: 0,
+            relevantCount: 0,
+            draftCount: 0,
+          }),
         });
         break;
       }
@@ -812,7 +1057,7 @@ export async function runAdaptiveResearch({
       );
       const evidenceTrace = summarizeEvidenceTrace(sourceTraces);
 
-      if (isAdaptiveLoopDebug()) {
+      if (isAdaptiveDebugEnabled()) {
         adaptiveLog(
           `source evidence trace:\n${sourceTraces
             .map(
@@ -857,6 +1102,11 @@ export async function runAdaptiveResearch({
         conflictsAfter: conflictsBefore,
         costUsd: roundCost,
         evidenceTrace,
+        ...roundRetrievalDiagnostics(jobTrace, {
+          addedCount: added.length,
+          relevantCount: relevant.length,
+          draftCount: roundDrafts.length,
+        }),
       };
 
       if (added.length === 0) {

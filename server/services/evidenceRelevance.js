@@ -665,14 +665,6 @@ export function evaluateSourcesForFields({
   return { evaluations, byField };
 }
 
-export function countRelevance(evaluations = []) {
-  const counts = { direct: 0, supporting: 0, contextual: 0, none: 0 };
-  for (const ev of evaluations) {
-    if (counts[ev.relevance] != null) counts[ev.relevance] += 1;
-  }
-  return counts;
-}
-
 export function criticalFieldStopQualitySatisfied({
   directSources = [],
   supportingSources = [],

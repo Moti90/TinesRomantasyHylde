@@ -206,6 +206,65 @@ Aric is only an early love interest.`;
     assert.equal(invented, false);
   });
 
+  it("diversity instruction appears once when queryHints are present", async () => {
+    let prompt = "";
+    const client = {
+      responses: {
+        create: async (args) => {
+          const user = (args.input || []).find((m) => m.role === "user");
+          prompt = user?.content || "";
+          return mockSearchResponse({
+            text: JSON.stringify({
+              findings: [
+                {
+                  url: "https://blog.example.com/x",
+                  title: "X",
+                  summary: "He keeps her safe.",
+                  type: "blog",
+                },
+              ],
+            }),
+            urls: ["https://blog.example.com/x"],
+          });
+        },
+      },
+    };
+    await runFocusedSearch(client, {
+      id: "field-r1-1",
+      focus: "plotkarakter",
+      batch: "plotkarakter",
+      userPrompt: "Find reader evidence about the pairing.",
+      queryHints: ['"The Ember Cycle" protective review'],
+      purpose: "field",
+    });
+    const needle = "Use these as ALTERNATIVE search approaches.";
+    assert.equal(prompt.split(needle).length - 1, 1);
+  });
+
+  it("initial-style focused search without queryHints has no diversity instruction", async () => {
+    let prompt = "";
+    const client = {
+      responses: {
+        create: async (args) => {
+          const user = (args.input || []).find((m) => m.role === "user");
+          prompt = user?.content || "";
+          return mockSearchResponse({
+            text: JSON.stringify({ findings: [] }),
+            urls: [],
+          });
+        },
+      },
+    };
+    await runFocusedSearch(client, {
+      id: "helteprofil",
+      focus: "helteprofil",
+      batch: "helteprofil",
+      userPrompt: "Find anmeldelser af den mandlige hovedperson.",
+      purpose: "field",
+    });
+    assert.equal(prompt.includes("Use these as ALTERNATIVE search approaches."), false);
+  });
+
   it("identityHint from structured pairing is enough for series MMC B", () => {
     const inferred = inferSeriesRomanticLeads({
       identityHint: {

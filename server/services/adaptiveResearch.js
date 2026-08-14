@@ -27,6 +27,14 @@ import {
   isStudyGuideUrl,
 } from "./evidenceRelevance.js";
 import {
+  ADAPTIVE_CRITICAL_FIELD_MIN_COVERAGE,
+  ADAPTIVE_FIELD_MIN_COVERAGE,
+  ADAPTIVE_MAX_JOBS_PER_ROUND,
+  ADAPTIVE_TARGET_COVERAGE,
+  ADAPTIVE_VERSION,
+  isAdaptiveDebugEnabled,
+} from "./versions.js";
+import {
   canonicalizeUrl,
   classifySourceType,
   inferSeriesRomanticLeads,
@@ -39,12 +47,9 @@ import {
   subjectIdentityFrom,
 } from "./sourceSubject.js";
 import {
-  ADAPTIVE_CRITICAL_FIELD_MIN_COVERAGE,
-  ADAPTIVE_FIELD_MIN_COVERAGE,
-  ADAPTIVE_MAX_JOBS_PER_ROUND,
-  ADAPTIVE_TARGET_COVERAGE,
-  ADAPTIVE_VERSION,
-} from "./versions.js";
+  buildRetrievalApproaches,
+  flattenRetrievalApproaches,
+} from "./searchRetrieval.js";
 
 const MAX_TINE_WEIGHT = 1.4;
 const NO_DIRECT_EVIDENCE_CAP = 25;
@@ -1235,7 +1240,7 @@ export function assessSeriesIdentityResolution(leads, { identity, research } = {
   const resolve = (resolved, reason) => {
     trace.finalResolved = resolved;
     trace.finalReason = reason;
-    if (isAdaptiveDebug()) {
+    if (isAdaptiveDebugEnabled()) {
       console.log("[adaptive:identity]", JSON.stringify(trace, null, 2));
     }
     return {
@@ -1293,13 +1298,6 @@ export function assessSeriesIdentityResolution(leads, { identity, research } = {
   return resolve(false, "insufficient_series_evidence");
 }
 
-function isAdaptiveDebug() {
-  if (process.env.NODE_ENV === "production") return false;
-  const v = process.env.ADAPTIVE_DEBUG;
-  if (v == null || String(v).trim() === "") return false;
-  return !["0", "false", "no", "off"].includes(String(v).trim().toLowerCase());
-}
-
 export function shouldTriggerIdentitySearch(leads, identity) {
   if (!isSeriesAnalysis(identity)) return false;
   return leads?.resolution?.resolved !== true;
@@ -1314,7 +1312,6 @@ export function buildIdentityResolutionJob({ identity, leadCharacters } = {}) {
   const seriesTitle = series.title || identity?.series || identity?.title || "series";
   const firstBook = series.firstBook || series.workTitle || identity?.title || "";
   const author = series.author || identity?.author || "ukendt forfatter";
-  const fmc = leadCharacters?.fmc || "";
   const mmc = leadCharacters?.mmc || "";
   const candidates = unique([
     mmc,
@@ -1352,21 +1349,14 @@ Afklar:
 
 Antag ikke at den første tilsyneladende love interest i bog 1 forbliver den centrale romantiske lead.${candidateBit}`;
 
-  const quoted = `"${seriesTitle}"`;
-  const queryHints = unique([
-    `${quoted} endgame couple`,
-    `${quoted} eventual partner heroine`,
-    `${quoted} later books romantic pairing`,
-    `${quoted} main couple series spoilers`,
-    preferSeriesOverFirstBook ? `${quoted} series endgame couple` : null,
-    fmc ? `${quoted} "${fmc}" endgame partner` : null,
-    candidates.length >= 2
-      ? `${quoted} ${fmc ? `"${fmc}" ` : ""}${candidates
-          .slice(0, 2)
-          .map((n) => `"${n}"`)
-          .join(" ")} relationship`
-      : null,
-  ]);
+  const retrievalApproaches = buildRetrievalApproaches({
+    identity,
+    series,
+    leadCharacters,
+    strategy: "series_identity_resolution",
+    purpose: "identity",
+  });
+  const queryHints = flattenRetrievalApproaches(retrievalApproaches);
 
   return {
     id: "identity-resolution-r0-1",
@@ -1379,6 +1369,7 @@ Antag ikke at den første tilsyneladende love interest i bog 1 forbliver den cen
     priority: 1000,
     leadCharacters: leadCharacters || {},
     series,
+    retrievalApproaches,
     queryHints,
     userPrompt,
     targetPhenomena: [
@@ -1606,85 +1597,6 @@ ${extra}
 ${avoid}`;
 }
 
-function buildQueryHints({ strategy, series, leadCharacters }) {
-  const title = series.title || "series";
-  const quoted = `"${title}"`;
-  const unresolved = leadsUnresolved(leadCharacters);
-  const mmc = unresolved ? "" : leadCharacters.mmc;
-  const fmc = unresolved ? "" : leadCharacters.fmc;
-  const named = Boolean(mmc && fmc);
-  const altNames = unique([
-    unresolved ? leadCharacters?.mmc : null,
-    ...(leadCharacters?.alternatives || []).map((a) => a.name),
-  ])
-    .filter(Boolean)
-    .slice(0, 2);
-  const genericLead = `${quoted} main romantic lead heroine`;
-  const genericPartner = `${quoted} heroine eventual romantic partner`;
-  const pairProtective = named
-    ? [
-        `${quoted} "${mmc}" "${fmc}" protective`,
-        `${quoted} "${mmc}" "${fmc}" bodyguard`,
-        `${quoted} ${mmc} protective ${fmc}`,
-      ]
-    : [];
-  const pairAgency = named
-    ? [
-        `${quoted} "${mmc}" "${fmc}" autonomy respect`,
-        `${quoted} "${mmc}" "${fmc}" equal partnership`,
-        `${quoted} ${mmc} respects ${fmc} agency`,
-      ]
-    : [];
-  if (strategy === "hero_protective_dynamic") {
-    return unique([
-      unresolved ? genericLead : null,
-      unresolved ? genericPartner : null,
-      ...pairProtective,
-      `${quoted} ${mmc || "MMC"} protective heroine review`,
-      `${quoted} ${mmc || "hero"} goes feral ${fmc || "heroine"}`.trim(),
-      `${quoted} bodyguard protective reddit`,
-      ...altNames.map((n) => `${quoted} ${n} protective review`),
-    ]);
-  }
-  if (strategy === "hero_respect_agency" || strategy === "heroine_growth") {
-    return unique([
-      unresolved ? genericLead : null,
-      unresolved ? genericPartner : null,
-      ...pairAgency,
-      `${quoted} ${mmc || "MMC"} respects ${fmc || "heroine"} agency`,
-      `${quoted} morally grey hero equal partner review`,
-      `${quoted} heroine growth review`,
-      ...altNames.map((n) => `${quoted} ${n} heroine agency review`),
-    ]);
-  }
-  if (strategy === "romance_spice") {
-    return unique([
-      `${quoted} spice level review`,
-      `${quoted} open door romance review`,
-      `${quoted} steamy romantasy reddit`,
-    ]);
-  }
-  if (strategy === "conflict_resolution") {
-    return unique([
-      unresolved ? genericLead : null,
-      unresolved ? genericPartner : null,
-      `${quoted} ${mmc || "MMC"} protective or controlling review`,
-      `${quoted} ${fmc || "FMC"} agency vs possessive hero`,
-      `${quoted} character dynamic disagreement reddit`,
-    ]);
-  }
-  if (strategy === "reader_emotional_response") {
-    return unique([
-      `${quoted} book hangover review`,
-      `${quoted} couldn't put it down`,
-    ]);
-  }
-  return unique([
-    `${quoted} worldbuilding plot review`,
-    `${quoted} epic fantasy romance review`,
-  ]);
-}
-
 export function planFollowUpResearch({
   identity,
   research,
@@ -1746,6 +1658,14 @@ export function planFollowUpResearch({
 
 En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre communities (Reddit, Goodreads-diskussioner, uafhængige blogs) og andre synonymer. Gentag ikke de samme katalog- eller synopsis-kilder.`;
     }
+    const retrievalApproaches = buildRetrievalApproaches({
+      identity,
+      series,
+      leadCharacters,
+      targetFields: group.fields,
+      strategy: group.strategy,
+      purpose: "field",
+    });
     return {
       id: `followup-${group.strategy}-r${round}-${i + 1}`,
       strategy: group.strategy,
@@ -1757,11 +1677,8 @@ En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre c
       reasons: unique(group.gaps.flatMap((g) => g.reasons)),
       leadCharacters,
       series,
-      queryHints: buildQueryHints({
-        strategy: group.strategy,
-        series,
-        leadCharacters,
-      }),
+      retrievalApproaches,
+      queryHints: flattenRetrievalApproaches(retrievalApproaches),
       userPrompt,
       targetPhenomena: unique(group.gaps.flatMap((g) => g.targetPhenomena)),
       previousStrategyUsed: usedBefore,

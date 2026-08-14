@@ -6,10 +6,10 @@ import {
   hasTargetFieldSignal,
   isFieldSpecificEvidence,
 } from "../server/services/evidenceRelevance.js";
-import { selectValuableSources } from "../server/services/webResearch.js";
 import {
   debugSourceEvidenceTrace,
   isFollowUpSourceRelevant,
+  prepareFollowUpSources,
   runAdaptiveResearch,
 } from "../server/services/adaptiveResearchLoop.js";
 
@@ -74,7 +74,7 @@ const stablePairing = [
 ];
 
 describe("B.1.2 evidence flow", () => {
-  it("field-specific fandom source is retained in adaptive follow-up selection", () => {
+  it("field-specific fandom source is retained in adaptive follow-up prepare", () => {
     const field = PROTECTIVE;
     const kept = {
       title: "Character analysis",
@@ -93,16 +93,21 @@ describe("B.1.2 evidence flow", () => {
       summary: "A named character in the series with a court title.",
       targetFields: [field],
     }));
-    const selected = selectValuableSources([kept, ...generic], {
-      adaptiveFollowUp: true,
+    const prepared = prepareFollowUpSources([kept, ...generic], {
       targetFields: [field],
-    });
+      batchHint: "helteprofil",
+      strategy: "hero_protective_dynamic",
+    }, 1);
     assert.ok(
-      selected.some((s) => /wiki\/Hero/i.test(s.url)),
+      prepared.some((s) => /wiki\/Hero/i.test(s.url)),
       "field-specific fandom source should be kept"
     );
     assert.equal(hasTargetFieldSignal(kept, [field]), true);
     assert.equal(hasTargetFieldSignal(generic[0], [field]), false);
+    assert.equal(
+      isFollowUpSourceRelevant({ ...kept, id: "kept" }, [{ targetFields: [field] }]),
+      true
+    );
   });
 
   it("generic fandom bio remains contextual or droppable", () => {

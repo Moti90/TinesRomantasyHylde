@@ -257,6 +257,9 @@ describe("research benchmark harness", () => {
     assert.match(md, /reddit\.com/);
     assert.match(md, /Are these sources actually sufficient/);
     assert.match(md, /hero_protective_dynamic/);
+    assert.match(md, /## RETRIEVAL/);
+    assert.ok(result.retrieval);
+    assert.ok("zeroRetrievalRate" in result.retrieval);
     assert.match(md, /STOP: target_reached/);
     assert.match(md, /ROUND 1/);
     assert.equal(result.identityResolutionTriggered, false);
