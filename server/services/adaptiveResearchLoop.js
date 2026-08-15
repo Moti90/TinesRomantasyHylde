@@ -52,6 +52,7 @@ import {
   formatSourceFlowLog,
   publicSourceFlow,
 } from "./sourceFlow.js";
+import { buildRoundFieldCoverageObservability } from "./fieldCoverageObservability.js";
 import {
   assessRetrievalYield,
   buildFallbackQueryHints,
@@ -79,6 +80,44 @@ export function shouldRunAdaptiveResearch({
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function attachFieldCoverageObservability(roundRecord, {
+  coverageBefore,
+  coverageAfter,
+  researchAfter,
+  researchBefore,
+  identity,
+  assessments,
+} = {}) {
+  const obs = buildRoundFieldCoverageObservability({
+    targetFields: roundRecord.targetFields,
+    coverageBefore,
+    coverageAfter: coverageAfter || coverageBefore,
+    jobs: roundRecord.jobs,
+    researchAfter,
+    researchBefore,
+    identity,
+    assessments,
+  });
+  roundRecord.fieldSnapshotsBefore = obs.fieldSnapshotsBefore;
+  roundRecord.fieldSnapshotsAfter = obs.fieldSnapshotsAfter;
+  roundRecord.fieldCoverageSummary = obs.fieldCoverageSummary;
+  roundRecord.fieldEligibleVsCounted = obs.fieldEligibleVsCounted;
+  return roundRecord;
+}
+
+function formatFieldCoverageSummaryLog(summary) {
+  if (!summary) return "";
+  const lines = [
+    `field coverage: ${summary.weightedCoverageBefore} → ${summary.weightedCoverageAfter} (Δ${summary.weightedDelta})`,
+  ];
+  for (const row of summary.fields || []) {
+    lines.push(
+      `${row.field}: coverage ${row.coverage} direct ${row.direct} supporting ${row.supporting} eligible ${row.eligibleThisRound} counted ${row.actuallyCountedThisRound} saturated=${row.supportingSaturated} stopQuality ${row.stopQuality}`
+    );
+  }
+  return lines.join("\n");
 }
 
 function combineJobRetrievalStatus(statuses = []) {
@@ -994,7 +1033,10 @@ export async function runAdaptiveResearch({
       }
 
       const jobs = intelligence.followUpPlan || [];
-      const coverageBefore = intelligence.coverage.weightedCoverage;
+      const coverageBeforeIntel = intelligence.coverage;
+      const coverageBefore = coverageBeforeIntel.weightedCoverage;
+      const researchBeforeRound = { sources: research.sources || [] };
+      const roundAssessments = assessmentsOf(analysis);
       const criticalBefore = [
         ...(intelligence.coverage.criticalFieldsBelowMinimum || []),
       ];
@@ -1120,7 +1162,7 @@ export async function runAdaptiveResearch({
 
       if (succeeded === 0) {
         stopReason = "error";
-        rounds.push({
+        const failedRound = {
           round,
           targetFields: jobs.flatMap((j) => j.targetFields || j.fields || []),
           jobs: jobTrace,
@@ -1139,7 +1181,16 @@ export async function runAdaptiveResearch({
             relevantCount: 0,
             draftCount: 0,
           }),
+        };
+        attachFieldCoverageObservability(failedRound, {
+          coverageBefore: coverageBeforeIntel,
+          coverageAfter: coverageBeforeIntel,
+          researchAfter: research,
+          researchBefore: researchBeforeRound,
+          identity,
+          assessments: roundAssessments,
         });
+        rounds.push(failedRound);
         break;
       }
 
@@ -1210,6 +1261,14 @@ export async function runAdaptiveResearch({
           draftCount: roundDrafts.length,
         }),
       };
+      attachFieldCoverageObservability(roundRecord, {
+        coverageBefore: coverageBeforeIntel,
+        coverageAfter: coverageBeforeIntel,
+        researchAfter: { sources: merge.sources },
+        researchBefore: researchBeforeRound,
+        identity,
+        assessments: roundAssessments,
+      });
 
       if (added.length === 0) {
         rounds.push(roundRecord);
@@ -1263,6 +1322,14 @@ export async function runAdaptiveResearch({
         analysis = nextAnalysis;
       } catch (err) {
         warnings.push(`analysis failed: ${err.message || err}`);
+        attachFieldCoverageObservability(roundRecord, {
+          coverageBefore: coverageBeforeIntel,
+          coverageAfter: coverageBeforeIntel,
+          researchAfter: research,
+          researchBefore: researchBeforeRound,
+          identity,
+          assessments: roundAssessments,
+        });
         rounds.push(roundRecord);
         stopReason = "error";
         break;
@@ -1297,6 +1364,14 @@ export async function runAdaptiveResearch({
           newDirectOrSupporting: relevant.length,
         };
       }
+      attachFieldCoverageObservability(roundRecord, {
+        coverageBefore: coverageBeforeIntel,
+        coverageAfter: after.coverage,
+        researchAfter: research,
+        researchBefore: researchBeforeRound,
+        identity,
+        assessments: assessmentsOf(analysis),
+      });
       rounds.push(roundRecord);
 
       adaptiveLog(
@@ -1304,6 +1379,8 @@ export async function runAdaptiveResearch({
           criticalResolved.join(", ") || "none"
         }`
       );
+      const fieldLog = formatFieldCoverageSummaryLog(roundRecord.fieldCoverageSummary);
+      if (fieldLog) adaptiveLog(fieldLog);
 
       intelligence = after;
 

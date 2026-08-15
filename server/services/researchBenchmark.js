@@ -33,9 +33,10 @@ import {
   namesReferToSamePerson,
   subjectIdentityFrom,
 } from "./sourceSubject.js";
-import { summarizeSourceFlow } from "./sourceFlow.js";
+import { flowRatio, summarizeSourceFlow } from "./sourceFlow.js";
+import { summarizeFieldFlow } from "./fieldCoverageObservability.js";
 
-export const BENCHMARK_VERSION = "benchmark-v5"; // C.1.3: field-aware coverageEligible + subject-rejection flag uses same population
+export const BENCHMARK_VERSION = "benchmark-v6"; // C.2.1: field coverage observability (eligible vs counted, saturation, role mix). Production coverage unchanged.
 
 export const FAILURE_FLAGS = [
   "NO_EVIDENCE_FOUND",
@@ -358,6 +359,13 @@ export function fieldBenchmark({
     heuristicEvidenceRelevance: heuristic,
     expectedRange: groundField?.expectedRange || null,
     notes: groundField?.notes || null,
+    directEvidenceCount: finalCov?.directEvidenceCount || 0,
+    supportingEvidenceCount: finalCov?.supportingEvidenceCount || 0,
+    stopQualitySatisfied: Boolean(finalCov?.stopQualitySatisfied),
+    supportingSaturated: Boolean(finalCov?.supportingSaturated),
+    needsStrongDirect: Boolean(finalCov?.needsStrongDirect),
+    sourceRoleMix: finalCov?.sourceRoleMix || null,
+    coverageComponents: finalCov?.coverageComponents || null,
   };
 }
 
@@ -418,7 +426,12 @@ export function collectWrongSubjectEvidence({
   });
   const examples = [];
   if (!ctxIdentity.mmc && !ctxIdentity.fmc) {
-    return { wrongSubjectEvidenceCount: 0, examples };
+    return {
+      wrongSubjectEvidenceCount: 0,
+      wrongSubjectInFinalResearchCount: 0,
+      examples,
+      note: "Final research.sources with raw field-specific evidence bound to the wrong character. Not adaptive-job subject rejection.",
+    };
   }
   const context = {
     research,
@@ -454,7 +467,9 @@ export function collectWrongSubjectEvidence({
   }
   return {
     wrongSubjectEvidenceCount: examples.length,
+    wrongSubjectInFinalResearchCount: examples.length,
     examples: examples.slice(0, 12),
+    note: "Final research.sources with raw field-specific evidence bound to the wrong character. Not adaptive-job subject rejection.",
   };
 }
 
@@ -829,7 +844,7 @@ export function detectFailureFlags({
   if ((wrong.wrongSubjectEvidenceCount || 0) > 0) {
     push(
       "WRONG_SUBJECT_EVIDENCE",
-      `${wrong.wrongSubjectEvidenceCount} field-relevant source(s) bound to the wrong character`
+      `${wrong.wrongSubjectEvidenceCount} field-relevant source(s) in final research bound to the wrong character (not adaptive-job subject rejection)`
     );
   }
 
@@ -944,6 +959,26 @@ export function renderReviewMarkdown(result) {
         `- ${f.code}${f.requiresHumanReview ? " (requiresHumanReview)" : ""}: ${f.detail}`
       );
     }
+  }
+  lines.push("");
+  lines.push("## FIELD COVERAGE OBSERVABILITY");
+  const flow = result.fieldFlow || {};
+  lines.push(
+    `targeted fields: ${flow.targetedFieldsCount ?? 0} · eligible: ${flow.eligibleEvidenceCount ?? 0} · actually counted: ${flow.actuallyCountedEvidenceCount ?? 0} · eligible→counted rate: ${flow.eligibleToCountedRate ?? "null"}`
+  );
+  lines.push(
+    `supporting saturated fields: ${flow.saturatedSupportingFieldCount ?? 0} · strong-direct deficit fields: ${flow.strongDirectDeficitFieldCount ?? 0}`
+  );
+  lines.push(
+    `wrong subject in final research: ${result.wrongSubjectInFinalResearch?.count ?? result.wrongSubjectEvidence?.wrongSubjectEvidenceCount ?? 0}`
+  );
+  lines.push(
+    `adaptive job subject rejected: ${result.adaptiveJobSubjectRejected?.count ?? 0}`
+  );
+  for (const row of flow.fields || []) {
+    lines.push(
+      `${row.field}: coverage ${row.coverage} · direct ${row.direct} · supporting ${row.supporting} · saturated=${row.supportingSaturated} · needsStrongDirect=${row.needsStrongDirect} · stopQuality=${row.stopQualitySatisfied}`
+    );
   }
   lines.push("");
   lines.push("## FIELDS");
@@ -1175,6 +1210,26 @@ export function evaluateSeriesBenchmark({
     identityChanged: Boolean(identityMeta.changed),
     identityCostUsd: Number(identityMeta.costUsd) || 0,
     wrongSubjectEvidence,
+    wrongSubjectInFinalResearch: {
+      count:
+        wrongSubjectEvidence.wrongSubjectInFinalResearchCount ??
+        wrongSubjectEvidence.wrongSubjectEvidenceCount ??
+        0,
+      examples: wrongSubjectEvidence.examples || [],
+      note: wrongSubjectEvidence.note,
+    },
+    adaptiveJobSubjectRejected: {
+      count:
+        retrieval.sourceFlow?.adaptiveJobSubjectRejectedCount ??
+        retrieval.sourceFlow?.subjectRejectedCount ??
+        retrieval.sourceFlow?.wrongSubjectRejectedCount ??
+        0,
+      note: "Adaptive job sourceFlow: raw field-relevant sources rejected by subject guard at classify time. Not final-research wrong-subject evidence.",
+    },
+    fieldFlow: summarizeFieldFlow({
+      rounds: adaptiveMeta.rounds || [],
+      coverage: adaptive.intelligence.coverage,
+    }),
     adaptiveEvidenceTrace: {
       identity: identityMeta.trace || null,
       rounds: (adaptiveMeta.rounds || []).map((r) => ({
@@ -1277,5 +1332,32 @@ export function summarizeRun(results = []) {
         })
       ),
     },
+    fieldFlow: (() => {
+      const eligible = results.reduce(
+        (n, r) => n + (Number(r.fieldFlow?.eligibleEvidenceCount) || 0),
+        0
+      );
+      const counted = results.reduce(
+        (n, r) => n + (Number(r.fieldFlow?.actuallyCountedEvidenceCount) || 0),
+        0
+      );
+      return {
+        targetedFieldsCount: results.reduce(
+          (n, r) => n + (Number(r.fieldFlow?.targetedFieldsCount) || 0),
+          0
+        ),
+        eligibleEvidenceCount: eligible,
+        actuallyCountedEvidenceCount: counted,
+        eligibleToCountedRate: flowRatio(counted, eligible),
+        saturatedSupportingFieldCount: results.reduce(
+          (n, r) => n + (Number(r.fieldFlow?.saturatedSupportingFieldCount) || 0),
+          0
+        ),
+        strongDirectDeficitFieldCount: results.reduce(
+          (n, r) => n + (Number(r.fieldFlow?.strongDirectDeficitFieldCount) || 0),
+          0
+        ),
+      };
+    })(),
   };
 }

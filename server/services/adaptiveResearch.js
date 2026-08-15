@@ -643,6 +643,38 @@ function conflictLevelOf(supportCount, conflictCount) {
   return "meaningful";
 }
 
+/** Diagnostic mix of counted (direct+supporting) sources. Does not affect coverage. */
+function sourceRoleMixOf(sources = []) {
+  const mix = {
+    readerExperienceCount: 0,
+    studyGuideCount: 0,
+    encyclopediaCount: 0,
+    blogCount: 0,
+    forumCount: 0,
+    goodreadsCount: 0,
+    professionalCount: 0,
+    otherCount: 0,
+  };
+  for (const source of sources || []) {
+    const role = classifySourceRole(source);
+    if (role === "reader_experience") mix.readerExperienceCount += 1;
+    else if (role === "study_guide") mix.studyGuideCount += 1;
+    else if (role === "encyclopedia") mix.encyclopediaCount += 1;
+
+    const type = sourceTypeOf(source);
+    if (type === "blog") mix.blogCount += 1;
+    else if (type === "forum") mix.forumCount += 1;
+    else if (type === "goodreads") mix.goodreadsCount += 1;
+    else if (type === "professional") mix.professionalCount += 1;
+    else mix.otherCount += 1;
+  }
+  return mix;
+}
+
+function noteCap(capsApplied, name, before, limit) {
+  if (before > limit) capsApplied.push(name);
+}
+
 export function calculateFieldCoverage({
   field,
   assessment,
@@ -770,21 +802,28 @@ export function calculateFieldCoverage({
     score: claim.score,
   });
 
+  const capsApplied = [];
   let coverageScore = raw;
   if (claim.basis === "insufficient") {
+    noteCap(capsApplied, "insufficient", coverageScore, INSUFFICIENT_CAP);
     coverageScore = Math.min(coverageScore, INSUFFICIENT_CAP);
   }
   if (!hasFieldEvidence && claim.basis === "ai_inference") {
+    noteCap(capsApplied, "ai_inference_no_evidence", coverageScore, AI_INFERENCE_NO_EVIDENCE_CAP);
     coverageScore = Math.min(coverageScore, AI_INFERENCE_NO_EVIDENCE_CAP);
   }
   if (!hasFieldEvidence && claim.basis === "synopsis_only") {
+    noteCap(capsApplied, "synopsis_no_evidence", coverageScore, SYNOPSIS_NO_EVIDENCE_CAP);
     coverageScore = Math.min(coverageScore, SYNOPSIS_NO_EVIDENCE_CAP);
   }
   if (!hasFieldEvidence) {
+    noteCap(capsApplied, "no_direct_evidence", coverageScore, NO_DIRECT_EVIDENCE_CAP);
     coverageScore = Math.min(coverageScore, NO_DIRECT_EVIDENCE_CAP);
+    noteCap(capsApplied, "contextual_only", coverageScore, CONTEXTUAL_ONLY_CAP);
     coverageScore = Math.min(coverageScore, CONTEXTUAL_ONLY_CAP);
   }
   if (isCriticalTineField(field) && coverageScore >= 80 && !hasFieldEvidence) {
+    noteCap(capsApplied, "critical_without_field_evidence", coverageScore, CONTEXTUAL_ONLY_CAP);
     coverageScore = Math.min(coverageScore, CONTEXTUAL_ONLY_CAP);
   }
   coverageScore = roundScore(coverageScore);
@@ -803,7 +842,25 @@ export function calculateFieldCoverage({
   const idsOf = (items) =>
     unique(items.map((item) => item.source?.id).filter(Boolean));
 
-  return {
+  const countedSources = [...directSources, ...supportingSources];
+  const coverageComponents = {
+    directEvidencePoints: components.directEvidence,
+    confidenceBasisPoints: components.confidenceBasis,
+    sourceIndependencePoints: components.sourceIndependence,
+    evidenceSpecificityPoints: components.evidenceSpecificity,
+    readerDiversityPoints: components.readerDiversity,
+    capsApplied,
+    totalCoverage: coverageScore,
+  };
+  const supportingSaturated = supportingCount >= 3 && directCount === 0;
+  const supportingMarginalGainPossible = supportingCount < 3;
+  const needsStrongDirect =
+    isCriticalTineField(field) &&
+    claim.score != null &&
+    !stopQualitySatisfied &&
+    directCount === 0;
+
+  const result = {
     field,
     coverageScore,
     score: claim.score,
@@ -815,18 +872,28 @@ export function calculateFieldCoverage({
     conflictCount,
     uniqueUrls: allDiversity.uniqueUrls || diversity.uniqueUrls,
     independentDomains: diversity.uniqueDomains,
+    uniqueDomains: diversity.uniqueDomains,
     sourceTypes: diversity.sourceTypes.length
       ? diversity.sourceTypes
       : allDiversity.sourceTypes,
     phenomenonEvidenceCount: evidence.phenomenonEvidenceCount,
     unresolvedEvidenceIds: evidence.unresolvedIds,
     validatedEvidenceSourceIds: evidence.validatedEvidenceSourceIds,
+    directEvidenceSourceIds: idsOf(evidence.direct),
+    supportingEvidenceSourceIds: idsOf(evidence.supporting),
+    phenomenonMatchedSourceIds: unique(evidence.phenomenonIds),
+    assessmentEvidenceSourceIds: unique(claim.evidenceSourceIds),
     conflictLevel,
     needsResearch,
     stopQualitySatisfied,
     readerReviewEvidence,
     reasons: unique(reasons),
     components,
+    coverageComponents,
+    supportingSaturated,
+    supportingMarginalGainPossible,
+    needsStrongDirect,
+    sourceRoleMix: sourceRoleMixOf(countedSources),
     diversity,
     evidenceDebug: {
       coverage: coverageScore,
@@ -836,10 +903,12 @@ export function calculateFieldCoverage({
       rejected: idsOf(evidence.rejected),
       domains: diversity.uniqueDomains,
       readerReviewEvidence,
-      coverageComponents: components,
+      coverageComponents,
       stopQualitySatisfied,
     },
   };
+  result.gapReasons = gapReasonsFor(field, result, claim);
+  return result;
 }
 
 export function calculateResearchCoverage({
