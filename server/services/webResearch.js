@@ -1820,7 +1820,7 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
   const baseArgs = {
     model: ANALYSIS_MODEL,
     temperature: 0,
-    tools: [{ type: "web_search" }],
+    tools: [{ type: "web_search" }], // C.3.5: no domain filter; queryHints are instructions only
     tool_choice: "required",
     include: ["web_search_call.action.sources"],
     input,

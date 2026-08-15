@@ -53,6 +53,11 @@ import {
   publicSourceFlow,
 } from "./sourceFlow.js";
 import {
+  buildRoundFieldCoverageObservability,
+  observePreparedSourceMix,
+} from "./fieldCoverageObservability.js";
+import { enrichJobsWithSourceMixOutcomes } from "./fieldResearchNeed.js";
+import {
   assessRetrievalYield,
   buildFallbackQueryHints,
   buildFallbackUserPrompt,
@@ -79,6 +84,45 @@ export function shouldRunAdaptiveResearch({
 
 function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function attachFieldCoverageObservability(roundRecord, {
+  coverageBefore,
+  coverageAfter,
+  researchAfter,
+  researchBefore,
+  identity,
+  assessments,
+} = {}) {
+  const obs = buildRoundFieldCoverageObservability({
+    targetFields: roundRecord.targetFields,
+    coverageBefore,
+    coverageAfter: coverageAfter || coverageBefore,
+    jobs: roundRecord.jobs,
+    researchAfter,
+    researchBefore,
+    identity,
+    assessments,
+  });
+  roundRecord.fieldSnapshotsBefore = obs.fieldSnapshotsBefore;
+  roundRecord.fieldSnapshotsAfter = obs.fieldSnapshotsAfter;
+  roundRecord.fieldCoverageSummary = obs.fieldCoverageSummary;
+  roundRecord.fieldEligibleVsCounted = obs.fieldEligibleVsCounted;
+  enrichJobsWithSourceMixOutcomes(roundRecord, { researchAfter });
+  return roundRecord;
+}
+
+function formatFieldCoverageSummaryLog(summary) {
+  if (!summary) return "";
+  const lines = [
+    `field coverage: ${summary.weightedCoverageBefore} → ${summary.weightedCoverageAfter} (Δ${summary.weightedDelta})`,
+  ];
+  for (const row of summary.fields || []) {
+    lines.push(
+      `${row.field}: coverage ${row.coverage} direct ${row.direct} supporting ${row.supporting} eligible ${row.eligibleThisRound} counted ${row.actuallyCountedThisRound} saturated=${row.supportingSaturated} stopQuality ${row.stopQuality}`
+    );
+  }
+  return lines.join("\n");
 }
 
 function combineJobRetrievalStatus(statuses = []) {
@@ -421,6 +465,7 @@ export async function executeFocusedJobWithFallback({
       targetFields: job?.targetFields || job?.fields || [],
       strategy: job?.strategy || "",
       purpose: isIdentity ? "identity" : job?.purpose || "field",
+      retrievalMode: isIdentity ? "general" : job?.retrievalMode || "general",
     });
   const focus = isIdentity ? "series_identity" : job?.batchHint || "helteprofil";
   const batch = focus;
@@ -451,7 +496,9 @@ export async function executeFocusedJobWithFallback({
   const primary = await runOnce({
     id: job?.id,
     userPrompt: job?.userPrompt || "",
-    queryHints: job?.queryHints || flattenRetrievalApproaches(approaches),
+    queryHints:
+      job?.queryHints ||
+      flattenRetrievalApproaches(approaches, job?.retrievalMode || approaches.retrievalMode),
   });
   const primaryPreparedDiag = prepareJobSourcesDiagnostic(
     primary.findings,
@@ -994,7 +1041,10 @@ export async function runAdaptiveResearch({
       }
 
       const jobs = intelligence.followUpPlan || [];
-      const coverageBefore = intelligence.coverage.weightedCoverage;
+      const coverageBeforeIntel = intelligence.coverage;
+      const coverageBefore = coverageBeforeIntel.weightedCoverage;
+      const researchBeforeRound = { sources: research.sources || [] };
+      const roundAssessments = assessmentsOf(analysis);
       const criticalBefore = [
         ...(intelligence.coverage.criticalFieldsBelowMinimum || []),
       ];
@@ -1080,6 +1130,22 @@ export async function runAdaptiveResearch({
               `source flow details:\n${JSON.stringify(sourceFlow.sourceDetails, null, 2)}`
             );
           }
+          const mixObs = observePreparedSourceMix({
+            prepared: result?.sources || [],
+            targetFields: job?.targetFields || job?.fields || [],
+            context: {
+              research,
+              identity,
+              leadCharacters:
+                research.seriesIdentity || job?.leadCharacters,
+              ...subjectIdentityFrom(research, identity || {}, {
+                leadCharacters:
+                  research.seriesIdentity || job?.leadCharacters,
+              }),
+            },
+            requestedRetrievalMode: job.retrievalMode || "general",
+            preferredSourceRoles: job.preferredSourceRoles || [],
+          });
           jobTrace.push({
             id: job.id,
             strategy: job.strategy,
@@ -1099,6 +1165,7 @@ export async function runAdaptiveResearch({
             fallbackSearchCostUsd: result?.fallbackSearchCostUsd ?? 0,
             totalSearchCostUsd: result?.totalSearchCostUsd ?? null,
             sourceFlow: publicSourceFlow(sourceFlow),
+            ...mixObs,
           });
         } catch (err) {
           const message = err?.message || String(err);
@@ -1120,7 +1187,7 @@ export async function runAdaptiveResearch({
 
       if (succeeded === 0) {
         stopReason = "error";
-        rounds.push({
+        const failedRound = {
           round,
           targetFields: jobs.flatMap((j) => j.targetFields || j.fields || []),
           jobs: jobTrace,
@@ -1139,7 +1206,16 @@ export async function runAdaptiveResearch({
             relevantCount: 0,
             draftCount: 0,
           }),
+        };
+        attachFieldCoverageObservability(failedRound, {
+          coverageBefore: coverageBeforeIntel,
+          coverageAfter: coverageBeforeIntel,
+          researchAfter: research,
+          researchBefore: researchBeforeRound,
+          identity,
+          assessments: roundAssessments,
         });
+        rounds.push(failedRound);
         break;
       }
 
@@ -1210,6 +1286,14 @@ export async function runAdaptiveResearch({
           draftCount: roundDrafts.length,
         }),
       };
+      attachFieldCoverageObservability(roundRecord, {
+        coverageBefore: coverageBeforeIntel,
+        coverageAfter: coverageBeforeIntel,
+        researchAfter: research,
+        researchBefore: researchBeforeRound,
+        identity,
+        assessments: roundAssessments,
+      });
 
       if (added.length === 0) {
         rounds.push(roundRecord);
@@ -1223,6 +1307,14 @@ export async function runAdaptiveResearch({
           newDirectOrSupporting: 0,
           TARGET_COVERAGE_GAIN_WITHOUT_NEW_EVIDENCE: false,
         };
+        attachFieldCoverageObservability(roundRecord, {
+          coverageBefore: coverageBeforeIntel,
+          coverageAfter: coverageBeforeIntel,
+          researchAfter: research,
+          researchBefore: researchBeforeRound,
+          identity,
+          assessments: roundAssessments,
+        });
         rounds.push(roundRecord);
         stopReason = "no_new_evidence";
         break;
@@ -1263,6 +1355,14 @@ export async function runAdaptiveResearch({
         analysis = nextAnalysis;
       } catch (err) {
         warnings.push(`analysis failed: ${err.message || err}`);
+        attachFieldCoverageObservability(roundRecord, {
+          coverageBefore: coverageBeforeIntel,
+          coverageAfter: coverageBeforeIntel,
+          researchAfter: research,
+          researchBefore: researchBeforeRound,
+          identity,
+          assessments: roundAssessments,
+        });
         rounds.push(roundRecord);
         stopReason = "error";
         break;
@@ -1286,6 +1386,16 @@ export async function runAdaptiveResearch({
       roundRecord.coverageGain = coverageAfter - coverageBefore;
       roundRecord.criticalFieldsResolved = criticalResolved;
       roundRecord.conflictsAfter = conflictsAfter;
+      attachFieldCoverageObservability(roundRecord, {
+        coverageBefore: coverageBeforeIntel,
+        coverageAfter: after.coverage,
+        researchAfter: research,
+        researchBefore: researchBeforeRound,
+        identity,
+        assessments: assessmentsOf(analysis),
+      });
+      const summaryLog = formatFieldCoverageSummaryLog(roundRecord.fieldCoverageSummary);
+      if (summaryLog) adaptiveLog(summaryLog);
       if (
         relevant.length === 0 &&
         roundRecord.coverageGain >= minGain

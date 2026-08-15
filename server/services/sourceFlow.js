@@ -7,6 +7,10 @@
  * source role is suitable for that field class. This is no longer the
  * global subjectiveSourceQuality >= 0.5 gate. Usable study-guide/fandom
  * behavior evidence can be coverageEligible (as supporting-equivalent).
+ *
+ * coverageEligible means "may potentially count" — not "actually counted"
+ * in collectDirectEvidence (direct/supporting). coverageContributingCount
+ * is a deprecated alias of coverageEligibleCount (C.2.1).
  */
 
 import {
@@ -135,6 +139,7 @@ export function emptySourceFlow() {
     fieldRelevantCount: 0,
     subjectValidCount: 0,
     coverageEligibleCount: 0,
+    /** @deprecated alias of coverageEligibleCount — not actually-counted. */
     coverageContributingCount: 0,
     qualityStrongCount: 0,
     qualityUsableCount: 0,
@@ -462,6 +467,7 @@ export function buildJobSourceFlow({
     fieldRelevant: [],
     subjectValid: [],
     coverageEligible: [],
+    coverageEligibleByField: Object.fromEntries(fields.map((f) => [f, []])),
   };
   for (const source of preparedDrafts) {
     const key = draftIdentityKey(source);
@@ -472,6 +478,15 @@ export function buildJobSourceFlow({
       keySets.newUnique.push(key);
     }
     applyClassifiedSource(flow, classified, key, keySets);
+    if (key) {
+      for (const row of classified.fieldRows || []) {
+        if (!row.coverageEligible) continue;
+        if (!keySets.coverageEligibleByField[row.field]) {
+          keySets.coverageEligibleByField[row.field] = [];
+        }
+        keySets.coverageEligibleByField[row.field].push(key);
+      }
+    }
     for (const field of SOURCE_FLOW_CRITICAL_FIELDS) {
       const row = classified.criticalFieldFlow[field];
       if (!row) continue;
@@ -562,13 +577,14 @@ export function aggregateRoundSourceFlow(jobFlows = []) {
     fieldRelevant: 0,
     subjectValid: 0,
     coverageEligible: 0,
-    coverageContributing: 0,
+    coverageContributing: 0, // deprecated alias of coverageEligible
     qualityStrong: 0,
     qualityUsable: 0,
     qualityWeak: 0,
     qualityIneligible: 0,
     cappedFieldRelevantCount: 0,
     wrongSubjectRejectedCount: 0,
+    adaptiveJobSubjectRejectedCount: 0,
     lowCoverageQualityCount: 0,
     focusRejected: 0,
     unique: true,
@@ -638,6 +654,7 @@ export function aggregateRoundSourceFlow(jobFlows = []) {
       coverageContributing: keys.coverageEligible.size,
       cappedFieldRelevantCount,
       wrongSubjectRejectedCount: subjectRejectedCount(fieldRelevant, subjectValid),
+      adaptiveJobSubjectRejectedCount: subjectRejectedCount(fieldRelevant, subjectValid),
       lowCoverageQualityCount,
       focusRejected,
       unique: true,
@@ -675,6 +692,7 @@ export function aggregateRoundSourceFlow(jobFlows = []) {
     coverageContributing: coverageEligible,
     cappedFieldRelevantCount,
     wrongSubjectRejectedCount: subjectRejectedCount(fieldRelevant, subjectValid),
+    adaptiveJobSubjectRejectedCount: subjectRejectedCount(fieldRelevant, subjectValid),
     lowCoverageQualityCount,
     focusRejected,
     unique: false,
@@ -693,6 +711,9 @@ export function attachFlowKeySets(flow, { rawUrls, returnedFindings, prepared, e
     fieldRelevant: [],
     subjectValid: [],
     coverageEligible: [],
+    coverageEligibleByField: Object.fromEntries(
+      unique(targetFields).map((f) => [f, []])
+    ),
   };
   for (const source of preparedDrafts) {
     const key = draftIdentityKey(source);
@@ -703,6 +724,13 @@ export function attachFlowKeySets(flow, { rawUrls, returnedFindings, prepared, e
     if (classified.fieldRelevant) keySets.fieldRelevant.push(key);
     if (classified.subjectValid) keySets.subjectValid.push(key);
     if (classified.coverageEligible) keySets.coverageEligible.push(key);
+    for (const row of classified.fieldRows || []) {
+      if (!row.coverageEligible) continue;
+      if (!keySets.coverageEligibleByField[row.field]) {
+        keySets.coverageEligibleByField[row.field] = [];
+      }
+      keySets.coverageEligibleByField[row.field].push(key);
+    }
   }
   flow.keySets = keySets;
   return flow;
@@ -738,6 +766,7 @@ export function summarizeSourceFlow(flows = []) {
     coverageEligibleCount: coverageEligible,
     coverageContributingCount: coverageEligible,
     subjectRejectedCount: subjectRejected,
+    adaptiveJobSubjectRejectedCount: subjectRejected,
     qualityStrongCount: list.reduce(
       (n, f) => n + (Number(f.qualityStrongCount) || 0),
       0

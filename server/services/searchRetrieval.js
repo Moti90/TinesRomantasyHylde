@@ -1,9 +1,17 @@
 /**
  * Bid 3 Fase C.1 — diversified retrieval approaches + low-yield fallback.
+ * C.3 — source-mix retrieval *modes* (preference / instruction weighting).
+ *
  * Deterministic. No API calls. Does not change evidence/coverage scoring.
+ *
+ * C.3.5: queryHints and mode instructions are retrieval preferences for
+ * OpenAI web_search. They are not controlled Bing/Google/site: queries.
+ * The current Responses integration uses `{ type: "web_search" }` with no
+ * domain filter. We do not claim "we search Reddit directly".
  */
 
 import { sourceDedupeKey } from "./webResearch.js";
+import { RETRIEVAL_MODES } from "./retrievalModes.js";
 
 const GENERIC_MMC = "the series' central male romantic lead";
 const GENERIC_FMC = "the heroine";
@@ -98,6 +106,7 @@ export function buildRetrievalApproaches({
   targetFields = [],
   strategy = "",
   purpose = "field",
+  retrievalMode = RETRIEVAL_MODES.GENERAL,
 } = {}) {
   const title = series.title || identity.series || identity.title || "series";
   const q = quote(title);
@@ -219,6 +228,28 @@ export function buildRetrievalApproaches({
     }
   }
 
+  const mode = identityJob
+    ? RETRIEVAL_MODES.GENERAL
+    : retrievalMode || RETRIEVAL_MODES.GENERAL;
+
+  if (!identityJob && mode === RETRIEVAL_MODES.READER_DIRECT) {
+    readerLanguage.push(`${q} readers describe ${mmc}`);
+    readerLanguage.push(`${q} review says ${mmc} ${fmc}`);
+    discussionLanguage.push(`${q} reddit discussion ${mmc} ${fmc}`);
+    discussionLanguage.push(`${q} goodreads review ${mmc} ${fmc}`);
+    discussionLanguage.push(`${q} independent review ${mmc} protective`);
+  }
+  if (!identityJob && mode === RETRIEVAL_MODES.SCENE_DIRECT) {
+    sceneLanguage.push(`${q} chapter discussion ${mmc} reaction`);
+    sceneLanguage.push(`${q} what happens when ${fmc} is in danger`);
+    sceneLanguage.push(`${q} scene when ${fmc} is threatened or hurt`);
+    readerLanguage.push(`${q} review recounts ${mmc} reaction`);
+  }
+  if (!identityJob && mode === RETRIEVAL_MODES.DIVERSITY) {
+    discussionLanguage.push(`${q} independent review not wiki`);
+    readerLanguage.push(`${q} blog review ${mmc} ${fmc}`);
+  }
+
   const capBucket = (arr, n = 3) => unique(arr).slice(0, n);
   return {
     readerLanguage: capBucket(readerLanguage, 3),
@@ -229,10 +260,44 @@ export function buildRetrievalApproaches({
     named: leads.named,
     mmc: leads.mmc,
     fmc: leads.fmc,
+    retrievalMode: mode,
   };
 }
 
-export function flattenRetrievalApproaches(approaches = {}) {
+export function flattenRetrievalApproaches(approaches = {}, modeOrOpts = "general") {
+  const mode =
+    typeof modeOrOpts === "string"
+      ? modeOrOpts
+      : modeOrOpts?.mode || approaches.retrievalMode || RETRIEVAL_MODES.GENERAL;
+
+  if (mode === RETRIEVAL_MODES.READER_DIRECT) {
+    return unique([
+      ...(approaches.discussionLanguage || []).slice(0, 3),
+      ...(approaches.readerLanguage || []).slice(0, 3),
+      ...(approaches.sceneLanguage || []).slice(0, 2),
+      ...(approaches.relationshipLanguage || []).slice(0, 1),
+      ...(approaches.tropeLanguage || []).slice(0, 1),
+    ]).slice(0, 10);
+  }
+  if (mode === RETRIEVAL_MODES.SCENE_DIRECT) {
+    return unique([
+      ...(approaches.sceneLanguage || []).slice(0, 3),
+      ...(approaches.readerLanguage || []).slice(0, 2),
+      ...(approaches.discussionLanguage || []).slice(0, 2),
+      ...(approaches.relationshipLanguage || []).slice(0, 1),
+      ...(approaches.tropeLanguage || []).slice(0, 1),
+    ]).slice(0, 10);
+  }
+  if (mode === RETRIEVAL_MODES.DIVERSITY) {
+    return unique([
+      ...(approaches.discussionLanguage || []).slice(0, 3),
+      ...(approaches.readerLanguage || []).slice(0, 2),
+      ...(approaches.relationshipLanguage || []).slice(0, 2),
+      ...(approaches.sceneLanguage || []).slice(0, 1),
+      ...(approaches.tropeLanguage || []).slice(0, 1),
+    ]).slice(0, 10);
+  }
+
   return unique([
     ...(approaches.readerLanguage || []).slice(0, 3),
     ...(approaches.sceneLanguage || []).slice(0, 2),
