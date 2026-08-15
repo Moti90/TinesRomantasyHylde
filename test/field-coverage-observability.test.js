@@ -451,7 +451,7 @@ describe("C.2.1 field coverage observability", () => {
     assert.equal(q.eligible, true);
     assert.equal(q.qualityTier, "usable");
     assert.equal(q.coverageBucket, "supporting");
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v9");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
   });
 
   it("13. B.1.3 subject guard unchanged", () => {
@@ -484,8 +484,8 @@ describe("C.2.1 field coverage observability", () => {
       plan.map((p) => p.id),
       ["helteprofil", "romanceprofil", "plotkarakter", "helhed"]
     );
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v9");
-    assert.equal(BENCHMARK_VERSION, "benchmark-v6");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
+    assert.equal(BENCHMARK_VERSION, "benchmark-v7");
   });
 
   it("coverageComponents reuse the production points (no parallel formula)", () => {

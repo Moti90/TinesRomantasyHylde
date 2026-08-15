@@ -52,7 +52,11 @@ import {
   formatSourceFlowLog,
   publicSourceFlow,
 } from "./sourceFlow.js";
-import { buildRoundFieldCoverageObservability } from "./fieldCoverageObservability.js";
+import {
+  buildRoundFieldCoverageObservability,
+  observePreparedSourceMix,
+} from "./fieldCoverageObservability.js";
+import { enrichJobsWithSourceMixOutcomes } from "./fieldResearchNeed.js";
 import {
   assessRetrievalYield,
   buildFallbackQueryHints,
@@ -104,6 +108,7 @@ function attachFieldCoverageObservability(roundRecord, {
   roundRecord.fieldSnapshotsAfter = obs.fieldSnapshotsAfter;
   roundRecord.fieldCoverageSummary = obs.fieldCoverageSummary;
   roundRecord.fieldEligibleVsCounted = obs.fieldEligibleVsCounted;
+  enrichJobsWithSourceMixOutcomes(roundRecord, { researchAfter });
   return roundRecord;
 }
 
@@ -460,6 +465,7 @@ export async function executeFocusedJobWithFallback({
       targetFields: job?.targetFields || job?.fields || [],
       strategy: job?.strategy || "",
       purpose: isIdentity ? "identity" : job?.purpose || "field",
+      retrievalMode: isIdentity ? "general" : job?.retrievalMode || "general",
     });
   const focus = isIdentity ? "series_identity" : job?.batchHint || "helteprofil";
   const batch = focus;
@@ -490,7 +496,9 @@ export async function executeFocusedJobWithFallback({
   const primary = await runOnce({
     id: job?.id,
     userPrompt: job?.userPrompt || "",
-    queryHints: job?.queryHints || flattenRetrievalApproaches(approaches),
+    queryHints:
+      job?.queryHints ||
+      flattenRetrievalApproaches(approaches, job?.retrievalMode || approaches.retrievalMode),
   });
   const primaryPreparedDiag = prepareJobSourcesDiagnostic(
     primary.findings,
@@ -1122,6 +1130,22 @@ export async function runAdaptiveResearch({
               `source flow details:\n${JSON.stringify(sourceFlow.sourceDetails, null, 2)}`
             );
           }
+          const mixObs = observePreparedSourceMix({
+            prepared: result?.sources || [],
+            targetFields: job?.targetFields || job?.fields || [],
+            context: {
+              research,
+              identity,
+              leadCharacters:
+                research.seriesIdentity || job?.leadCharacters,
+              ...subjectIdentityFrom(research, identity || {}, {
+                leadCharacters:
+                  research.seriesIdentity || job?.leadCharacters,
+              }),
+            },
+            requestedRetrievalMode: job.retrievalMode || "general",
+            preferredSourceRoles: job.preferredSourceRoles || [],
+          });
           jobTrace.push({
             id: job.id,
             strategy: job.strategy,
@@ -1141,6 +1165,7 @@ export async function runAdaptiveResearch({
             fallbackSearchCostUsd: result?.fallbackSearchCostUsd ?? 0,
             totalSearchCostUsd: result?.totalSearchCostUsd ?? null,
             sourceFlow: publicSourceFlow(sourceFlow),
+            ...mixObs,
           });
         } catch (err) {
           const message = err?.message || String(err);

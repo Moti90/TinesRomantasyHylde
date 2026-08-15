@@ -23,7 +23,8 @@ import {
   FIELD_MATCH_AMBIGUOUS_SUBJECT,
   FIELD_MATCH_WRONG_SUBJECT,
 } from "./sourceSubject.js";
-import { flowRatio } from "./sourceFlow.js";
+import { classifyDraftEvidence, flowRatio } from "./sourceFlow.js";
+import { countSourceRoleMix } from "./fieldResearchNeed.js";
 
 export const NOT_COUNTED_REASONS = {
   DEDUPED_AFTER_JOB: "deduped_after_job",
@@ -475,5 +476,31 @@ export function summarizeFieldFlow({
     saturatedSupportingFieldCount,
     strongDirectDeficitFieldCount,
     fields: fieldReview,
+  };
+}
+
+export function observePreparedSourceMix({
+  prepared = [],
+  targetFields = [],
+  context = {},
+  requestedRetrievalMode = "general",
+  preferredSourceRoles = [],
+} = {}) {
+  const fieldRelevant = [];
+  const eligible = [];
+  for (const source of prepared || []) {
+    const classified = classifyDraftEvidence(source, {
+      targetFields,
+      context,
+    });
+    if (classified.fieldRelevant) fieldRelevant.push(source);
+    if (classified.coverageEligible) eligible.push(source);
+  }
+  return {
+    requestedRetrievalMode: requestedRetrievalMode || "general",
+    preferredSourceRoles: [...(preferredSourceRoles || [])],
+    returnedRoleMix: countSourceRoleMix(prepared),
+    fieldRelevantRoleMix: countSourceRoleMix(fieldRelevant),
+    coverageEligibleRoleMix: countSourceRoleMix(eligible),
   };
 }

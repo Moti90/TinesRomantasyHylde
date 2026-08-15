@@ -10,8 +10,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  * adaptive-v7: subject-aware field evidence + normalized identity confirmation.
  * adaptive-v8: diversified retrieval approaches + one low-yield web_search fallback per focused job.
  * adaptive-v9: field-aware source quality (role × field class) for coverage eligibility.
+ * adaptive-v10: source-mix-aware planner/retrieval (reader/scene/diversity modes).
  */
-export const ADAPTIVE_VERSION = "adaptive-v9";
+export const ADAPTIVE_VERSION = "adaptive-v10";
 
 /** One targeted series-identity search before field follow-ups. */
 export const ADAPTIVE_MAX_IDENTITY_SEARCHES = Number(

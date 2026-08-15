@@ -36,7 +36,7 @@ import {
 import { flowRatio, summarizeSourceFlow } from "./sourceFlow.js";
 import { summarizeFieldFlow } from "./fieldCoverageObservability.js";
 
-export const BENCHMARK_VERSION = "benchmark-v6"; // C.2.1: field coverage observability (eligible vs counted, saturation, role mix). Production coverage unchanged.
+export const BENCHMARK_VERSION = "benchmark-v7"; // C.3: retrievalMode + source-mix outcomes on jobs. Coverage formula unchanged.
 
 export const FAILURE_FLAGS = [
   "NO_EVIDENCE_FOUND",
@@ -1230,6 +1230,19 @@ export function evaluateSeriesBenchmark({
       rounds: adaptiveMeta.rounds || [],
       coverage: adaptive.intelligence.coverage,
     }),
+    sourceMix: {
+      jobs: (adaptiveMeta.rounds || []).flatMap((r) =>
+        (r.jobs || []).map((j) => ({
+          id: j.id,
+          requestedRetrievalMode: j.requestedRetrievalMode || j.retrievalMode || null,
+          preferredSourceRoles: j.preferredSourceRoles || [],
+          sourceMixOutcome: j.sourceMixOutcome || null,
+          strongDirectRecovered: Boolean(j.strongDirectRecovered),
+          readerEvidenceRecovered: Boolean(j.readerEvidenceRecovered),
+          newStrongDirectCount: j.newStrongDirectCount ?? null,
+        }))
+      ),
+    },
     adaptiveEvidenceTrace: {
       identity: identityMeta.trace || null,
       rounds: (adaptiveMeta.rounds || []).map((r) => ({

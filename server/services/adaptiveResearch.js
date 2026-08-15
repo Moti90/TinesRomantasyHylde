@@ -51,6 +51,12 @@ import {
   buildRetrievalApproaches,
   flattenRetrievalApproaches,
 } from "./searchRetrieval.js";
+import {
+  classifyFieldResearchNeed,
+  fieldStillNeedsFollowUp,
+  retrievalModeInstruction,
+  selectGroupRetrievalMode,
+} from "./fieldResearchNeed.js";
 
 const MAX_TINE_WEIGHT = 1.4;
 const NO_DIRECT_EVIDENCE_CAP = 25;
@@ -1722,7 +1728,12 @@ export function planFollowUpResearch({
 
   const leadCharacters = softLeadCharacters(research, identity);
   const series = seriesContext(identity);
-  const groups = groupGaps(resolvedGaps).sort(
+  const actionableGaps = resolvedGaps.filter((gap) =>
+    fieldStillNeedsFollowUp(gap, resolvedCoverage.fields?.[gap.field])
+  );
+  if (!actionableGaps.length) return [];
+
+  const groups = groupGaps(actionableGaps).sort(
     (a, b) => b.priority - a.priority
   );
   const limit = Math.max(0, Number(maxJobs) || 0);
@@ -1735,6 +1746,13 @@ export function planFollowUpResearch({
 
   return groups.slice(0, limit).map((group, i) => {
     const usedBefore = priorStrategies.has(group.strategy);
+    const fieldNeeds = group.fields.map((field) =>
+      classifyFieldResearchNeed(resolvedCoverage.fields?.[field] || { field })
+    );
+    const retrievalMode = selectGroupRetrievalMode(fieldNeeds);
+    const preferredSourceRoles = unique(
+      fieldNeeds.flatMap((n) => n.preferredSourceRoles || [])
+    );
     let userPrompt = buildUserPrompt({
       strategy: group.strategy,
       group,
@@ -1747,6 +1765,8 @@ export function planFollowUpResearch({
 
 En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre communities (Reddit, Goodreads-diskussioner, uafhængige blogs) og andre synonymer. Gentag ikke de samme katalog- eller synopsis-kilder.`;
     }
+    const modeNote = retrievalModeInstruction(retrievalMode);
+    if (modeNote) userPrompt += `\n\n${modeNote}`;
     const retrievalApproaches = buildRetrievalApproaches({
       identity,
       series,
@@ -1754,6 +1774,7 @@ En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre c
       targetFields: group.fields,
       strategy: group.strategy,
       purpose: "field",
+      retrievalMode,
     });
     return {
       id: `followup-${group.strategy}-r${round}-${i + 1}`,
@@ -1767,10 +1788,13 @@ En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre c
       leadCharacters,
       series,
       retrievalApproaches,
-      queryHints: flattenRetrievalApproaches(retrievalApproaches),
+      queryHints: flattenRetrievalApproaches(retrievalApproaches, retrievalMode),
       userPrompt,
       targetPhenomena: unique(group.gaps.flatMap((g) => g.targetPhenomena)),
       previousStrategyUsed: usedBefore,
+      retrievalMode,
+      preferredSourceRoles,
+      fieldNeeds,
     };
   });
 }
