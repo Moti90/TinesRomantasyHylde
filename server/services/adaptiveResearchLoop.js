@@ -15,6 +15,7 @@ import {
   sourceIdentityKey,
   subjectiveSourceQuality,
 } from "./adaptiveResearch.js";
+import { attachSeriesRomanceIdentity } from "./seriesRomanceIdentity.js";
 import {
   classifySourceRole,
   evaluateSourceForField,
@@ -706,6 +707,9 @@ export async function rebuildResearchFromSources({
   if (previousResearch?.seriesIdentity) {
     research.seriesIdentity = previousResearch.seriesIdentity;
   }
+  if (previousResearch?.seriesRomanceIdentity) {
+    research.seriesRomanceIdentity = previousResearch.seriesRomanceIdentity;
+  }
   return { research, inputTokens, outputTokens, costUsd };
 }
 
@@ -983,6 +987,7 @@ export async function runAdaptiveResearch({
     identityResolution.before.mmc !== identityResolution.after.mmc ||
     identityResolution.before.fmc !== identityResolution.after.fmc;
   research.seriesIdentity = identityAfterLeads;
+  attachSeriesRomanceIdentity(research, identityAfterLeads);
 
   if (identityResolution.triggered) {
     adaptiveLog(
