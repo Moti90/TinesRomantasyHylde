@@ -1428,21 +1428,29 @@ export function buildIdentityResolutionJob({ identity, leadCharacters } = {}) {
 
   const userPrompt = `Jeg undersøger serien "${seriesTitle}" af ${author}.${firstBit}
 
-Find den centrale / endgame romantiske pairing på tværs af HELE serien (FULL SERIES, LATER BOOKS, ENDGAME / EVENTUAL PAIRING) — ikke blot den første love interest i bog 1.
+Undersøg FØRST seriens romantiske STRUKTUR. Antag ikke ét centralt/endgame-par for hele serien.
 
 Do not answer based only on book 1.
 Search for evidence from later books or series-level guides/discussions.
 Spoilers are allowed.
 
-Prioritér kilder om bog 2, bog 3, senere bind, series wiki/relationship-sider, series guides og læserdiskussioner med spoilers. Undgå kun at søge på første bogs titel.
+Find evidens for én af disse strukturer:
+- samme primære romantiske par gennem det relevante serie-/arc-scope
+- skiftende hovedpar pr. bog eller arc (ét legitimt primary par pr. scope)
+- flere legitime pairings der overlapper eller kører parallelt
+- utilstrækkelig, uklar eller modstridende evidens
 
 Afklar:
-- heltinden / FMC
-- den primære eller eventual/endgame mandlige romantiske lead
-- om en tidligere love interest erstattes af en anden central partner i senere bøger
-- evidens for pairingen på tværs af senere bind
+- hvilke romantiske par der er legitime
+- hvilket book- eller arc-scope hvert par tilhører
+- om en tidligere love interest er en konkurrent i SAMME arc (alternative_love_interest) eller et andet legitimt hovedpar i et andet scope (another_primary_pairing)
+- om en romance er secondary i scopet
 
-Antag ikke at den første tilsyneladende love interest i bog 1 forbliver den centrale romantiske lead.${candidateBit}`;
+Prioritér kilder om senere bind, series wiki/relationship-sider, series guides og læserdiskussioner med spoilers. Undgå kun at søge på første bogs titel.
+
+Ét fundet par er ikke nok til at konkludere single_couple — der skal være series-level evidens for at det samme par er primært gennem det relevante scope.
+Flere par er ikke automatisk rotating_couples — rotating kræver forskellige, ikke-konkurrerende book/arc-scopes.
+Opdig ikke interne kilde-id'er.${candidateBit}`;
 
   const retrievalApproaches = buildRetrievalApproaches({
     identity,
@@ -1468,9 +1476,11 @@ Antag ikke at den første tilsyneladende love interest i bog 1 forbliver den cen
     queryHints,
     userPrompt,
     targetPhenomena: [
+      "romantic structure",
       "central romantic pairing",
       "endgame partner",
       "eventual partner",
+      "each book couple",
     ],
   };
 }

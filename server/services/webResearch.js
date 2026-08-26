@@ -18,6 +18,10 @@ import {
   diversityInstruction,
   extractWebSearchQueries,
 } from "./searchRetrieval.js";
+import {
+  pairingHintFromRomance,
+  romanceIdentityFromStructuredOutput,
+} from "./seriesRomanceDiscovery.js";
 
 const DEBUG_LOG = dataPath("debug-research.log");
 
@@ -200,10 +204,95 @@ export const FOCUSED_FIELD_SEARCH_SCHEMA = {
   required: ["findings"],
 };
 
+const IDENTITY_ALT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    name: { type: "string" },
+    role: { type: "string" },
+  },
+  required: ["name", "role"],
+};
+
+const IDENTITY_BOOK_SCOPE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    bookNumber: { type: "number" },
+    title: { type: "string" },
+  },
+  required: ["bookNumber", "title"],
+};
+
+const IDENTITY_ARC_SCOPE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    label: { type: "string" },
+  },
+  required: ["id", "label"],
+};
+
+const IDENTITY_MEMBER_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    name: { type: "string" },
+    role: { type: "string", enum: ["romantic_lead"] },
+    slot: { type: "string", enum: ["mmc", "fmc", ""] },
+  },
+  required: ["name", "role", "slot"],
+};
+
+const IDENTITY_PAIRING_ITEM_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    id: { type: "string" },
+    members: { type: "array", items: IDENTITY_MEMBER_SCHEMA },
+    bookScopes: { type: "array", items: IDENTITY_BOOK_SCOPE_SCHEMA },
+    arcScopes: { type: "array", items: IDENTITY_ARC_SCOPE_SCHEMA },
+    prominence: { type: "string", enum: ["primary", "secondary"] },
+    relation: {
+      type: "string",
+      enum: ["another_primary_pairing", "secondary_pairing", ""],
+    },
+    confidence: { type: "string", enum: ["high", "medium", "low"] },
+    basis: { type: "array", items: { type: "string" } },
+    alternatives: { type: "array", items: IDENTITY_ALT_SCHEMA },
+    evidenceUrls: { type: "array", items: { type: "string" } },
+    evidenceFindingIndexes: { type: "array", items: { type: "integer" } },
+  },
+  required: [
+    "id",
+    "members",
+    "bookScopes",
+    "arcScopes",
+    "prominence",
+    "relation",
+    "confidence",
+    "basis",
+    "alternatives",
+    "evidenceUrls",
+    "evidenceFindingIndexes",
+  ],
+};
+
 export const IDENTITY_RESOLUTION_SEARCH_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
+    topology: {
+      type: "string",
+      enum: [
+        "single_couple",
+        "rotating_couples",
+        "ensemble_mixed",
+        "unknown",
+      ],
+    },
+    pairings: { type: "array", items: IDENTITY_PAIRING_ITEM_SCHEMA },
     pairing: {
       type: "object",
       additionalProperties: false,
@@ -214,22 +303,14 @@ export const IDENTITY_RESOLUTION_SEARCH_SCHEMA = {
         basis: { type: "array", items: { type: "string" } },
         alternatives: {
           type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              name: { type: "string" },
-              role: { type: "string" },
-            },
-            required: ["name", "role"],
-          },
+          items: IDENTITY_ALT_SCHEMA,
         },
       },
       required: ["fmc", "mmc", "confidence", "basis", "alternatives"],
     },
     findings: { type: "array", items: FINDING_ITEM_SCHEMA },
   },
-  required: ["pairing", "findings"],
+  required: ["topology", "pairings", "pairing", "findings"],
 };
 
 function focusedSearchSchema(purpose) {
@@ -240,7 +321,7 @@ function focusedSearchSchema(purpose) {
 
 function focusedSearchSchemaName(purpose) {
   return purpose === "identity"
-    ? "identity_resolution_search"
+    ? "identity_resolution_search_v2"
     : "focused_field_search";
 }
 
@@ -318,7 +399,7 @@ export function formatIdentityHintText(pairing) {
 export function tryParseFocusedSearchText(text, { purpose = "field" } = {}) {
   const trimmed = String(text || "").trim();
   if (!trimmed) {
-    return { ok: false, findings: [], pairing: null, source: null };
+    return { ok: false, findings: [], pairing: null, romanceIdentity: null, source: null };
   }
   let parsed = null;
   let source = null;
@@ -330,16 +411,23 @@ export function tryParseFocusedSearchText(text, { purpose = "field" } = {}) {
     source = parsed ? "json_fallback" : null;
   }
   if (!parsed || typeof parsed !== "object") {
-    return { ok: false, findings: [], pairing: null, source: null };
+    return { ok: false, findings: [], pairing: null, romanceIdentity: null, source: null };
   }
   const findings = Array.isArray(parsed.findings)
     ? parsed.findings.map(normalizeFinding).filter(Boolean)
     : [];
-  const pairing =
+  const romanceIdentity =
+    purpose === "identity" ? romanceIdentityFromStructuredOutput(parsed) : null;
+  let pairing =
     purpose === "identity" ? normalizeStructuredPairing(parsed) : null;
+  if (purpose === "identity" && !pairing && romanceIdentity?.pairings?.length) {
+    pairing = pairingHintFromRomance(romanceIdentity);
+  }
   const ok =
-    Array.isArray(parsed.findings) || Boolean(pairing?.mmc || pairing?.fmc);
-  return { ok, findings, pairing, source, parsed };
+    Array.isArray(parsed.findings) ||
+    Boolean(pairing?.mmc || pairing?.fmc) ||
+    Boolean(romanceIdentity?.pairings?.length);
+  return { ok, findings, pairing, romanceIdentity, source, parsed };
 }
 
 export function buildFocusedSearchRepairPrompt({
@@ -351,6 +439,8 @@ export function buildFocusedSearchRepairPrompt({
   const example =
     purpose === "identity"
       ? `{
+  "topology": "unknown",
+  "pairings": [],
   "pairing": {
     "fmc": "",
     "mmc": "",
@@ -418,6 +508,7 @@ export async function resolveFocusedSearchOutput({
     return {
       findings: first.findings,
       pairing: first.pairing,
+      romanceIdentity: first.romanceIdentity || null,
       parseStatus: first.source || "structured",
       retryUsed: false,
       retryInputTokens: 0,
@@ -432,6 +523,7 @@ export async function resolveFocusedSearchOutput({
       return {
         findings: [],
         pairing: null,
+        romanceIdentity: null,
         parseStatus: rawUrls.length ? "raw_only" : "failed",
         retryUsed: true,
         retryInputTokens: 0,
@@ -445,6 +537,7 @@ export async function resolveFocusedSearchOutput({
       return {
         findings: second.findings,
         pairing: second.pairing,
+        romanceIdentity: second.romanceIdentity || null,
         parseStatus: "repaired",
         retryUsed: true,
         retryInputTokens: Number(repaired?.inputTokens) || 0,
@@ -454,6 +547,7 @@ export async function resolveFocusedSearchOutput({
     return {
       findings: [],
       pairing: null,
+      romanceIdentity: null,
       parseStatus: rawUrls.length ? "raw_only" : "failed",
       retryUsed: true,
       retryInputTokens: Number(repaired?.inputTokens) || 0,
@@ -463,6 +557,7 @@ export async function resolveFocusedSearchOutput({
   return {
     findings: [],
     pairing: null,
+    romanceIdentity: null,
     parseStatus: rawUrls.length ? "raw_only" : "failed",
     retryUsed: false,
     retryInputTokens: 0,
@@ -1774,6 +1869,22 @@ export async function runFocusedSearch(client, {
     identityPurpose
       ? `Returnér KUN JSON med dette schema:
 {
+  "topology": "single_couple|rotating_couples|ensemble_mixed|unknown",
+  "pairings": [
+    {
+      "id": "",
+      "members": [{ "name": "", "role": "romantic_lead", "slot": "fmc|mmc|" }],
+      "bookScopes": [{ "bookNumber": 0, "title": "" }],
+      "arcScopes": [{ "id": "", "label": "" }],
+      "prominence": "primary|secondary",
+      "relation": "another_primary_pairing|secondary_pairing|",
+      "confidence": "high|medium|low",
+      "basis": ["later-series central pairing"],
+      "alternatives": [{ "name": "", "role": "early_love_interest" }],
+      "evidenceUrls": ["https://..."],
+      "evidenceFindingIndexes": [0]
+    }
+  ],
   "pairing": {
     "fmc": "",
     "mmc": "",
@@ -1782,9 +1893,12 @@ export async function runFocusedSearch(client, {
     "alternatives": [{ "name": "", "role": "early_love_interest" }]
   },
   "findings": [
-    { "title": "...", "url": "https://...", "type": "professional|blog|forum|goodreads", "summary": "1-3 sætninger om pairingen. Brug senere bøger/spoilers." }
+    { "title": "...", "url": "https://...", "type": "professional|blog|forum|goodreads", "summary": "1-3 sætninger om pairingen og dens book/arc-scope. Brug senere bøger/spoilers." }
   ]
-}`
+}
+topology er et forslag — bind hvert pairing til book/arc scope. Opdig ikke interne source-id'er; henvis til findings via evidenceUrls eller evidenceFindingIndexes.
+alternative_love_interest hører i pairing.alternatives (samme arc). another_primary_pairing er et andet legitimt hovedpar i et andet book/arc-scope. secondary_pairing er legitim men ikke primary.
+pairing er bagudkompatibelt singular snapshot — det er IKKE en vinder for hele serien når topology er rotating_couples eller ensemble_mixed.`
       : `Returnér KUN JSON:
 {
   "findings": [
@@ -1808,7 +1922,7 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
     {
       role: "system",
       content: identityPurpose
-        ? "Du udfører én fokuseret websøgning for at identificere seriens centrale/endgame romantiske pairing. Returnér KUN JSON der matcher schemaet. Brug kun URL'er fra web_search-resultater — opdig ikke links. Spoilers er tilladt og nødvendige. Wiki/fandom, study guides, series/character guides, forfatter-/forlagssider, senere boganmeldelser og læserdiskussioner er relevante. Skip Amazon-butikssider og branchenyheder om rettighedssalg. Antag ikke at bog 1's første love interest er series-level lead."
+        ? "Du udfører én fokuseret websøgning for at identificere seriens romantiske STRUKTUR — ikke kun ét endgame-par. Returnér KUN JSON der matcher schemaet. Brug kun URL'er fra web_search-resultater — opdig ikke links. Spoilers er tilladt og nødvendige. Wiki/fandom, study guides, series/character guides, forfatter-/forlagssider, senere boganmeldelser og læserdiskussioner er relevante. Skip Amazon-butikssider og branchenyheder om rettighedssalg. Antag ikke at bog 1's første love interest er series-level lead. Skeln mellem samme par gennem serien, skiftende hovedpar pr. bog/arc, flere legitime parallelle pairings, og utilstrækkelig evidens. En tidligere kærlighedsinteresse i samme arc er alternative_love_interest, ikke et andet primary pairing."
         : "Du udfører én fokuseret websøgning til romantasy-vurdering. Returnér KUN JSON der matcher schemaet. Brug kun URL'er fra web_search-resultater — opdig ikke links. Skip Amazon, forhandler, branchenyheder, forlags-PR, fandom-lore og rene Goodreads-udgavesider uden anmeldelsetekst. Prioritér anmeldelser der beskriver læseoplevelse og tropes.",
     },
     {
@@ -1994,6 +2108,7 @@ Max 10 findings. Opdig ikke URL'er. Tom findings-liste OK hvis intet relevant. I
     cappedDrafts,
     mergedDraftsBeforeCap: mergedBeforeCap,
     pairing: resolved.pairing || null,
+    romanceIdentity: resolved.romanceIdentity || null,
     parseStatus: resolved.parseStatus,
     retryUsed: Boolean(resolved.retryUsed),
     webSearchCalls: countWebSearchCalls(response),

@@ -17,6 +17,12 @@ import {
 } from "./adaptiveResearch.js";
 import { attachSeriesRomanceIdentity } from "./seriesRomanceIdentity.js";
 import {
+  attachDiscoveredRomanceIdentity,
+  mapRomanceEvidence,
+  romanceIdentityFromStructuredOutput,
+  validateRomanceTopology,
+} from "./seriesRomanceDiscovery.js";
+import {
   classifySourceRole,
   evaluateSourceForField,
   hasTargetFieldSignal,
@@ -34,6 +40,7 @@ import {
   ADAPTIVE_TARGET_COVERAGE,
   ADAPTIVE_VERSION,
   ANALYSIS_MODEL,
+  IDENTITY_RESOLUTION_VERSION,
   RESEARCH_MODEL,
   estimateCostUsd,
   isAdaptiveDebugEnabled,
@@ -614,6 +621,7 @@ export async function executeFocusedJobWithFallback({
   return {
     sources: prepared,
     pairing: combined.pairing || null,
+    romanceIdentity: combined.romanceIdentity || null,
     parseStatus: combined.parseStatus || null,
     retryUsed: Boolean(combined.retryUsed),
     rawUrls: combined.rawUrls || [],
@@ -864,10 +872,13 @@ export async function runAdaptiveResearch({
     parseStatus: null,
     retryUsed: false,
     rawUrlCount: 0,
+    version: IDENTITY_RESOLUTION_VERSION,
     before: identitySnapshot(identityBeforeLeads),
     after: identitySnapshot(identityBeforeLeads),
     changed: false,
   };
+
+  let discoveredRomance = null;
 
   adaptiveLog(
     `Series identity:\nMMC: ${identityResolution.before.mmc || "—"}\nFMC: ${identityResolution.before.fmc || "—"}\nconfidence: ${identityResolution.before.confidence}\nresolved: ${identityResolution.before.resolved}\nreason: ${identityResolution.before.reason || "n/a"}`
@@ -936,6 +947,26 @@ export async function runAdaptiveResearch({
         sources: merge.sources,
         identityHint: result?.pairing || research.identityHint || null,
       };
+      const discoveryDraft =
+        result?.romanceIdentity ||
+        romanceIdentityFromStructuredOutput({
+          pairing: result?.pairing,
+          pairings: result?.pairings,
+          topology: result?.topology,
+        });
+      if (
+        result?.romanceIdentity ||
+        result?.pairing ||
+        (Array.isArray(result?.pairings) && result.pairings.length)
+      ) {
+        discoveredRomance = mapRomanceEvidence(
+          validateRomanceTopology(discoveryDraft),
+          {
+            findings: result?.findings || [],
+            sources: merge.sources,
+          }
+        );
+      }
       identityResolution.triggered = true;
       identityResolution.searchCalls = calls;
       identityResolution.sourcesAdded = (merge.added || []).length;
@@ -987,7 +1018,21 @@ export async function runAdaptiveResearch({
     identityResolution.before.mmc !== identityResolution.after.mmc ||
     identityResolution.before.fmc !== identityResolution.after.fmc;
   research.seriesIdentity = identityAfterLeads;
-  attachSeriesRomanceIdentity(research, identityAfterLeads);
+  if (discoveredRomance) {
+    attachDiscoveredRomanceIdentity(research, discoveredRomance);
+  } else {
+    attachSeriesRomanceIdentity(research, identityAfterLeads);
+  }
+  const romanceObs = research.seriesRomanceIdentity?.observability || {};
+  identityResolution.detectedTopology =
+    romanceObs.detectedTopology ?? research.seriesRomanceIdentity?.topology ?? null;
+  identityResolution.pairingCount = romanceObs.pairingCount ?? null;
+  identityResolution.primaryPairingCount =
+    romanceObs.primaryPairingCount ?? null;
+  identityResolution.identityResolutionReason =
+    romanceObs.identityResolutionReason ?? null;
+  identityResolution.legacyIdentityRepresentativeOfSeries =
+    romanceObs.legacyIdentityRepresentativeOfSeries ?? "unknown";
 
   if (identityResolution.triggered) {
     adaptiveLog(

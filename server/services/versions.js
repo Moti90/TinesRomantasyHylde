@@ -14,6 +14,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  */
 export const ADAPTIVE_VERSION = "adaptive-v10";
 
+/** Identity-search schema/prompt (Series Romance Structure 2). Not in research cache hash. */
+export const IDENTITY_RESOLUTION_VERSION = "identity-v2";
+
 /** One targeted series-identity search before field follow-ups. */
 export const ADAPTIVE_MAX_IDENTITY_SEARCHES = Number(
   process.env.ADAPTIVE_MAX_IDENTITY_SEARCHES || 1

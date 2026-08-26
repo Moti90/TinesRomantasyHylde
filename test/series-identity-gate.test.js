@@ -107,7 +107,7 @@ describe("series identity resolution gate", () => {
         executeFollowUpJob: async ({ job }) => {
           if (job.strategy === "series_identity_resolution") {
             identityCalls += 1;
-            assert.match(job.userPrompt, /centrale \/ endgame romantiske pairing/i);
+            assert.match(job.userPrompt, /romantiske STRUKTUR/i);
             assert.match(job.userPrompt, /Spoilers are allowed/i);
             assert.match(job.userPrompt, /Do not answer based only on book 1/i);
             assert.ok(job.queryHints.some((h) => /endgame couple/i.test(h)));

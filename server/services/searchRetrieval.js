@@ -128,6 +128,8 @@ export function buildRetrievalApproaches({
   }
 
   if (identityJob) {
+    readerLanguage.push(`${q} romantic structure series`);
+    readerLanguage.push(`${q} each book romantic couple`);
     readerLanguage.push(`${q} later books romantic pairing`);
     readerLanguage.push(`${q} endgame couple review`);
     sceneLanguage.push(`${q} later books who does the heroine end up with`);
@@ -336,11 +338,17 @@ export function buildFallbackUserPrompt({
   if (identityJob) {
     return `I am researching the series "${title}"${authorBit}.
 
-Find spoiler-friendly evidence about the central / endgame romantic pairing across the FULL SERIES — later books, not only the first love interest in book 1.
+First determine the series' romantic STRUCTURE — do not assume a single endgame couple.
+
+Find spoiler-friendly evidence across later books, not only the first love interest in book 1:
+- the same primary couple across the series
+- different primary couples per book or arc
+- multiple legitimate overlapping pairings
+- or insufficient evidence
 
 ${channels}
 
-Prioritise sources that name the heroine and her eventual partner, or that discuss how the pairing changes after book 1.`;
+Prioritise sources that name romantic pairings and which book or arc each pairing belongs to.`;
   }
 
   if (
@@ -620,6 +628,11 @@ export function mergeRetrievalAttempts(primary = {}, fallback = {}) {
     rawUrls,
     rawUrlCount: rawUrls.length,
     pairing: preferPairing(primary.pairing, fallback.pairing),
+    romanceIdentity:
+      (fallback.romanceIdentity?.pairings || []).length >
+      (primary.romanceIdentity?.pairings || []).length
+        ? fallback.romanceIdentity
+        : primary.romanceIdentity || fallback.romanceIdentity || null,
     parseStatus: fallback.parseStatus || primary.parseStatus || null,
     retryUsed: Boolean(primary.retryUsed || fallback.retryUsed),
     webSearchCalls:

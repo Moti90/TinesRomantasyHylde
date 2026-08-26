@@ -1,10 +1,9 @@
 /**
- * Additive series-level romance identity (Series Romance Structure 1).
+ * Additive series-level romance identity (Series Romance Structure 1–2).
  *
- * Does not replace research.seriesIdentity. Does not infer rotating/ensemble
- * topology from live research — that stays a later bid. This module only
- * represents structure and projects a valid single_couple onto the legacy
- * MMC/FMC object.
+ * Does not replace research.seriesIdentity. Discovery/validation of topology
+ * lives in seriesRomanceDiscovery.js. This module is the data model,
+ * normalization, legacy projection, and rebuild preservation.
  *
  * alternative_love_interest lives on a pairing's `alternatives`.
  * another_primary_pairing / secondary_pairing are pairing relations, not
@@ -63,7 +62,7 @@ function normalizeBookScope(raw) {
     raw.bookNumber == null || raw.bookNumber === ""
       ? null
       : Number(raw.bookNumber);
-  const bookNumber = Number.isFinite(parsed) ? parsed : null;
+  const bookNumber = Number.isFinite(parsed) && parsed !== 0 ? parsed : null;
   const title = asString(raw.title);
   if (bookNumber == null && !title) return null;
   return {
@@ -154,6 +153,17 @@ export function normalizeRomancePairing(raw, index = 0) {
   const evidenceSourceIds = unique(
     Array.isArray(raw.evidenceSourceIds) ? raw.evidenceSourceIds : []
   );
+  const evidenceUrls = unique(
+    Array.isArray(raw.evidenceUrls) ? raw.evidenceUrls.map(asString) : []
+  );
+  const evidenceFindingIndexes = unique(
+    (Array.isArray(raw.evidenceFindingIndexes)
+      ? raw.evidenceFindingIndexes
+      : []
+    )
+      .map((n) => Number(n))
+      .filter((n) => Number.isInteger(n) && n >= 0)
+  );
   const basis = Array.isArray(raw.basis)
     ? raw.basis.map((b) => asString(b)).filter(Boolean)
     : [];
@@ -169,6 +179,8 @@ export function normalizeRomancePairing(raw, index = 0) {
     confidence: asConfidence(raw.confidence),
     basis,
     evidenceSourceIds,
+    evidenceUrls,
+    evidenceFindingIndexes,
     alternatives,
   };
 }
@@ -212,11 +224,11 @@ export function normalizeSeriesRomanceIdentity(raw = {}) {
   };
 }
 
-function primaryPairings(romance) {
+export function primaryPairings(romance) {
   return (romance?.pairings || []).filter((p) => p.prominence === "primary");
 }
 
-function memberBySlot(pairing, slot) {
+export function memberBySlot(pairing, slot) {
   return (pairing?.members || []).find((m) => m.slot === slot) || null;
 }
 
@@ -321,14 +333,71 @@ export function isSecondaryPairing(pairing) {
   );
 }
 
+export function romanceObservability(romance = {}) {
+  const topology = romance.topology || "unknown";
+  const pairings = romance.pairings || [];
+  const primaries = primaryPairings(romance);
+  const resolved = romance.resolution?.resolved === true;
+  let legacyIdentityRepresentativeOfSeries = "unknown";
+  if (topology === "single_couple" && resolved) {
+    legacyIdentityRepresentativeOfSeries = true;
+  } else if (
+    topology === "rotating_couples" ||
+    topology === "ensemble_mixed"
+  ) {
+    legacyIdentityRepresentativeOfSeries = false;
+  }
+  return {
+    detectedTopology: topology,
+    pairingCount: pairings.length,
+    primaryPairingCount: primaries.length,
+    identityResolutionReason:
+      romance.resolution?.reason || "unspecified",
+    legacyIdentityRepresentativeOfSeries,
+  };
+}
+
+export function withRomanceObservability(romance) {
+  const normalized = normalizeSeriesRomanceIdentity(romance);
+  return {
+    ...normalized,
+    observability: romanceObservability(normalized),
+  };
+}
+
+/**
+ * Richer discovery results must survive rebuild/reanalyse instead of being
+ * replaced by a legacy-derived single_couple snapshot.
+ */
+export function isPreservableRomanceIdentity(romance) {
+  if (!romance || typeof romance !== "object") return false;
+  const r = normalizeSeriesRomanceIdentity(romance);
+  if (r.topology === "rotating_couples" || r.topology === "ensemble_mixed") {
+    return true;
+  }
+  if (r.pairings.length > 1) return true;
+  return r.pairings.some(
+    (p) => p.bookScopes.length > 0 || p.arcScopes.length > 0
+  );
+}
+
 /**
  * Attach additive romance identity next to legacy seriesIdentity.
- * Does not mutate seriesIdentity.
+ * Does not mutate seriesIdentity. Does not overwrite a richer existing
+ * seriesRomanceIdentity with a legacy-derived snapshot.
  */
 export function attachSeriesRomanceIdentity(research, seriesIdentity) {
   if (!research || typeof research !== "object") return research;
-  research.seriesRomanceIdentity = seriesRomanceIdentityFromLegacy(
-    seriesIdentity || research.seriesIdentity || {}
+  if (isPreservableRomanceIdentity(research.seriesRomanceIdentity)) {
+    research.seriesRomanceIdentity = withRomanceObservability(
+      research.seriesRomanceIdentity
+    );
+    return research;
+  }
+  research.seriesRomanceIdentity = withRomanceObservability(
+    seriesRomanceIdentityFromLegacy(
+      seriesIdentity || research.seriesIdentity || {}
+    )
   );
   return research;
 }
