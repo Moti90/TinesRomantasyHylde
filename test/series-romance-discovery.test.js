@@ -5,6 +5,7 @@ import {
   attachSeriesRomanceIdentity,
   isAnotherPrimaryPairing,
   isAlternativeLoveInterest,
+  isPreservableRomanceIdentity,
   legacySeriesIdentityFromRomance,
   normalizeSeriesRomanceIdentity,
   seriesRomanceIdentityFromLegacy,
@@ -13,10 +14,12 @@ import {
   attachDiscoveredRomanceIdentity,
   classifyRomanceTopology,
   mapRomanceEvidence,
+  pickDiscoveryReason,
   romanceIdentityFromStructuredOutput,
+  stampTopologyDiscovery,
   validateRomanceTopology,
 } from "../server/services/seriesRomanceDiscovery.js";
-import { tryParseFocusedSearchText } from "../server/services/webResearch.js";
+import { canonicalizeUrl, tryParseFocusedSearchText } from "../server/services/webResearch.js";
 
 const WREN = "Wren";
 const KAEL = "Kael";
@@ -407,7 +410,7 @@ describe("series romance discovery", () => {
     assert.equal(isAnotherPrimaryPairing(triangleAlt.pairings[0].alternatives[0]), false);
   });
 
-  it("evidenceUrls/finding-indeks mappes til eksisterende source ids og opfinder ingen", () => {
+  it("evidenceUrls/finding-indeks mappes til namespacede refs og opfinder ingen ids", () => {
     const draft = validateRomanceTopology({
       pairings: [
         primaryPairing({
@@ -422,6 +425,7 @@ describe("series romance discovery", () => {
     });
     draft.pairings[0].evidenceUrls = ["https://guides.example.com/glass/romance"];
     draft.pairings[0].evidenceFindingIndexes = [0];
+    draft.pairings[0].evidenceSourceIds = ["pairing-1"];
     const mapped = mapRomanceEvidence(draft, {
       findings: [
         { url: "https://guides.example.com/glass/romance", title: "Guide" },
@@ -433,12 +437,24 @@ describe("series romance discovery", () => {
         },
       ],
     });
-    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, ["source-glass-1"]);
+    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, []);
+    assert.deepEqual(mapped.pairings[0].evidenceRefs, [
+      { namespace: "research_sources", id: "source-glass-1" },
+      {
+        namespace: "discovery_findings",
+        index: 0,
+        url: "https://guides.example.com/glass/romance",
+      },
+    ]);
     const empty = mapRomanceEvidence(draft, {
       findings: [{ url: "https://other.example.com/x" }],
       sources: [{ id: "source-other", url: "https://other.example.com/x" }],
     });
     assert.equal(empty.pairings[0].evidenceSourceIds.includes("pairing-1"), false);
+    assert.equal(
+      empty.pairings[0].evidenceRefs.some((r) => r.id === "pairing-1"),
+      false
+    );
   });
 
   it("claimed topology nedgraderes når evidensen ikke matcher", () => {
@@ -537,6 +553,12 @@ describe("series romance discovery", () => {
     });
     assert.equal(mapped.topology, "unknown");
     assert.equal(mapped.resolution.resolved, false);
+    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, []);
+    assert.equal(
+      mapped.pairings[0].evidenceRefs.some((r) => r.id === "source-invented-1"),
+      false
+    );
+    assert.equal(mapped.pairings.length, 1);
   });
 
   it("ét arcScope alene resolver ikke single_couple", () => {
@@ -553,5 +575,181 @@ describe("series romance discovery", () => {
     assert.equal(romance.topology, "unknown");
     assert.equal(romance.resolution.resolved, false);
     assert.equal(romance.pairings[0].arcScopes[0].id, "series");
+  });
+
+  it("modelopfundet evidenceSourceId overlever ikke uden deterministisk mapping", () => {
+    const romance = validateRomanceTopology({
+      pairings: [
+        primaryPairing({
+          members: [member(WREN, "fmc"), member(KAEL, "mmc")],
+          bookScopes: [{ bookNumber: 1, title: "Glass One" }],
+        }),
+      ],
+    });
+    romance.pairings[0].evidenceSourceIds = ["source-invented-1"];
+    romance.pairings[0].evidenceUrls = [];
+    const mapped = mapRomanceEvidence(romance, {
+      findings: [],
+      sources: [{ id: "source-real", url: "https://guides.example.com/glass/real" }],
+    });
+    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, []);
+    assert.deepEqual(mapped.pairings[0].evidenceRefs, []);
+    assert.equal(mapped.pairings[0].members[0].name, WREN);
+  });
+
+  it("matching URL mod research.sources bliver research_sources-namespace, ikke bart ID", () => {
+    const romance = validateRomanceTopology({
+      pairings: [
+        primaryPairing({
+          members: [member(WREN, "fmc"), member(KAEL, "mmc")],
+        }),
+      ],
+    });
+    romance.pairings[0].evidenceUrls = ["https://guides.example.com/glass/match"];
+    const mapped = mapRomanceEvidence(romance, {
+      findings: [],
+      sources: [
+        { id: "source-4", url: "https://guides.example.com/glass/match" },
+      ],
+    });
+    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, []);
+    assert.deepEqual(mapped.pairings[0].evidenceRefs, [
+      { namespace: "research_sources", id: "source-4" },
+    ]);
+  });
+
+  it("canonicaliserede URL-varianter producerer samme evidence-reference", () => {
+    const romance = validateRomanceTopology({
+      pairings: [
+        primaryPairing({
+          members: [member(WREN, "fmc"), member(KAEL, "mmc")],
+        }),
+      ],
+    });
+    romance.pairings[0].evidenceUrls = [
+      "https://www.goodreads.com/book/show/12345-glass?utm_source=share",
+    ];
+    romance.pairings[0].evidenceFindingIndexes = [0];
+    const mapped = mapRomanceEvidence(romance, {
+      findings: [
+        { url: "https://goodreads.com/book/show/12345", title: "GR" },
+        { url: "https://www.goodreads.com/book/show/12345-glass", title: "dup" },
+      ],
+      sources: [],
+    });
+    const canon = canonicalizeUrl(
+      "https://www.goodreads.com/book/show/12345-glass?utm_source=share"
+    );
+    assert.equal(mapped.discoveryEvidence.findings.length, 1);
+    assert.deepEqual(mapped.pairings[0].evidenceFindingIndexes, [0]);
+    assert.deepEqual(mapped.pairings[0].evidenceRefs, [
+      { namespace: "discovery_findings", index: 0, url: canon },
+    ]);
+    assert.deepEqual(mapped.pairings[0].evidenceUrls, [canon]);
+  });
+
+  it("deduplikerede findings mapper index til det endeligt gemte array", () => {
+    const romance = validateRomanceTopology({
+      pairings: [
+        primaryPairing({
+          members: [member(WREN, "fmc"), member(KAEL, "mmc")],
+        }),
+      ],
+    });
+    romance.pairings[0].evidenceFindingIndexes = [1];
+    const mapped = mapRomanceEvidence(romance, {
+      findings: [
+        { url: "https://guides.example.com/glass/one", title: "One" },
+        { url: "https://guides.example.com/glass/two", title: "Two" },
+        { url: "https://guides.example.com/glass/one", title: "One dup" },
+      ],
+    });
+    assert.equal(mapped.discoveryEvidence.findings.length, 2);
+    assert.deepEqual(mapped.pairings[0].evidenceFindingIndexes, [1]);
+    assert.equal(
+      mapped.pairings[0].evidenceRefs[0].index,
+      1
+    );
+    assert.equal(
+      mapped.discoveryEvidence.findings[1].url,
+      "https://guides.example.com/glass/two"
+    );
+  });
+
+  it("ugyldig evidence-reference droppes uden at droppe pairingen", () => {
+    const romance = validateRomanceTopology({
+      pairings: [
+        primaryPairing({
+          members: [member(WREN, "fmc"), member(KAEL, "mmc")],
+          bookScopes: [{ bookNumber: 1, title: "Glass One" }],
+        }),
+      ],
+    });
+    romance.pairings[0].evidenceSourceIds = ["no-such-source"];
+    romance.pairings[0].evidenceFindingIndexes = [99];
+    romance.pairings[0].evidenceUrls = [
+      "https://guides.example.com/glass/kept",
+    ];
+    const mapped = mapRomanceEvidence(romance, {
+      findings: [{ url: "https://guides.example.com/glass/kept", title: "Kept" }],
+      sources: [],
+    });
+    assert.equal(mapped.pairings.length, 1);
+    assert.equal(mapped.pairings[0].members[0].name, WREN);
+    assert.deepEqual(mapped.pairings[0].evidenceSourceIds, []);
+    assert.equal(
+      mapped.pairings[0].evidenceRefs.some((r) => r.id === "no-such-source"),
+      false
+    );
+    assert.equal(mapped.pairings[0].evidenceRefs[0].namespace, "discovery_findings");
+    assert.deepEqual(mapped.pairings[0].evidenceFindingIndexes, [0]);
+  });
+
+  it("execution-failure reason vinder over generisk validator reason", () => {
+    assert.equal(
+      pickDiscoveryReason("unspecified", "topology_discovery_failed"),
+      "topology_discovery_failed"
+    );
+    const stamped = stampTopologyDiscovery(
+      {
+        topology: "unknown",
+        pairings: [],
+        resolution: { resolved: false, reason: "unspecified" },
+        discovery: {
+          source: "topology_discovery",
+          attempted: true,
+          resolved: false,
+          reason: "topology_discovery_failed",
+          version: "identity-v2",
+          attemptedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+      { reason: "unspecified" }
+    );
+    assert.equal(stamped.discovery.reason, "topology_discovery_failed");
+    assert.equal(stamped.discovery.attempted, true);
+    assert.equal(stamped.discovery.resolved, false);
+    assert.equal(stamped.discovery.source, "topology_discovery");
+  });
+
+  it("attempted topology-discovery unknown uden scopes bevares mod legacy projection", () => {
+    const attempted = stampTopologyDiscovery(
+      { topology: "unknown", pairings: [] },
+      { resolved: false, reason: "insufficient_topology_evidence" }
+    );
+    assert.equal(isPreservableRomanceIdentity(attempted), true);
+    const research = {
+      seriesIdentity: {
+        mmc: KAEL,
+        fmc: WREN,
+        resolution: { resolved: true },
+      },
+      seriesRomanceIdentity: attempted,
+    };
+    attachSeriesRomanceIdentity(research, research.seriesIdentity);
+    assert.equal(research.seriesRomanceIdentity.discovery.source, "topology_discovery");
+    assert.equal(research.seriesRomanceIdentity.discovery.attempted, true);
+    assert.equal(research.seriesRomanceIdentity.topology, "unknown");
+    assert.equal(research.seriesRomanceIdentity.pairings.length, 0);
   });
 });

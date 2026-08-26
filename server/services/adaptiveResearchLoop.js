@@ -10,16 +10,18 @@ import {
   buildIdentityResolutionJob,
   identitySnapshot,
   mergeAdaptiveSources,
-  shouldTriggerIdentitySearch,
+  needsLegacyIdentityResolution,
   softLeadCharacters,
   sourceIdentityKey,
   subjectiveSourceQuality,
 } from "./adaptiveResearch.js";
-import { attachSeriesRomanceIdentity } from "./seriesRomanceIdentity.js";
+import { attachSeriesRomanceIdentity, IDENTITY_JOB_MODES } from "./seriesRomanceIdentity.js";
 import {
   attachDiscoveredRomanceIdentity,
   mapRomanceEvidence,
   romanceIdentityFromStructuredOutput,
+  romanceTopologyDiscoveryDecision,
+  stampTopologyDiscovery,
   validateRomanceTopology,
 } from "./seriesRomanceDiscovery.js";
 import {
@@ -854,6 +856,8 @@ export async function runAdaptiveResearch({
   const minGain = options.minCoverageGain ?? ADAPTIVE_MIN_COVERAGE_GAIN;
   const maxIdentitySearches =
     options.maxIdentitySearches ?? ADAPTIVE_MAX_IDENTITY_SEARCHES;
+  const adaptiveMode = options.mode || "analyze";
+  const allowTopologyRetry = adaptiveMode === "refresh";
 
   const warnings = [];
   let additionalCost = 0;
@@ -879,6 +883,33 @@ export async function runAdaptiveResearch({
   };
 
   let discoveredRomance = null;
+  const frozenSeriesIdentity = cloneJson(identityBeforeLeads);
+  const frozenIdentityHint = research.identityHint ?? null;
+  const topologyDecision = romanceTopologyDiscoveryDecision({
+    identity,
+    seriesRomanceIdentity: research.seriesRomanceIdentity,
+    identityVersion: IDENTITY_RESOLUTION_VERSION,
+    allowRetry: allowTopologyRetry,
+  });
+  const needsLegacy = needsLegacyIdentityResolution(
+    identityBeforeLeads,
+    identity
+  );
+  const needsTopology = topologyDecision.trigger === true;
+  const identityJobMode = needsLegacy
+    ? IDENTITY_JOB_MODES.LEGACY_AND_TOPOLOGY
+    : needsTopology
+      ? IDENTITY_JOB_MODES.TOPOLOGY_ONLY
+      : null;
+  const shouldRunIdentityJob = Boolean(identityJobMode);
+  identityResolution.identityJobMode = identityJobMode;
+  identityResolution.topologyDiscoveryTriggered = needsTopology;
+  identityResolution.topologyDiscoveryTriggerReason = topologyDecision.reason;
+  identityResolution.topologyDiscoveryPreviouslyAttempted =
+    research.seriesRomanceIdentity?.discovery?.attempted === true &&
+    research.seriesRomanceIdentity?.discovery?.source === "topology_discovery";
+  identityResolution.topologyDiscoveryVersion =
+    research.seriesRomanceIdentity?.discovery?.version || null;
 
   adaptiveLog(
     `Series identity:\nMMC: ${identityResolution.before.mmc || "—"}\nFMC: ${identityResolution.before.fmc || "—"}\nconfidence: ${identityResolution.before.confidence}\nresolved: ${identityResolution.before.resolved}\nreason: ${identityResolution.before.reason || "n/a"}`
@@ -886,12 +917,12 @@ export async function runAdaptiveResearch({
 
   const canAffordIdentity =
     additionalSearch < maxSearch && additionalCost < maxCost;
-  if (
-    shouldTriggerIdentitySearch(identityBeforeLeads, identity) &&
-    maxIdentitySearches > 0 &&
-    canAffordIdentity
-  ) {
-    adaptiveLog("Identity resolution search...");
+  if (shouldRunIdentityJob && maxIdentitySearches > 0 && canAffordIdentity) {
+    adaptiveLog(
+      identityJobMode === IDENTITY_JOB_MODES.TOPOLOGY_ONLY
+        ? "Identity topology discovery (topology_only)..."
+        : "Identity resolution search..."
+    );
     const job = buildIdentityResolutionJob({
       identity,
       leadCharacters: identityBeforeLeads,
@@ -928,9 +959,6 @@ export async function runAdaptiveResearch({
         strategy: "series_identity_resolution",
       }));
       if (!drafts.length && (result?.rawUrls || []).length) {
-        // Defensive: mocked executeFollowUpJob and focusAllowsSource-empty
-        // findings can still carry raw URLs. runFocusedSearch already merges
-        // raw URLs into findings, so this is a no-op on the normal path.
         drafts = prepareIdentitySources(
           (result.rawUrls || []).map((u) => asRawFinding(u, "series_identity")),
           job
@@ -941,12 +969,18 @@ export async function runAdaptiveResearch({
           strategy: "series_identity_resolution",
         }));
       }
-      const merge = mergeAdaptiveSources(research.sources || [], drafts);
-      research = {
-        ...research,
-        sources: merge.sources,
-        identityHint: result?.pairing || research.identityHint || null,
-      };
+      const topologyOnly =
+        identityJobMode === IDENTITY_JOB_MODES.TOPOLOGY_ONLY;
+      const merge = topologyOnly
+        ? { sources: research.sources || [], added: [] }
+        : mergeAdaptiveSources(research.sources || [], drafts);
+      if (!topologyOnly) {
+        research = {
+          ...research,
+          sources: merge.sources,
+          identityHint: result?.pairing || research.identityHint || null,
+        };
+      }
       const discoveryDraft =
         result?.romanceIdentity ||
         romanceIdentityFromStructuredOutput({
@@ -954,19 +988,18 @@ export async function runAdaptiveResearch({
           pairings: result?.pairings,
           topology: result?.topology,
         });
-      if (
-        result?.romanceIdentity ||
-        result?.pairing ||
-        (Array.isArray(result?.pairings) && result.pairings.length)
-      ) {
-        discoveredRomance = mapRomanceEvidence(
-          validateRomanceTopology(discoveryDraft),
-          {
-            findings: result?.findings || [],
-            sources: merge.sources,
-          }
-        );
-      }
+      const validated = validateRomanceTopology(discoveryDraft);
+      const mapped = mapRomanceEvidence(validated, {
+        findings: result?.findings || [],
+        researchSources: research.sources || [],
+      });
+      discoveredRomance = stampTopologyDiscovery(mapped, {
+        reason: validated.resolution?.reason || null,
+        discoveryEvidence: {
+          findings: mapped.discoveryEvidence?.findings || [],
+          ...(topologyOnly ? { sources: drafts } : {}),
+        },
+      });
       identityResolution.triggered = true;
       identityResolution.searchCalls = calls;
       identityResolution.sourcesAdded = (merge.added || []).length;
@@ -1004,24 +1037,46 @@ export async function runAdaptiveResearch({
         `identity resolution failed: ${err?.message || err}`
       );
       adaptiveLog(`identity search failed: ${err?.message || err}`);
+      discoveredRomance = stampTopologyDiscovery(
+        research.seriesRomanceIdentity || {},
+        { resolved: false, reason: "topology_discovery_failed" }
+      );
     }
-  } else if (identityResolution.before.resolved) {
+  } else if (!shouldRunIdentityJob && identityResolution.before.resolved) {
     adaptiveLog(
       "Series identity resolved from initial research — no identity search"
     );
   }
 
-  const identityAfterLeads = softLeadCharacters(research, identity);
-  identityResolution.after = identitySnapshot(identityAfterLeads);
-  identityResolution.trace = identityAfterLeads?.resolution?.trace || null;
-  identityResolution.changed =
-    identityResolution.before.mmc !== identityResolution.after.mmc ||
-    identityResolution.before.fmc !== identityResolution.after.fmc;
-  research.seriesIdentity = identityAfterLeads;
+  if (identityJobMode === IDENTITY_JOB_MODES.TOPOLOGY_ONLY) {
+    research.seriesIdentity = frozenSeriesIdentity;
+    research.identityHint = frozenIdentityHint;
+    identityResolution.after = identitySnapshot(frozenSeriesIdentity);
+    identityResolution.changed = false;
+  } else {
+    const identityAfterLeads = softLeadCharacters(research, identity);
+    identityResolution.after = identitySnapshot(identityAfterLeads);
+    identityResolution.changed =
+      identityResolution.before.mmc !== identityResolution.after.mmc ||
+      identityResolution.before.fmc !== identityResolution.after.fmc;
+    research.seriesIdentity = identityAfterLeads;
+  }
+  identityResolution.trace =
+    research.seriesIdentity?.resolution?.trace || null;
   if (discoveredRomance) {
     attachDiscoveredRomanceIdentity(research, discoveredRomance);
   } else {
-    attachSeriesRomanceIdentity(research, identityAfterLeads);
+    attachSeriesRomanceIdentity(research, research.seriesIdentity);
+  }
+  if (identityResolution.triggered) {
+    research.seriesRomanceIdentity = stampTopologyDiscovery(
+      research.seriesRomanceIdentity || {},
+      {
+        reason: identityResolution.parseStatus,
+        discoveryEvidence:
+          research.seriesRomanceIdentity?.discoveryEvidence,
+      }
+    );
   }
   const romanceObs = research.seriesRomanceIdentity?.observability || {};
   identityResolution.detectedTopology =

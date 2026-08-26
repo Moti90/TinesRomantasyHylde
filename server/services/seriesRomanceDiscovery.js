@@ -8,15 +8,21 @@
 
 import {
   ALTERNATIVE_LOVE_INTEREST,
+  EVIDENCE_REF_NAMESPACES,
   PAIRING_RELATIONS,
+  ROMANCE_DISCOVERY_SOURCES,
+  emptyRomanceDiscovery,
   emptySeriesRomanceIdentity,
   isPreservableRomanceIdentity,
   memberBySlot,
   normalizeRomancePairing,
   normalizeSeriesRomanceIdentity,
   primaryPairings,
+  uniqueEvidenceRefs,
   withRomanceObservability,
 } from "./seriesRomanceIdentity.js";
+import { IDENTITY_RESOLUTION_VERSION } from "./versions.js";
+import { canonicalizeUrl } from "./webResearch.js";
 
 const SWITCH_RE =
   /\b(switch|replac|former partner|early (love|relationship)|triangle|rival|ex[- ]lover)\b/i;
@@ -345,36 +351,141 @@ export function pairingHintFromRomance(romance) {
   };
 }
 
-export function mapRomanceEvidence(romance, { findings = [], sources = [] } = {}) {
-  const normalized = normalizeSeriesRomanceIdentity(romance);
-  const urlToId = new Map();
-  for (const source of sources || []) {
-    const url = asString(source.url).toLowerCase();
-    if (url && source.id) urlToId.set(url, source.id);
-  }
-  const pairings = normalized.pairings.map((pairing) => {
-    const urls = [...(pairing.evidenceUrls || [])];
-    for (const index of pairing.evidenceFindingIndexes || []) {
-      const finding = findings[index];
-      if (finding?.url) urls.push(finding.url);
+const EXECUTION_FAILURE_REASONS = new Set(["topology_discovery_failed"]);
+const PARSER_RETRIEVAL_FAILURE_REASONS = new Set([
+  "failed",
+  "raw_only",
+  "parse_failed",
+]);
+const GENERIC_DISCOVERY_REASONS = new Set([
+  "unspecified",
+  "provided",
+  "legacy_projection",
+  "structured",
+  "json_fallback",
+  "repaired",
+]);
+
+export function discoveryReasonRank(reason) {
+  const r = String(reason || "").trim();
+  if (!r) return 4;
+  if (EXECUTION_FAILURE_REASONS.has(r)) return 0;
+  if (PARSER_RETRIEVAL_FAILURE_REASONS.has(r)) return 1;
+  if (GENERIC_DISCOVERY_REASONS.has(r)) return 3;
+  return 2;
+}
+
+export function pickDiscoveryReason(...candidates) {
+  let best = null;
+  let bestRank = 5;
+  for (const c of candidates) {
+    const r = String(c || "").trim();
+    if (!r) continue;
+    const rank = discoveryReasonRank(r);
+    if (rank < bestRank) {
+      best = r;
+      bestRank = rank;
     }
-    const mappedIds = unique(
-      urls
-        .map((url) => urlToId.get(asString(url).toLowerCase()))
-        .filter(Boolean)
-    );
+  }
+  return best;
+}
+
+export function normalizeDiscoveryFindings(findings = []) {
+  const stored = [];
+  const seen = new Set();
+  for (const f of findings || []) {
+    if (!f || typeof f !== "object") continue;
+    const canon = canonicalizeUrl(f.url);
+    if (canon) {
+      if (seen.has(canon)) continue;
+      seen.add(canon);
+    }
+    stored.push({
+      url: f.url || null,
+      title: f.title || "",
+      summary: f.summary || "",
+      type: f.type || null,
+    });
+  }
+  return stored;
+}
+
+function researchSourceByCanonical(researchSources, canon) {
+  if (!canon) return null;
+  return (
+    (researchSources || []).find(
+      (s) => s?.id && canonicalizeUrl(s.url) === canon
+    ) || null
+  );
+}
+
+function storedFindingIndex(storedFindings, canon) {
+  if (!canon) return -1;
+  return storedFindings.findIndex((f) => canonicalizeUrl(f.url) === canon);
+}
+
+/**
+ * Bind pairing evidence to server-validated, namespaced refs.
+ * Model-generated evidenceSourceIds are never kept. Invalid refs are dropped
+ * without dropping the pairing.
+ */
+export function mapRomanceEvidence(
+  romance,
+  { findings = [], sources = [], researchSources } = {}
+) {
+  const normalized = normalizeSeriesRomanceIdentity(romance);
+  const storedFindings = normalizeDiscoveryFindings(findings);
+  const researchBag = researchSources || sources || [];
+  const pairings = normalized.pairings.map((pairing) => {
+    const canonUrls = [];
+    const seenCanon = new Set();
+    const addUrl = (url) => {
+      const canon = canonicalizeUrl(url);
+      if (!canon || seenCanon.has(canon)) return;
+      seenCanon.add(canon);
+      canonUrls.push(canon);
+    };
+    for (const url of pairing.evidenceUrls || []) addUrl(url);
+    for (const index of pairing.evidenceFindingIndexes || []) {
+      if (!Number.isInteger(Number(index))) continue;
+      const finding = findings[Number(index)];
+      if (finding?.url) addUrl(finding.url);
+    }
+    const refs = [];
+    const remappedIndexes = [];
+    for (const canon of canonUrls) {
+      const researchHit = researchSourceByCanonical(researchBag, canon);
+      if (researchHit?.id) {
+        refs.push({
+          namespace: EVIDENCE_REF_NAMESPACES.RESEARCH_SOURCES,
+          id: String(researchHit.id),
+        });
+      }
+      const storedIndex = storedFindingIndex(storedFindings, canon);
+      if (storedIndex >= 0) {
+        refs.push({
+          namespace: EVIDENCE_REF_NAMESPACES.DISCOVERY_FINDINGS,
+          index: storedIndex,
+          url: canonicalizeUrl(storedFindings[storedIndex].url) || canon,
+        });
+        remappedIndexes.push(storedIndex);
+      }
+    }
     return {
       ...pairing,
-      evidenceSourceIds: unique([
-        ...(pairing.evidenceSourceIds || []),
-        ...mappedIds,
-      ]),
+      evidenceSourceIds: [],
+      evidenceUrls: canonUrls,
+      evidenceFindingIndexes: unique(remappedIndexes),
+      evidenceRefs: uniqueEvidenceRefs(refs),
     };
   });
   return withRomanceObservability({
     ...normalized,
     pairings,
     resolution: romance.resolution || normalized.resolution,
+    discoveryEvidence: {
+      findings: storedFindings,
+    },
   });
 }
 
@@ -395,6 +506,105 @@ export function attachDiscoveredRomanceIdentity(research, romance) {
   }
   research.seriesRomanceIdentity = incoming;
   return research;
+}
+
+function isSeriesIdentity(identity) {
+  if (identity?.isSeries === true) return true;
+  const series = String(identity?.series || "").trim();
+  const title = String(identity?.title || "").trim();
+  if (series && title && series.toLowerCase() !== title.toLowerCase()) return true;
+  if (series && identity?.firstBook) return true;
+  return Boolean(series);
+}
+
+const RESOLVED_TOPOLOGIES = new Set([
+  "single_couple",
+  "rotating_couples",
+  "ensemble_mixed",
+]);
+
+/**
+ * Deterministic topology-discovery decision. Does not infer provenance from
+ * topology or pairing count. Legacy seriesIdentity.resolved does not block.
+ */
+export function romanceTopologyDiscoveryDecision({
+  identity,
+  seriesRomanceIdentity,
+  identityVersion = IDENTITY_RESOLUTION_VERSION,
+  allowRetry = false,
+} = {}) {
+  if (!isSeriesIdentity(identity)) {
+    return { trigger: false, reason: "not_series" };
+  }
+  if (!seriesRomanceIdentity) {
+    return { trigger: true, reason: "missing_romance_identity" };
+  }
+  const discovery = seriesRomanceIdentity.discovery;
+  const source = discovery?.source || null;
+  const attempted = discovery?.attempted === true;
+  const version = discovery?.version || null;
+  const topologyAware =
+    source === ROMANCE_DISCOVERY_SOURCES.TOPOLOGY_DISCOVERY && attempted;
+
+  if (!topologyAware) {
+    if (source === ROMANCE_DISCOVERY_SOURCES.LEGACY_PROJECTION) {
+      return { trigger: true, reason: "legacy_projection_only" };
+    }
+    return { trigger: true, reason: "missing_topology_discovery" };
+  }
+
+  if (version && version !== identityVersion) {
+    return { trigger: true, reason: "newer_identity_version" };
+  }
+
+  const topologyResolved =
+    discovery?.resolved === true &&
+    RESOLVED_TOPOLOGIES.has(seriesRomanceIdentity.topology);
+
+  if (topologyResolved) {
+    return { trigger: false, reason: "already_discovered_resolved" };
+  }
+
+  if (allowRetry) {
+    return { trigger: true, reason: "refresh_retry_unknown" };
+  }
+  return { trigger: false, reason: "already_attempted_unresolved" };
+}
+
+export function shouldTriggerRomanceTopologyDiscovery(args = {}) {
+  return romanceTopologyDiscoveryDecision(args).trigger === true;
+}
+
+export function needsRomanceTopologyDiscovery(args = {}) {
+  return shouldTriggerRomanceTopologyDiscovery(args);
+}
+
+export function stampTopologyDiscovery(romance, over = {}) {
+  const base = romance || emptySeriesRomanceIdentity();
+  const resolved =
+    over.resolved != null
+      ? over.resolved === true
+      : base.resolution?.resolved === true &&
+        RESOLVED_TOPOLOGIES.has(base.topology);
+  return withRomanceObservability({
+    ...base,
+    discovery: emptyRomanceDiscovery({
+      source: ROMANCE_DISCOVERY_SOURCES.TOPOLOGY_DISCOVERY,
+      version: over.version || base.discovery?.version || IDENTITY_RESOLUTION_VERSION,
+      attempted: true,
+      resolved,
+      attemptedAt:
+        over.attemptedAt ||
+        base.discovery?.attemptedAt ||
+        new Date().toISOString(),
+      reason: pickDiscoveryReason(
+        over.reason,
+        base.discovery?.reason,
+        base.resolution?.reason
+      ),
+    }),
+    discoveryEvidence: over.discoveryEvidence || base.discoveryEvidence,
+  });
 }
 
 export { primaryPairings };

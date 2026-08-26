@@ -184,6 +184,7 @@ export async function analyzeNewSeries(opts) {
         initialAnalysis: analysis,
         catalog,
         mofibo,
+        options: { mode: "analyze" },
       });
       research = adapted.research;
       analysis = adapted.analysis;
@@ -407,6 +408,7 @@ export async function refreshSeriesResearch(name) {
         initialAnalysis: analysis,
         catalog,
         mofibo,
+        options: { mode: "refresh" },
       });
       research = adapted.research;
       analysis = adapted.analysis;

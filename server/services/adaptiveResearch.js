@@ -1398,6 +1398,10 @@ export function shouldTriggerIdentitySearch(leads, identity) {
   return leads?.resolution?.resolved !== true;
 }
 
+export function needsLegacyIdentityResolution(leads, identity) {
+  return shouldTriggerIdentitySearch(leads, identity);
+}
+
 function leadsUnresolved(leadCharacters) {
   return leadCharacters?.resolution?.resolved !== true;
 }

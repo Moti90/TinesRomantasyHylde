@@ -152,7 +152,7 @@ describe("series identity resolution gate", () => {
     assert.ok(fieldCalls === 0 || result.research.seriesIdentity.mmc === "Corin");
   });
 
-  it("stable series pairing skips identity search", async () => {
+  it("stable series pairing skips legacy identity search and uses topology_only", async () => {
     const sources = [
       {
         id: "source-1",
@@ -178,7 +178,7 @@ describe("series identity resolution gate", () => {
     assert.equal(shouldTriggerIdentitySearch(assessed, seriesIdentity), false);
 
     let identityCalls = 0;
-    await runAdaptiveResearch({
+    const result = await runAdaptiveResearch({
       identity: seriesIdentity,
       initialResearch: researchWith(sources),
       initialAnalysis: analysisWith(weakAssessments()),
@@ -191,7 +191,11 @@ describe("series identity resolution gate", () => {
         analyze: async () => analysisWith(weakAssessments()),
       },
     });
-    assert.equal(identityCalls, 0);
+    assert.equal(identityCalls, 1);
+    assert.equal(result.adaptive.identityResolution.identityJobMode, "topology_only");
+    assert.equal(result.research.seriesIdentity.mmc, "Aldric");
+    assert.equal(result.research.seriesIdentity.fmc, "Elowen");
+    assert.equal(result.research.seriesIdentity.resolution.resolved, true);
   });
 
   it("ambiguous identity after search stays unresolved and does not lock queries to A", async () => {
@@ -702,6 +706,9 @@ describe("series identity resolution gate", () => {
       options: {
         maxFollowUpRounds: 1,
         executeFollowUpJob: async ({ job }) => {
+          if (job.strategy === "series_identity_resolution") {
+            return { sources: [], webSearchCalls: 1, costUsd: 0.01 };
+          }
           assert.notEqual(job.strategy, "series_identity_resolution");
           return {
             sources: [],

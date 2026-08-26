@@ -10,6 +10,8 @@
  * renamed alternatives.
  */
 
+import { IDENTITY_RESOLUTION_VERSION } from "./versions.js";
+
 export const ROMANCE_TOPOLOGIES = Object.freeze([
   "single_couple",
   "rotating_couples",
@@ -164,6 +166,9 @@ export function normalizeRomancePairing(raw, index = 0) {
       .map((n) => Number(n))
       .filter((n) => Number.isInteger(n) && n >= 0)
   );
+  const evidenceRefs = uniqueEvidenceRefs(
+    Array.isArray(raw.evidenceRefs) ? raw.evidenceRefs : []
+  );
   const basis = Array.isArray(raw.basis)
     ? raw.basis.map((b) => asString(b)).filter(Boolean)
     : [];
@@ -181,8 +186,49 @@ export function normalizeRomancePairing(raw, index = 0) {
     evidenceSourceIds,
     evidenceUrls,
     evidenceFindingIndexes,
+    evidenceRefs,
     alternatives,
   };
+}
+
+export function normalizeEvidenceRef(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  if (raw.namespace === EVIDENCE_REF_NAMESPACES.RESEARCH_SOURCES) {
+    const id = asString(raw.id);
+    return id
+      ? { namespace: EVIDENCE_REF_NAMESPACES.RESEARCH_SOURCES, id }
+      : null;
+  }
+  if (raw.namespace === EVIDENCE_REF_NAMESPACES.DISCOVERY_FINDINGS) {
+    const index = Number(raw.index);
+    if (!Number.isInteger(index) || index < 0) return null;
+    const url = asString(raw.url);
+    return url
+      ? { namespace: EVIDENCE_REF_NAMESPACES.DISCOVERY_FINDINGS, index, url }
+      : { namespace: EVIDENCE_REF_NAMESPACES.DISCOVERY_FINDINGS, index };
+  }
+  return null;
+}
+
+function evidenceRefKey(ref) {
+  if (ref.namespace === EVIDENCE_REF_NAMESPACES.RESEARCH_SOURCES) {
+    return `research_sources:${ref.id}`;
+  }
+  return `discovery_findings:${ref.index}`;
+}
+
+export function uniqueEvidenceRefs(refs = []) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of refs) {
+    const ref = normalizeEvidenceRef(raw);
+    if (!ref) continue;
+    const key = evidenceRefKey(ref);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(ref);
+  }
+  return out;
 }
 
 function coverageOf(topology, pairings, resolved) {
@@ -357,12 +403,53 @@ export function romanceObservability(romance = {}) {
   };
 }
 
+export const ROMANCE_DISCOVERY_SOURCES = Object.freeze({
+  LEGACY_PROJECTION: "legacy_projection",
+  TOPOLOGY_DISCOVERY: "topology_discovery",
+});
+
+export const EVIDENCE_REF_NAMESPACES = Object.freeze({
+  RESEARCH_SOURCES: "research_sources",
+  DISCOVERY_FINDINGS: "discovery_findings",
+});
+
+export const IDENTITY_JOB_MODES = Object.freeze({
+  LEGACY_AND_TOPOLOGY: "legacy_and_topology",
+  TOPOLOGY_ONLY: "topology_only",
+});
+
+export function emptyRomanceDiscovery(over = {}) {
+  const source =
+    over.source === ROMANCE_DISCOVERY_SOURCES.TOPOLOGY_DISCOVERY
+      ? ROMANCE_DISCOVERY_SOURCES.TOPOLOGY_DISCOVERY
+      : ROMANCE_DISCOVERY_SOURCES.LEGACY_PROJECTION;
+  return {
+    source,
+    version: over.version || IDENTITY_RESOLUTION_VERSION,
+    attempted: over.attempted === true,
+    resolved: over.resolved === true,
+    attemptedAt: over.attemptedAt || null,
+    reason: over.reason || null,
+  };
+}
+
+export function normalizeRomanceDiscovery(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  return emptyRomanceDiscovery(raw);
+}
+
 export function withRomanceObservability(romance) {
   const normalized = normalizeSeriesRomanceIdentity(romance);
-  return {
+  const next = {
     ...normalized,
     observability: romanceObservability(normalized),
   };
+  const discovery = normalizeRomanceDiscovery(romance?.discovery);
+  if (discovery) next.discovery = discovery;
+  if (romance?.discoveryEvidence) {
+    next.discoveryEvidence = romance.discoveryEvidence;
+  }
+  return next;
 }
 
 /**
@@ -371,6 +458,12 @@ export function withRomanceObservability(romance) {
  */
 export function isPreservableRomanceIdentity(romance) {
   if (!romance || typeof romance !== "object") return false;
+  if (
+    romance.discovery?.source === ROMANCE_DISCOVERY_SOURCES.TOPOLOGY_DISCOVERY &&
+    romance.discovery?.attempted === true
+  ) {
+    return true;
+  }
   const r = normalizeSeriesRomanceIdentity(romance);
   if (r.topology === "rotating_couples" || r.topology === "ensemble_mixed") {
     return true;
@@ -394,10 +487,17 @@ export function attachSeriesRomanceIdentity(research, seriesIdentity) {
     );
     return research;
   }
-  research.seriesRomanceIdentity = withRomanceObservability(
-    seriesRomanceIdentityFromLegacy(
-      seriesIdentity || research.seriesIdentity || {}
-    )
+  const projected = seriesRomanceIdentityFromLegacy(
+    seriesIdentity || research.seriesIdentity || {}
   );
+  research.seriesRomanceIdentity = withRomanceObservability({
+    ...projected,
+    discovery: emptyRomanceDiscovery({
+      source: ROMANCE_DISCOVERY_SOURCES.LEGACY_PROJECTION,
+      attempted: false,
+      resolved: false,
+      reason: "legacy_projection",
+    }),
+  });
   return research;
 }
