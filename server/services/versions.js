@@ -11,8 +11,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  * adaptive-v8: diversified retrieval approaches + one low-yield web_search fallback per focused job.
  * adaptive-v9: field-aware source quality (role × field class) for coverage eligibility.
  * adaptive-v10: source-mix-aware planner/retrieval (reader/scene/diversity modes).
+ * adaptive-v11: series romance scope scheduling metadata (Structure 3.1).
  */
-export const ADAPTIVE_VERSION = "adaptive-v10";
+export const ADAPTIVE_VERSION = "adaptive-v11";
 
 /** Identity-search schema/prompt (Series Romance Structure 2). Not in research cache hash. */
 export const IDENTITY_RESOLUTION_VERSION = "identity-v2";

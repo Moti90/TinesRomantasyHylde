@@ -481,7 +481,7 @@ describe("C.3 strong direct source mix", () => {
       plan.map((p) => p.id),
       ["helteprofil", "romanceprofil", "plotkarakter", "helhed"]
     );
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v11");
     assert.equal(BENCHMARK_VERSION, "benchmark-v7");
   });
 

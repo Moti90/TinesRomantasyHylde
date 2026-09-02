@@ -79,6 +79,15 @@ import {
   retrievalAttemptRecord,
   retrievalStatusAfterAttempts,
 } from "./searchRetrieval.js";
+import { defensiveCopyRomanceScope } from "./seriesRomancePlanning.js";
+
+function jobTraceScopeFields(job) {
+  return {
+    strategy: job.strategy,
+    targetFields: [...(job.targetFields || job.fields || [])],
+    romanceScope: defensiveCopyRomanceScope(job.romanceScope),
+  };
+}
 
 export function shouldRunAdaptiveResearch({
   researchCacheHit = false,
@@ -1253,7 +1262,7 @@ export async function runAdaptiveResearch({
           });
           jobTrace.push({
             id: job.id,
-            strategy: job.strategy,
+            ...jobTraceScopeFields(job),
             ok: true,
             webSearchCalls: calls,
             sourceCount: (result?.sources || []).length,
@@ -1277,7 +1286,7 @@ export async function runAdaptiveResearch({
           warnings.push(`${job.id} failed: ${message}`);
           jobTrace.push({
             id: job.id,
-            strategy: job.strategy,
+            ...jobTraceScopeFields(job),
             ok: false,
             error: message,
           });

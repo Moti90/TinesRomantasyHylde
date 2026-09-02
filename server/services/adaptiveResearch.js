@@ -57,6 +57,10 @@ import {
   retrievalModeInstruction,
   selectGroupRetrievalMode,
 } from "./fieldResearchNeed.js";
+import {
+  selectRomanceScopeForJob,
+  semanticPairingKey,
+} from "./seriesRomancePlanning.js";
 
 const MAX_TINE_WEIGHT = 1.4;
 const NO_DIRECT_EVIDENCE_CAP = 25;
@@ -1758,6 +1762,8 @@ export function planFollowUpResearch({
     )
   );
 
+  const plannedSemanticPairingKeys = new Set();
+
   return groups.slice(0, limit).map((group, i) => {
     const usedBefore = priorStrategies.has(group.strategy);
     const fieldNeeds = group.fields.map((field) =>
@@ -1767,6 +1773,17 @@ export function planFollowUpResearch({
     const preferredSourceRoles = unique(
       fieldNeeds.flatMap((n) => n.preferredSourceRoles || [])
     );
+    const targetFields = group.fields;
+    const romanceScope = selectRomanceScopeForJob({
+      seriesRomanceIdentity: research?.seriesRomanceIdentity,
+      strategy: group.strategy,
+      targetFields,
+      previousRounds,
+      plannedSemanticPairingKeys,
+    });
+    if (romanceScope) {
+      plannedSemanticPairingKeys.add(semanticPairingKey(romanceScope));
+    }
     let userPrompt = buildUserPrompt({
       strategy: group.strategy,
       group,
@@ -1809,6 +1826,7 @@ En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre c
       retrievalMode,
       preferredSourceRoles,
       fieldNeeds,
+      romanceScope: romanceScope ?? null,
     };
   });
 }

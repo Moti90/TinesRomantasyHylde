@@ -110,7 +110,7 @@ describe("C.1.3 field-aware evidence quality", () => {
     assert.equal(fieldQualityClass(RHYSAND), "relationship");
     assert.equal(fieldQualityClass(HANGOVER), "reader_experience");
     assert.equal(fieldQualityClass(FMC_DEV), "fmc_development");
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v11");
   });
 
   it("1. generic fandom character bio gives no Protective/Bodyguard/THAD coverage", () => {

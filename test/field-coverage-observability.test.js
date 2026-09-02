@@ -451,7 +451,7 @@ describe("C.2.1 field coverage observability", () => {
     assert.equal(q.eligible, true);
     assert.equal(q.qualityTier, "usable");
     assert.equal(q.coverageBucket, "supporting");
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v11");
   });
 
   it("13. B.1.3 subject guard unchanged", () => {
@@ -484,7 +484,7 @@ describe("C.2.1 field coverage observability", () => {
       plan.map((p) => p.id),
       ["helteprofil", "romanceprofil", "plotkarakter", "helhed"]
     );
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v10");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v11");
     assert.equal(BENCHMARK_VERSION, "benchmark-v7");
   });
 
