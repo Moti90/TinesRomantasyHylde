@@ -985,8 +985,8 @@ describe("seriesRomancePlanning job shape and isolation", () => {
 });
 
 describe("seriesRomancePlanning regression and version", () => {
-  it("ADAPTIVE_VERSION === adaptive-v11", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v11");
+  it("ADAPTIVE_VERSION === adaptive-v12", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v12");
   });
 
   it("comparePairingSelection og pairingSelectionSortKey er stabile", () => {
@@ -1115,6 +1115,13 @@ describe("seriesRomancePlanning jobTrace loop integration", () => {
     assert.equal("topology" in scopedTrace.romanceScope, true);
     assert.equal("id" in scopedTrace.romanceScope, false);
     assert.equal("members" in scopedTrace.romanceScope, false);
+    assert.ok(scopedTrace.scopedRecordsStored >= 1);
+    assert.ok(result.research.scopedRetrieval?.records?.length >= 1);
+    const legacyUrls = (result.research.sources || []).map((s) => s.url);
+    assert.equal(
+      legacyUrls.includes("https://reviews.example.com/scoped-success"),
+      false
+    );
   });
 
   it("failed executed scoped job bevarer romanceScope i jobTrace og tæller som attempted", async () => {

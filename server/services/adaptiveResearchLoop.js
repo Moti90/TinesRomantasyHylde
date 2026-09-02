@@ -80,6 +80,15 @@ import {
   retrievalStatusAfterAttempts,
 } from "./searchRetrieval.js";
 import { defensiveCopyRomanceScope } from "./seriesRomancePlanning.js";
+import {
+  buildInvalidRomanceScopeExecutorResult,
+  buildInvalidRomanceScopeJobTrace,
+  buildScopedExecutionInputs,
+  buildScopedRetrievalRecords,
+  isExecutableRomanceScope,
+  mergeScopedRetrievalRecords,
+  normalizeScopedRetrieval,
+} from "./seriesRomanceRetrieval.js";
 
 function jobTraceScopeFields(job) {
   return {
@@ -473,8 +482,19 @@ export async function executeFocusedJobWithFallback({
   research = null,
   existingSources = null,
 } = {}) {
+  if (job?.romanceScope != null && !isExecutableRomanceScope(job.romanceScope)) {
+    return buildInvalidRomanceScopeExecutorResult();
+  }
+
   const isIdentity =
     job?.strategy === "series_identity_resolution" || job?.purpose === "identity";
+  const scopedInputs =
+    !isIdentity && isExecutableRomanceScope(job?.romanceScope)
+      ? buildScopedExecutionInputs(job, {
+          identity,
+          series: job?.series || {},
+        })
+      : null;
   const approaches =
     job?.retrievalApproaches ||
     buildRetrievalApproaches({
@@ -514,9 +534,10 @@ export async function executeFocusedJobWithFallback({
 
   const primary = await runOnce({
     id: job?.id,
-    userPrompt: job?.userPrompt || "",
+    userPrompt: scopedInputs?.primaryUserPrompt ?? (job?.userPrompt || ""),
     queryHints:
-      job?.queryHints ||
+      scopedInputs?.primaryQueryHints ??
+      job?.queryHints ??
       flattenRetrievalApproaches(approaches, job?.retrievalMode || approaches.retrievalMode),
   });
   const primaryPreparedDiag = prepareJobSourcesDiagnostic(
@@ -565,18 +586,22 @@ export async function executeFocusedJobWithFallback({
       fallbackBlockedByBudget = true;
     } else {
       fallbackTriggered = true;
-      const fallbackPrompt = buildFallbackUserPrompt({
-        identity,
-        series: job?.series || {},
-        leadCharacters: job?.leadCharacters || {},
-        strategy: job?.strategy || "",
-        targetFields: job?.targetFields || job?.fields || [],
-        purpose,
-      });
+      const fallbackPrompt = scopedInputs
+        ? scopedInputs.fallbackUserPrompt
+        : buildFallbackUserPrompt({
+            identity,
+            series: job?.series || {},
+            leadCharacters: job?.leadCharacters || {},
+            strategy: job?.strategy || "",
+            targetFields: job?.targetFields || job?.fields || [],
+            purpose,
+          });
       const fallback = await runOnce({
         id: `${job?.id || "job"}-fallback`,
         userPrompt: fallbackPrompt,
-        queryHints: buildFallbackQueryHints(approaches),
+        queryHints: scopedInputs
+          ? scopedInputs.fallbackQueryHints
+          : buildFallbackQueryHints(approaches),
       });
       fallbackCost = searchCostUsd(fallback);
       fallbackRepair = repairCostUsd(fallback);
@@ -729,6 +754,9 @@ export async function rebuildResearchFromSources({
   if (previousResearch?.seriesRomanceIdentity) {
     research.seriesRomanceIdentity = previousResearch.seriesRomanceIdentity;
   }
+  research.scopedRetrieval = normalizeScopedRetrieval(
+    previousResearch?.scopedRetrieval
+  );
   return { research, inputTokens, outputTokens, costUsd };
 }
 
@@ -847,6 +875,7 @@ export async function runAdaptiveResearch({
   }
 
   let research = cloneJson(initialResearch || { sources: [], meta: {} });
+  research.scopedRetrieval = normalizeScopedRetrieval(research.scopedRetrieval);
   let analysis = initialAnalysis;
   const deps = {
     executeFollowUpJob:
@@ -1154,7 +1183,10 @@ export async function runAdaptiveResearch({
         break;
       }
 
-      const jobs = intelligence.followUpPlan || [];
+      const jobs =
+        round === 1 && Array.isArray(options.followUpPlan)
+          ? options.followUpPlan
+          : intelligence.followUpPlan || [];
       const coverageBeforeIntel = intelligence.coverage;
       const coverageBefore = coverageBeforeIntel.weightedCoverage;
       const researchBeforeRound = { sources: research.sources || [] };
@@ -1178,9 +1210,19 @@ export async function runAdaptiveResearch({
       let roundIn = 0;
       let roundOut = 0;
       let succeeded = 0;
+      let roundScopedStored = 0;
 
       for (const job of jobs) {
         if (additionalSearch + roundSearch >= maxSearch) break;
+
+        if (job.romanceScope != null && !isExecutableRomanceScope(job.romanceScope)) {
+          jobTrace.push(buildInvalidRomanceScopeJobTrace(job));
+          adaptiveLog(`job ${job.id} skipped: invalid_romance_scope`);
+          continue;
+        }
+
+        const scopedJob = isExecutableRomanceScope(job.romanceScope);
+
         try {
           const result = await deps.executeFollowUpJob({
             job,
@@ -1192,26 +1234,62 @@ export async function runAdaptiveResearch({
             remainingSearchCalls: maxSearch - additionalSearch - roundSearch,
             remainingCostUsd: maxCost - additionalCost - roundCost,
           });
+
+          if (result?.invalidRomanceScope) {
+            jobTrace.push(buildInvalidRomanceScopeJobTrace(job));
+            adaptiveLog(`job ${job.id} skipped: invalid_romance_scope`);
+            continue;
+          }
+
           const calls = Number(result?.webSearchCalls) || 0;
           const cost = Number(result?.costUsd) || 0;
           roundSearch += calls;
           roundCost += cost;
           roundIn += Number(result?.inputTokens) || 0;
           roundOut += Number(result?.outputTokens) || 0;
-          roundDrafts.push(...(result?.sources || []));
-          if (!(result?.sources || []).length && (result?.rawUrls || []).length) {
-            // Same defensive backfill as identity: custom/mocked jobs may
-            // return rawUrls without prepared sources.
-            roundDrafts.push(
-              ...prepareFollowUpSources(
-                (result.rawUrls || []).map((u) =>
-                  asRawFinding(u, job.batchHint || "helteprofil")
-                ),
-                job,
-                round
-              )
+
+          let preparedSources = result?.sources || [];
+          if (!preparedSources.length && (result?.rawUrls || []).length) {
+            preparedSources = prepareFollowUpSources(
+              (result.rawUrls || []).map((u) =>
+                asRawFinding(u, job.batchHint || "helteprofil")
+              ),
+              job,
+              round
             );
           }
+
+          let scopedRecordsProduced = 0;
+          let scopedRecordsStored = 0;
+          let scopedDuplicatesSkipped = 0;
+          let requestedScopeKey = null;
+
+          if (scopedJob) {
+            const scopedRecords = buildScopedRetrievalRecords(
+              preparedSources,
+              job,
+              round
+            );
+            scopedRecordsProduced = scopedRecords.length;
+            requestedScopeKey =
+              scopedRecords[0]?.requestedScopeKey ||
+              buildScopedExecutionInputs(job, {
+                identity,
+                series: job?.series || {},
+              })?.requestedScopeKey ||
+              null;
+            const mergedSidecar = mergeScopedRetrievalRecords(
+              research.scopedRetrieval,
+              scopedRecords
+            );
+            research.scopedRetrieval = mergedSidecar.sidecar;
+            scopedRecordsStored = mergedSidecar.stored;
+            scopedDuplicatesSkipped = mergedSidecar.skipped;
+            roundScopedStored += scopedRecordsStored;
+          } else {
+            roundDrafts.push(...preparedSources);
+          }
+
           succeeded += 1;
           const sourceFlow =
             result?.sourceFlow ||
@@ -1221,7 +1299,7 @@ export async function runAdaptiveResearch({
               mergedDraftsBeforeCap:
                 result?.mergedDraftsBeforeCap || result?.findings || [],
               returnedFindings: result?.findings || result?.sources || [],
-              prepared: result?.sources || [],
+              prepared: preparedSources,
               cappedDrafts: result?.cappedDrafts || [],
               droppedFocus: result?.droppedFocus || [],
               existingSources: research.sources || [],
@@ -1245,7 +1323,7 @@ export async function runAdaptiveResearch({
             );
           }
           const mixObs = observePreparedSourceMix({
-            prepared: result?.sources || [],
+            prepared: preparedSources,
             targetFields: job?.targetFields || job?.fields || [],
             context: {
               research,
@@ -1265,12 +1343,12 @@ export async function runAdaptiveResearch({
             ...jobTraceScopeFields(job),
             ok: true,
             webSearchCalls: calls,
-            sourceCount: (result?.sources || []).length,
+            sourceCount: preparedSources.length,
             parseStatus: result?.parseStatus || null,
             retryUsed: Boolean(result?.retryUsed),
             rawUrlCount: (result?.rawUrls || []).length,
             mergedCount: (result?.findings || []).length,
-            preparedCount: (result?.sources || []).length,
+            preparedCount: preparedSources.length,
             retrievalAttempts: result?.retrievalAttempts || null,
             retrievalStatus: result?.retrievalStatus || null,
             fallbackTriggered: Boolean(result?.fallbackTriggered),
@@ -1279,6 +1357,12 @@ export async function runAdaptiveResearch({
             fallbackSearchCostUsd: result?.fallbackSearchCostUsd ?? 0,
             totalSearchCostUsd: result?.totalSearchCostUsd ?? null,
             sourceFlow: publicSourceFlow(sourceFlow),
+            requestedScopeKey,
+            scopedRecordsProduced,
+            scopedRecordsStored,
+            scopedDuplicatesSkipped,
+            scopedExecutionSkipped: false,
+            scopedExecutionSkipReason: null,
             ...mixObs,
           });
         } catch (err) {
@@ -1308,6 +1392,8 @@ export async function runAdaptiveResearch({
           webSearchCalls: roundSearch,
           newSources: 0,
           newRelevantSources: 0,
+          scopedRecordsStored: 0,
+          scopedOnlyRound: false,
           coverageBefore,
           coverageAfter: coverageBefore,
           coverageGain: 0,
@@ -1385,6 +1471,8 @@ export async function runAdaptiveResearch({
         webSearchCalls: roundSearch,
         newSources: added.length,
         newRelevantSources: relevant.length,
+        scopedRecordsStored: roundScopedStored,
+        scopedOnlyRound: added.length === 0 && roundScopedStored > 0,
         coverageBefore,
         coverageAfter: coverageBefore,
         coverageGain: 0,
@@ -1443,7 +1531,11 @@ export async function runAdaptiveResearch({
         roundRecord.costUsd += rebuilt.costUsd || 0;
       } catch (err) {
         warnings.push(`synthesis failed: ${err.message || err}`);
-        research = { ...research, sources: merge.sources };
+        research = {
+          ...research,
+          sources: merge.sources,
+          scopedRetrieval: normalizeScopedRetrieval(research.scopedRetrieval),
+        };
       }
 
       try {

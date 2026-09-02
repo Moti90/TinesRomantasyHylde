@@ -9,48 +9,47 @@ This document tracks the repository's current implementation state. Update it wh
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 3.1, scoped retrieval planning.
-- Structure 1, Structure 2, and Structure 2.1 are committed.
-- Governance is locally committed as `09a8ed2`.
-- Structure 3.1 is locally committed and has passed final commit-readiness review.
-- The project is awaiting push approval.
-- Structure 3.2 has not started.
+- Current roadmap phase: Structure 3.2, scoped retrieval execution and storage.
+- Structure 1, Structure 2, Structure 2.1, and Structure 3.1 are committed and pushed.
+- Structure 3.1 commit: `95c6060` on `origin/adaptive-research`.
+- Structure 3.2 design decisions are locked.
+- Structure 3.2 final review passed.
+- No commit blockers remain.
+- Structure 3.2 is being committed locally.
+- Push has not occurred.
+- Structure 4 has not started.
 
-## Structure 3.1 status
+## Structure 3.1 status (committed)
 
 Structure 3.1 adds deterministic pairing-scope metadata to existing field jobs and additive within-run planner history (`romanceScope` on jobs + `jobTrace`).
 
-It does not change:
+It does not change queries, execution, source storage, subject binding, coverage, scoring, budgets, or single-couple legacy behavior by itself.
 
-- queries or retrieval approaches,
-- execution or source storage semantics,
-- subject binding,
-- coverage or scoring,
-- search/cost budgets,
-- single-couple legacy behavior.
+## Structure 3.2 status (local commit in progress)
 
-### Cross-round history
+Structure 3.2 implements scoped retrieval execution and sidecar storage:
 
-Attempted-scope matching uses field-level overlap under the same strategy:
+- executable-scope validation with fail-closed malformed non-null scope,
+- non-throwing invalid-scope job traces via `safeTraceRomanceScope`,
+- neutral scoped primary/fallback query inputs (no MMC/FMC guessing),
+- bounded query hints that retain at least one deterministic scope hint,
+- code-controlled retrieval strategy derived from normalized attempt,
+- deterministic stored `requestedRomanceScope` book/arc ordering,
+- top-level `research.scopedRetrieval.records` canonical storage,
+- scoped jobs bypass `research.sources`, legacy merge/relevance/coverage/synthesis,
+- sidecar preservation through rebuild/synthesis,
+- failed-round observability (`scopedRecordsStored: 0`, `scopedOnlyRound: false`),
+- `ADAPTIVE_VERSION = adaptive-v12`.
 
-- `strategy + overlapping canonical field + semanticPairingKey` → attempted
-- exact whole-set `targetFields` equality is not required
-- same-round `plannedSemanticPairingKeys` remains a separate global-per-planner-call rule
+It does not implement Structure 4 subject binding, pairing-aware coverage/gaps/scoring, UI changes, or additional search budgets.
 
 ### Verification results (2026-09-02)
 
-- Final commit-readiness review: passed
-- Open blockers before commit: none
-- Focused Structure 3.1 tests: `43/43` pass (`test/series-romance-planning.test.js`)
-- Full suite: `439/439` pass
-- Code/test diff: no whitespace errors
-- Markdown docs may contain intentional trailing spaces for hard line breaks, so `git show --check` can report them
-
-Integration coverage includes:
-
-- successful scoped `jobTrace` fields,
-- failed scoped `jobTrace` fields counting as attempted,
-- budget-stopped planned-but-not-executed jobs not counting as attempted.
+- Structure 3.2 focused tests: `28/28` pass (`test/series-romance-retrieval.test.js`)
+- Structure 3.1 regression: `43/43` pass (`test/series-romance-planning.test.js`)
+- Full suite (`npm test`): `467/467` pass
+- `git diff --check`: clean (CRLF normalization warnings only)
+- Locally committed; not pushed
 
 ## Open blockers
 
@@ -58,4 +57,4 @@ None.
 
 ## Next action
 
-Await push approval. After push, run a read-only Structure 3.2 architecture review. Do not begin Structure 3.2 implementation until that review is complete.
+Await push approval for Structure 3.2. Do not begin Structure 4 until roadmap authorizes it.
