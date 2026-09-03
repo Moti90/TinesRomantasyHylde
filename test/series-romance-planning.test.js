@@ -985,8 +985,8 @@ describe("seriesRomancePlanning job shape and isolation", () => {
 });
 
 describe("seriesRomancePlanning regression and version", () => {
-  it("ADAPTIVE_VERSION === adaptive-v12", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v12");
+  it("ADAPTIVE_VERSION === adaptive-v13", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v13");
   });
 
   it("comparePairingSelection og pairingSelectionSortKey er stabile", () => {

@@ -230,7 +230,7 @@ describe("C.1.2 source flow observability", () => {
       plan.map((p) => p.id),
       ["helteprofil", "romanceprofil", "plotkarakter", "helhed"]
     );
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v12");
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v13");
   });
 
   it("I. C.1 fallback still triggers once on zero retrieval", async () => {

@@ -89,6 +89,7 @@ import {
   mergeScopedRetrievalRecords,
   normalizeScopedRetrieval,
 } from "./seriesRomanceRetrieval.js";
+import { applyScopedSubjectBindings } from "./seriesRomanceSubjectBinding.js";
 
 function jobTraceScopeFields(job) {
   return {
@@ -718,7 +719,7 @@ export async function rebuildResearchFromSources({
     estimateCostUsd(RESEARCH_MODEL, inputTokens, outputTokens);
 
   const previousMeta = previousResearch?.meta || {};
-  const research = normalizeResearch(parsed, identity, {
+  let research = normalizeResearch(parsed, identity, {
     promptVersion: previousMeta.promptVersion,
     model: synth.model || previousMeta.model,
     webSearchCalls: previousMeta.webSearchCalls || 0,
@@ -757,6 +758,7 @@ export async function rebuildResearchFromSources({
   research.scopedRetrieval = normalizeScopedRetrieval(
     previousResearch?.scopedRetrieval
   );
+  research = applyScopedSubjectBindings(research);
   return { research, inputTokens, outputTokens, costUsd };
 }
 
@@ -876,6 +878,7 @@ export async function runAdaptiveResearch({
 
   let research = cloneJson(initialResearch || { sources: [], meta: {} });
   research.scopedRetrieval = normalizeScopedRetrieval(research.scopedRetrieval);
+  research = applyScopedSubjectBindings(research);
   let analysis = initialAnalysis;
   const deps = {
     executeFollowUpJob:
@@ -1127,6 +1130,8 @@ export async function runAdaptiveResearch({
   identityResolution.legacyIdentityRepresentativeOfSeries =
     romanceObs.legacyIdentityRepresentativeOfSeries ?? "unknown";
 
+  research = applyScopedSubjectBindings(research);
+
   if (identityResolution.triggered) {
     adaptiveLog(
       `Series identity after resolution:\nMMC: ${identityResolution.after.mmc || "—"}\nFMC: ${identityResolution.after.fmc || "—"}\nconfidence: ${identityResolution.after.confidence}\nresolved: ${identityResolution.after.resolved}\nreason: ${identityResolution.after.reason || "n/a"}`
@@ -1283,6 +1288,7 @@ export async function runAdaptiveResearch({
               scopedRecords
             );
             research.scopedRetrieval = mergedSidecar.sidecar;
+            research = applyScopedSubjectBindings(research);
             scopedRecordsStored = mergedSidecar.stored;
             scopedDuplicatesSkipped = mergedSidecar.skipped;
             roundScopedStored += scopedRecordsStored;
@@ -1536,6 +1542,7 @@ export async function runAdaptiveResearch({
           sources: merge.sources,
           scopedRetrieval: normalizeScopedRetrieval(research.scopedRetrieval),
         };
+        research = applyScopedSubjectBindings(research);
       }
 
       try {

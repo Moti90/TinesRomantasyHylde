@@ -827,8 +827,8 @@ describe("runAdaptiveResearch Structure 3.2 integration", () => {
 });
 
 describe("Structure 3.2 regression", () => {
-  it("ADAPTIVE_VERSION is adaptive-v12", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v12");
+  it("ADAPTIVE_VERSION is adaptive-v13", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v13");
   });
 
   it("legacy unscoped relevance path unchanged for null scope", () => {
