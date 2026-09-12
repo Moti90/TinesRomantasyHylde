@@ -14,11 +14,15 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  * adaptive-v11: series romance scope scheduling metadata (Structure 3.1).
  * adaptive-v12: scoped retrieval execution, sidecar storage (Structure 3.2).
  * adaptive-v13: pairing-aware subject binding on scoped retrieval (Structure 4).
+ * adaptive-v14: pairing-aware scoped coverage observability (Structure 5A).
  */
-export const ADAPTIVE_VERSION = "adaptive-v13";
+export const ADAPTIVE_VERSION = "adaptive-v14";
 
 /** Structure 4 subject binding semantics for scopedRetrieval.records. */
 export const SUBJECT_BINDING_VERSION = "subject-binding-v1";
+
+/** Structure 5A scoped coverage observability shape. */
+export const SCOPED_COVERAGE_VERSION = "scoped-coverage-v1";
 
 /** Identity-search schema/prompt (Series Romance Structure 2). Not in research cache hash. */
 export const IDENTITY_RESOLUTION_VERSION = "identity-v2";

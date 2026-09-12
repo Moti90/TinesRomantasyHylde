@@ -2,51 +2,51 @@
 
 > **Role:** Operational checkpoint, not product authority  
 > **Authoritative direction:** See [`PRODUCT_ROADMAP.md`](./PRODUCT_ROADMAP.md)  
-> **Last updated:** 2026-09-03
+> **Last updated:** 2026-09-12
 
 This document tracks the repository's current implementation state. Update it when a bid is committed, blocked, superseded, or moves to the next roadmap phase.
 
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 4 complete locally; awaiting push approval.
-- Structure 1–3.2 are committed and pushed.
-- Structure 3.2 commit: `a1df65b` on `origin/adaptive-research`.
-- Structure 4 final review passed.
-- Structure 4 is locally committed; **not** pushed.
-- Structure 4 is the current local HEAD on `adaptive-research`; not pushed.
-- Structure 5 has not started.
-- No commit blockers.
+- Current roadmap phase: Structure 5 Bid 5A (scoped coverage observability).
+- Structure 1–4 are committed and pushed.
+- Structure 4 commit: `24502c4` on `origin/adaptive-research`.
+- Structure 5 design decisions are locked.
+- Structure 5A final review passed.
+- Structure 5A is being locally committed in this checkpoint.
+- Structure 5A is **not** pushed.
+- Structure 5B (gaps/planner/loop) is the next bid and has not started.
+- Structure 6 has not started.
 
-## Structure 3.2 status (committed and pushed)
+## Structure 4 status (committed and pushed)
 
-Structure 3.2 implements scoped retrieval execution and sidecar storage (`research.scopedRetrieval`), fail-closed malformed scope, and `ADAPTIVE_VERSION = adaptive-v12` at commit time (superseded by Structure 4 bump).
+Structure 4 pairing-aware subject binding is on `origin/adaptive-research` as `24502c4` (`adaptive-v13` at commit time; superseded by Structure 5A `adaptive-v14`).
 
-## Structure 4 status (locally committed, not pushed)
+## Structure 5A status (local commit checkpoint)
 
-Structure 4 adds deterministic subject binding on scoped retrieval records:
+Structure 5A adds additive pairing-aware coverage observability:
 
-- `record.subjectBinding` with `subject-binding-v1`
-- pairing / member / book / arc / series-global detection
-- requested vs other-primary / secondary / ALT LI classification
-- compaction without winning binding
-- lifecycle: init bind, merge bind, rebuild preserve/rebind, fingerprint rebind
-- stale `pairingId` refresh against unique semantic key
-- `ADAPTIVE_VERSION = adaptive-v13`
-- `SUBJECT_BINDING_VERSION = subject-binding-v1`
+- `coverage.scoped` with `scoped-coverage-v1` when `isRomanceScopePlanningReady`
+- required cells = eligible primary pairings × `ROMANCE_SCOPE_ELIGIBLE_FIELDS`
+- evidence-only formula (no global assessment leakage)
+- zero records still materialize required cells at score 0
+- deterministic source-identity dedup (`direct` > `supporting`, stable semantic tie-break; input order never wins)
+- fail-closed malformed records (no `identityKey` URL/id fallback in coverage)
+- observed ALT LI / secondary pairing / secondary member cells never lift primary required
+- no planner/gap/loop-stop / query / retrieval / storage / budget changes
+- `ADAPTIVE_VERSION = adaptive-v14`
+- `SCOPED_COVERAGE_VERSION = scoped-coverage-v1`
+- `adaptiveResearchLoop.js` is untouched
 
-It does not implement Structure 5 coverage, gaps, scoring, UI, or query/budget changes.
+### Verification results (2026-09-12 — final review corrections)
 
-### Verification results (2026-09-03)
-
-- Structure 4 focused tests: `40/40` pass (`test/series-romance-subject-binding.test.js`)
-- Structure 3.1 + 3.2 + Structure 4 combined: `111/111` pass
-- Adaptive loop tests: `46/46` pass
-- Full suite (`npm test`): `507/507` pass
+- Structure 5A focused tests: `27/27` pass (`test/series-romance-scoped-coverage.test.js`)
+- Structure 3.1–4 + 5A combined: `178/178` pass
+- Adaptive coverage/planner/loop suites: `82/82` pass
+- Full suite (`npm test`): `534/534` pass
 - `git diff --check`: clean (CRLF normalization warnings only)
-- Final review: passed
-- Commit blockers: none
-- Locally committed; not pushed
+- Final review passed; locally committed in this checkpoint; **not** pushed
 
 ## Open blockers
 
@@ -54,4 +54,4 @@ None.
 
 ## Next action
 
-Push approval for Structure 4. Do not begin Structure 5 until roadmap authorizes it.
+Push Structure 5A when ready. Do not start Bid 5B until 5A is on the remote branch.

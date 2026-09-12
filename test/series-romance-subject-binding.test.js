@@ -1180,8 +1180,8 @@ describe("seriesRomanceSubjectBinding lifecycle", () => {
 });
 
 describe("Structure 4 regression", () => {
-  it("ADAPTIVE_VERSION is adaptive-v13", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v13");
+  it("ADAPTIVE_VERSION is adaptive-v14", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v14");
     assert.equal(SUBJECT_BINDING_VERSION, "subject-binding-v1");
   });
 });

@@ -35,6 +35,7 @@ import {
   ADAPTIVE_VERSION,
   isAdaptiveDebugEnabled,
 } from "./versions.js";
+import { attachScopedCoverage } from "./seriesRomanceScopedCoverage.js";
 import {
   canonicalizeUrl,
   classifySourceType,
@@ -957,15 +958,18 @@ export function calculateResearchCoverage({
       !fields[field].stopQualitySatisfied
   );
 
-  return {
-    weightedCoverage: weightTotal
-      ? roundScore(weightedSum / weightTotal)
-      : 0,
-    fields,
-    criticalFieldsBelowMinimum,
-    criticalFieldsMissingStopQuality,
-    adaptiveVersion: ADAPTIVE_VERSION,
-  };
+  return attachScopedCoverage(
+    {
+      weightedCoverage: weightTotal
+        ? roundScore(weightedSum / weightTotal)
+        : 0,
+      fields,
+      criticalFieldsBelowMinimum,
+      criticalFieldsMissingStopQuality,
+      adaptiveVersion: ADAPTIVE_VERSION,
+    },
+    { research }
+  );
 }
 
 function gapReasonsFor(field, fieldCoverage, claim) {
