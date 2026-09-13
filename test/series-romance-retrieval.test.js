@@ -678,7 +678,12 @@ describe("runAdaptiveResearch Structure 3.2 integration", () => {
     assert.equal(record.scopeStatus, "requested");
     assert.ok(record.requestedRomanceScope);
     assert.equal(result.adaptive.rounds[0].scopedOnlyRound, true);
-    assert.equal(result.adaptive.stopReason, "no_new_evidence");
+    assert.notEqual(result.adaptive.stopReason, "no_new_evidence");
+    assert.ok(
+      ["max_rounds", "search_budget_reached", "no_gaps", "cost_budget_reached"].includes(
+        result.adaptive.stopReason
+      )
+    );
   });
 
   it("mixed scoped and unscoped round isolates storage", async () => {
@@ -827,8 +832,8 @@ describe("runAdaptiveResearch Structure 3.2 integration", () => {
 });
 
 describe("Structure 3.2 regression", () => {
-  it("ADAPTIVE_VERSION is adaptive-v14", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v14");
+  it("ADAPTIVE_VERSION is adaptive-v15", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v15");
   });
 
   it("legacy unscoped relevance path unchanged for null scope", () => {

@@ -89,6 +89,10 @@ import {
   mergeScopedRetrievalRecords,
   normalizeScopedRetrieval,
 } from "./seriesRomanceRetrieval.js";
+import {
+  compareScopedRequiredProgress,
+  emptyScopedRoundObservability,
+} from "./seriesRomanceScopedCoverage.js";
 import { applyScopedSubjectBindings } from "./seriesRomanceSubjectBinding.js";
 
 function jobTraceScopeFields(job) {
@@ -791,8 +795,14 @@ function stopFromIntelligence(intelligence) {
   const coverage = intelligence?.coverage || {};
   const meaningful = meaningfulConflictCount(intelligence);
   const missingQuality = coverage.criticalFieldsMissingStopQuality || [];
+  const scoped = coverage.scoped;
+  const scopedBlocksTarget =
+    scoped?.active === true &&
+    scoped?.summary?.allRequiredCellsCovered !== true;
+
   if (!(intelligence?.followUpPlan || []).length) {
     if (
+      !scopedBlocksTarget &&
       (coverage.weightedCoverage || 0) >= ADAPTIVE_TARGET_COVERAGE &&
       !(coverage.criticalFieldsBelowMinimum || []).length &&
       missingQuality.length === 0 &&
@@ -1399,7 +1409,7 @@ export async function runAdaptiveResearch({
           newSources: 0,
           newRelevantSources: 0,
           scopedRecordsStored: 0,
-          scopedOnlyRound: false,
+          ...emptyScopedRoundObservability(),
           coverageBefore,
           coverageAfter: coverageBefore,
           coverageGain: 0,
@@ -1470,6 +1480,19 @@ export async function runAdaptiveResearch({
         `web search calls: ${roundSearch}\nnew sources: ${added.length}\nrelevant sources: ${relevant.length}`
       );
 
+      // Observability: mixed if both scoped and legacy jobs executed successfully,
+      // even when legacy drafts are field-irrelevant (added > 0, relevant === 0).
+      const hadScopedExecution = jobTrace.some(
+        (j) =>
+          j.ok &&
+          j.romanceScope &&
+          j.scopedExecutionSkipped !== true
+      );
+      const hadLegacyExecution = jobTrace.some(
+        (j) => j.ok && !j.romanceScope
+      );
+      const scopedOnlyRound = hadScopedExecution && !hadLegacyExecution;
+
       const roundRecord = {
         round,
         targetFields: [...new Set(jobs.flatMap((j) => j.targetFields || j.fields || []))],
@@ -1478,7 +1501,8 @@ export async function runAdaptiveResearch({
         newSources: added.length,
         newRelevantSources: relevant.length,
         scopedRecordsStored: roundScopedStored,
-        scopedOnlyRound: added.length === 0 && roundScopedStored > 0,
+        ...emptyScopedRoundObservability(),
+        scopedOnlyRound,
         coverageBefore,
         coverageAfter: coverageBefore,
         coverageGain: 0,
@@ -1503,13 +1527,78 @@ export async function runAdaptiveResearch({
         assessments: roundAssessments,
       });
 
-      if (added.length === 0) {
-        rounds.push(roundRecord);
-        stopReason = "no_new_evidence";
-        break;
-      }
-
+      // No relevant legacy evidence: recompute scoped progress (when scoped ran)
+      // before legacy added/relevant stop decisions. Relevant legacy still uses
+      // the rebuild/synthesize/analyze path below.
       if (relevant.length === 0) {
+        let scopedProgress = null;
+        let afterScopedIntel = null;
+        if (hadScopedExecution) {
+          // Carry retained legacy drafts into research before continuation
+          // intelligence so followUpPlan sees merge.sources (and already-updated
+          // scoped sidecar/bindings). Scoped productivity still compares only
+          // required scoped before/after — not legacy weighted gain.
+          if (added.length > 0) {
+            research.sources = merge.sources;
+          }
+          afterScopedIntel = analyzeResearchNeeds({
+            identity,
+            research,
+            assessments: roundAssessments,
+            previousRounds: [...rounds, roundRecord],
+          });
+          plannerCalls += 1;
+          scopedProgress = compareScopedRequiredProgress(
+            coverageBeforeIntel?.scoped,
+            afterScopedIntel.coverage?.scoped
+          );
+          Object.assign(roundRecord, scopedProgress, { scopedOnlyRound });
+          roundRecord.coverageAfter =
+            afterScopedIntel.coverage?.weightedCoverage ?? coverageBefore;
+          roundRecord.coverageGain =
+            roundRecord.coverageAfter - coverageBefore;
+          attachFieldCoverageObservability(roundRecord, {
+            coverageBefore: coverageBeforeIntel,
+            coverageAfter: afterScopedIntel.coverage,
+            researchAfter: research,
+            researchBefore: researchBeforeRound,
+            identity,
+            assessments: roundAssessments,
+          });
+        }
+
+        if (scopedProgress?.scopedProductive) {
+          // Productive required scoped gain: do not stop as no_new_evidence and
+          // do not synthesize/analyze solely for irrelevant legacy drafts.
+          rounds.push(roundRecord);
+          intelligence = afterScopedIntel;
+          const scopedStop = stopFromIntelligence(afterScopedIntel);
+          if (scopedStop) {
+            stopReason = scopedStop;
+            break;
+          }
+          if (additionalSearch >= maxSearch) {
+            stopReason = "search_budget_reached";
+            break;
+          }
+          if (additionalCost >= maxCost) {
+            stopReason = "cost_budget_reached";
+            break;
+          }
+          // Do not apply legacy weighted minGain diminishing returns here.
+          if (round >= maxRounds) {
+            stopReason = "max_rounds";
+            break;
+          }
+          continue;
+        }
+
+        if (added.length === 0) {
+          rounds.push(roundRecord);
+          stopReason = "no_new_evidence";
+          break;
+        }
+
         research.sources = merge.sources;
         roundRecord.diagnostics = {
           newDirectOrSupporting: 0,
@@ -1591,6 +1680,14 @@ export async function runAdaptiveResearch({
       roundRecord.coverageGain = coverageAfter - coverageBefore;
       roundRecord.criticalFieldsResolved = criticalResolved;
       roundRecord.conflictsAfter = conflictsAfter;
+      Object.assign(
+        roundRecord,
+        compareScopedRequiredProgress(
+          coverageBeforeIntel?.scoped,
+          after.coverage?.scoped
+        ),
+        { scopedOnlyRound }
+      );
       if (
         relevant.length === 0 &&
         roundRecord.coverageGain >= minGain

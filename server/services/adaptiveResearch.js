@@ -58,10 +58,19 @@ import {
   retrievalModeInstruction,
   selectGroupRetrievalMode,
 } from "./fieldResearchNeed.js";
+import { pairingHasScope } from "./seriesRomanceDiscovery.js";
+import { primaryPairings } from "./seriesRomanceIdentity.js";
 import {
+  ROMANCE_SCOPE_ELIGIBLE_FIELDS,
+  buildRomanceScope,
+  collectAttemptedSemanticKeys,
+  defensiveCopyRomanceScope,
   selectRomanceScopeForJob,
   semanticPairingKey,
+  sortedDisplayMemberNames,
 } from "./seriesRomancePlanning.js";
+
+const ROMANCE_SCOPE_ELIGIBLE_FIELD_SET = new Set(ROMANCE_SCOPE_ELIGIBLE_FIELDS);
 
 const MAX_TINE_WEIGHT = 1.4;
 const NO_DIRECT_EVIDENCE_CAP = 25;
@@ -1033,11 +1042,123 @@ export function calculateGapPriority({ field, coverageScore, claim, conflictLeve
   };
 }
 
+/** Structure 5B: Tine weight + cell deficit only (no assessment/conflict boosts). */
+export function calculateScopedGapPriority({ field, coverageScore }) {
+  const tineImportance = clamp(getTineFieldWeight(field) / MAX_TINE_WEIGHT, 0, 1);
+  const evidenceDeficit = clamp(1 - (Number(coverageScore) || 0) / 100, 0, 1);
+  const priority = clamp(0.48 * tineImportance + 0.52 * evidenceDeficit, 0, 1);
+  return {
+    priority: Math.round(priority * 100) / 100,
+    priorityFactors: {
+      tineImportance: Math.round(tineImportance * 100) / 100,
+      evidenceDeficit: Math.round(evidenceDeficit * 100) / 100,
+    },
+  };
+}
+
+function compareAsciiKeys(a, b) {
+  if (a === b) return 0;
+  return String(a) < String(b) ? -1 : 1;
+}
+
+/**
+ * Resolve romanceScope from the unique eligible primary pairing for a cell.
+ * Fail closed (null) when zero or multiple matches — never fabricate scope.
+ */
+export function resolveRomanceScopeForScopedCell(
+  cell,
+  seriesRomanceIdentity
+) {
+  const want = cell?.semanticPairingKey;
+  if (!want || !seriesRomanceIdentity) return null;
+  const matches = primaryPairings(seriesRomanceIdentity).filter((pairing) => {
+    if (pairing?.prominence !== "primary") return false;
+    if (!pairingHasScope(pairing)) return false;
+    if (!sortedDisplayMemberNames(pairing.members).length) return false;
+    return (
+      semanticPairingKey({
+        memberNames: sortedDisplayMemberNames(pairing.members),
+        bookScopes: pairing.bookScopes || [],
+        arcScopes: pairing.arcScopes || [],
+      }) === want
+    );
+  });
+  if (matches.length !== 1) return null;
+  return buildRomanceScope(matches[0], seriesRomanceIdentity.topology);
+}
+
+export function buildScopedResearchGaps({ coverage, research } = {}) {
+  const scoped = coverage?.scoped;
+  if (!scoped?.active) return [];
+  const romance = research?.seriesRomanceIdentity || null;
+  const gaps = [];
+
+  for (const cell of scoped.cells || []) {
+    if (cell?.requirement !== "required") continue;
+    if (cell.covered === true) continue;
+    if (!ROMANCE_SCOPE_ELIGIBLE_FIELD_SET.has(cell.field)) continue;
+
+    const romanceScope = resolveRomanceScopeForScopedCell(cell, romance);
+    if (!romanceScope) continue;
+
+    const { priority, priorityFactors } = calculateScopedGapPriority({
+      field: cell.field,
+      coverageScore: cell.coverageScore,
+    });
+
+    gaps.push({
+      field: cell.field,
+      cellKey: cell.key,
+      semanticPairingKey: cell.semanticPairingKey,
+      pairingId: cell.pairingId ?? null,
+      relationshipRole: cell.relationshipRole ?? null,
+      coverageScore: cell.coverageScore,
+      tineWeight: getTineFieldWeight(cell.field),
+      reasons: [...(cell.gapReasons || [])],
+      targetPhenomena:
+        FIELD_TARGET_PHENOMENA[cell.field] ||
+        (FIELD_PHENOMENON_PATTERNS[cell.field] || []).map((re) =>
+          String(re).replace(/^\/|\/[a-z]*$/g, "")
+        ),
+      batchHint: FIELD_TO_BATCH[cell.field] || null,
+      conflictLevel: null,
+      priority,
+      priorityFactors,
+      romanceScope: defensiveCopyRomanceScope(romanceScope),
+      scoped: true,
+    });
+  }
+
+  return gaps.sort(compareResearchGaps);
+}
+
+function compareResearchGaps(a, b) {
+  const byPriority = b.priority - a.priority;
+  if (byPriority) return byPriority;
+  const byWeight = b.tineWeight - a.tineWeight;
+  if (byWeight) return byWeight;
+  if (a.scoped || b.scoped) {
+    const byPair = compareAsciiKeys(
+      a.semanticPairingKey || "",
+      b.semanticPairingKey || ""
+    );
+    if (byPair) return byPair;
+    const byCell = compareAsciiKeys(a.cellKey || "", b.cellKey || "");
+    if (byCell) return byCell;
+  }
+  return compareAsciiKeys(a.field || "", b.field || "");
+}
+
 export function detectResearchGaps({ coverage, assessments, research }) {
   const gaps = [];
   const fieldCoverages = coverage?.fields || {};
+  const scopedActive = coverage?.scoped?.active === true;
 
   for (const field of SUBJECTIVE_KEYS) {
+    if (scopedActive && ROMANCE_SCOPE_ELIGIBLE_FIELD_SET.has(field)) {
+      continue;
+    }
+
     const fieldCoverage =
       fieldCoverages[field] ||
       calculateFieldCoverage({
@@ -1085,7 +1206,11 @@ export function detectResearchGaps({ coverage, assessments, research }) {
     });
   }
 
-  gaps.sort((a, b) => b.priority - a.priority || b.tineWeight - a.tineWeight);
+  if (scopedActive) {
+    gaps.push(...buildScopedResearchGaps({ coverage, research }));
+  }
+
+  gaps.sort(compareResearchGaps);
   return gaps;
 }
 
@@ -1563,6 +1688,280 @@ function groupGaps(gaps) {
   });
 }
 
+/** Map a field to its base follow-up strategy (no Rhysand/heroine merge). */
+function strategyForScopedField(field) {
+  for (const def of FOLLOWUP_STRATEGY_GROUPS) {
+    if (def.fields.includes(field)) {
+      return { strategy: def.strategy, batchHint: def.batchHint };
+    }
+  }
+  return { strategy: "plot_worldbuilding", batchHint: "plotkarakter" };
+}
+
+/** Group scoped gaps only when strategy AND semanticPairingKey match. */
+function groupScopedGaps(gaps) {
+  const buckets = new Map();
+  for (const gap of gaps || []) {
+    const pairKey = gap.semanticPairingKey;
+    if (!pairKey) continue;
+    const { strategy, batchHint } = strategyForScopedField(gap.field);
+    const bucketKey = `${strategy}\0${pairKey}`;
+    if (!buckets.has(bucketKey)) {
+      buckets.set(bucketKey, {
+        strategy,
+        batchHint,
+        semanticPairingKey: pairKey,
+        gaps: [],
+      });
+    }
+    buckets.get(bucketKey).gaps.push(gap);
+  }
+
+  const groups = [];
+  for (const key of [...buckets.keys()].sort(compareAsciiKeys)) {
+    const bucket = buckets.get(key);
+    const members = bucket.gaps.slice().sort(compareResearchGaps);
+    if (!members.length) continue;
+    groups.push({
+      strategy: bucket.strategy,
+      batchHint: bucket.batchHint || members[0].batchHint || "helteprofil",
+      fields: members.map((g) => g.field),
+      gaps: members,
+      priority: Math.max(...members.map((g) => g.priority)),
+      scoped: true,
+      semanticPairingKey: bucket.semanticPairingKey,
+      romanceScope: defensiveCopyRomanceScope(members[0].romanceScope),
+    });
+  }
+  return groups;
+}
+
+function comparePlanGroups(a, b) {
+  const byPriority = b.priority - a.priority;
+  if (byPriority) return byPriority;
+  if (a.scoped !== b.scoped) return a.scoped ? -1 : 1;
+  const byPair = compareAsciiKeys(
+    a.semanticPairingKey || "",
+    b.semanticPairingKey || ""
+  );
+  if (byPair) return byPair;
+  const byStrategy = compareAsciiKeys(a.strategy || "", b.strategy || "");
+  if (byStrategy) return byStrategy;
+  return compareAsciiKeys(
+    (a.fields || []).join("\0"),
+    (b.fields || []).join("\0")
+  );
+}
+
+function buildFollowUpJobFromGroup({
+  group,
+  round,
+  index,
+  identity,
+  leadCharacters,
+  series,
+  resolvedCoverage,
+  priorStrategies,
+  romanceScope,
+}) {
+  const usedBefore = priorStrategies.has(group.strategy);
+  const fieldNeeds = group.fields.map((field) =>
+    classifyFieldResearchNeed(resolvedCoverage.fields?.[field] || { field })
+  );
+  const retrievalMode = selectGroupRetrievalMode(fieldNeeds);
+  const preferredSourceRoles = unique(
+    fieldNeeds.flatMap((n) => n.preferredSourceRoles || [])
+  );
+  let userPrompt = buildUserPrompt({
+    strategy: group.strategy,
+    group,
+    identity,
+    leadCharacters,
+    series,
+  });
+  if (usedBefore) {
+    userPrompt += `
+
+En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre communities (Reddit, Goodreads-diskussioner, uafhængige blogs) og andre synonymer. Gentag ikke de samme katalog- eller synopsis-kilder.`;
+  }
+  const modeNote = retrievalModeInstruction(retrievalMode);
+  if (modeNote) userPrompt += `\n\n${modeNote}`;
+  const retrievalApproaches = buildRetrievalApproaches({
+    identity,
+    series,
+    leadCharacters,
+    targetFields: group.fields,
+    strategy: group.strategy,
+    purpose: "field",
+    retrievalMode,
+  });
+  return {
+    id: `followup-${group.strategy}-r${round}-${index}`,
+    strategy: group.strategy,
+    round,
+    fields: group.fields,
+    targetFields: group.fields,
+    batchHint: group.batchHint,
+    priority: group.priority,
+    reasons: unique(group.gaps.flatMap((g) => g.reasons)),
+    leadCharacters,
+    series,
+    retrievalApproaches,
+    queryHints: flattenRetrievalApproaches(retrievalApproaches, retrievalMode),
+    userPrompt,
+    targetPhenomena: unique(group.gaps.flatMap((g) => g.targetPhenomena)),
+    previousStrategyUsed: usedBefore,
+    retrievalMode,
+    preferredSourceRoles,
+    fieldNeeds,
+    romanceScope: romanceScope ?? null,
+  };
+}
+
+export function planFollowUpResearch({
+  identity,
+  research,
+  assessments,
+  coverage,
+  gaps,
+  round = 1,
+  maxJobs = ADAPTIVE_MAX_JOBS_PER_ROUND,
+  previousRounds = [],
+} = {}) {
+  const resolvedCoverage =
+    coverage ||
+    calculateResearchCoverage({ assessments, research, identity });
+  const resolvedGaps =
+    gaps ||
+    detectResearchGaps({
+      coverage: resolvedCoverage,
+      assessments,
+      research,
+    });
+
+  const scopedActive = resolvedCoverage?.scoped?.active === true;
+  const uncoveredScopedRequired =
+    scopedActive &&
+    resolvedCoverage.scoped?.summary?.allRequiredCellsCovered !== true;
+
+  const meaningfulConflict = resolvedGaps.some(
+    (g) => g.conflictLevel === "meaningful"
+  );
+  if (
+    resolvedCoverage.weightedCoverage >= ADAPTIVE_TARGET_COVERAGE &&
+    resolvedCoverage.criticalFieldsBelowMinimum.length === 0 &&
+    !(resolvedCoverage.criticalFieldsMissingStopQuality || []).length &&
+    !meaningfulConflict &&
+    !uncoveredScopedRequired
+  ) {
+    return [];
+  }
+  if (!resolvedGaps.length) return [];
+
+  const leadCharacters = softLeadCharacters(research, identity);
+  const series = seriesContext(identity);
+
+  const scopedGaps = resolvedGaps.filter((gap) => gap.scoped === true);
+  const legacyGaps = resolvedGaps.filter((gap) => gap.scoped !== true);
+
+  // Scoped required-cell covered state is authoritative — no fieldStillNeedsFollowUp.
+  const actionableLegacy = legacyGaps.filter((gap) =>
+    fieldStillNeedsFollowUp(gap, resolvedCoverage.fields?.[gap.field])
+  );
+
+  if (!scopedGaps.length && !actionableLegacy.length) return [];
+
+  const candidates = [
+    ...groupScopedGaps(scopedGaps),
+    ...groupGaps(actionableLegacy).map((group) => ({
+      ...group,
+      scoped: false,
+    })),
+  ].sort(comparePlanGroups);
+
+  const limit = Math.max(0, Number(maxJobs) || 0);
+  const priorStrategies = new Set(
+    (previousRounds || []).flatMap((r) =>
+      (r.jobs || []).map((j) => j.strategy).filter(Boolean)
+    )
+  );
+  const plannedSemanticPairingKeys = new Set();
+  const jobs = [];
+
+  for (const group of candidates) {
+    if (jobs.length >= limit) break;
+
+    if (group.scoped) {
+      const romanceScope = defensiveCopyRomanceScope(
+        group.romanceScope || group.gaps[0]?.romanceScope
+      );
+      if (!romanceScope) continue;
+
+      let scopeKey;
+      try {
+        scopeKey = semanticPairingKey(romanceScope);
+      } catch {
+        continue;
+      }
+      if (!scopeKey || scopeKey === "|") continue;
+      if (plannedSemanticPairingKeys.has(scopeKey)) continue;
+
+      const attempted = collectAttemptedSemanticKeys({
+        previousRounds,
+        strategy: group.strategy,
+        targetFields: group.fields,
+      });
+      if (attempted.has(scopeKey)) {
+        // Exhausted scoped candidates: never invent an unscoped replacement.
+        continue;
+      }
+
+      jobs.push(
+        buildFollowUpJobFromGroup({
+          group,
+          round,
+          index: jobs.length + 1,
+          identity,
+          leadCharacters,
+          series,
+          resolvedCoverage,
+          priorStrategies,
+          romanceScope,
+        })
+      );
+      plannedSemanticPairingKeys.add(scopeKey);
+      continue;
+    }
+
+    const romanceScope = selectRomanceScopeForJob({
+      seriesRomanceIdentity: research?.seriesRomanceIdentity,
+      strategy: group.strategy,
+      targetFields: group.fields,
+      previousRounds,
+      plannedSemanticPairingKeys,
+    });
+    if (romanceScope) {
+      plannedSemanticPairingKeys.add(semanticPairingKey(romanceScope));
+    }
+
+    jobs.push(
+      buildFollowUpJobFromGroup({
+        group,
+        round,
+        index: jobs.length + 1,
+        identity,
+        leadCharacters,
+        series,
+        resolvedCoverage,
+        priorStrategies,
+        romanceScope: romanceScope ?? null,
+      })
+    );
+  }
+
+  return jobs;
+}
+
 function heroLabel(leadCharacters) {
   if (leadsUnresolved(leadCharacters)) {
     return "seriens centrale mandlige romantiske lead";
@@ -1712,127 +2111,6 @@ ${lacking.map((p) => `- ${p}`).join("\n")}
 ${extra}
 
 ${avoid}`;
-}
-
-export function planFollowUpResearch({
-  identity,
-  research,
-  assessments,
-  coverage,
-  gaps,
-  round = 1,
-  maxJobs = ADAPTIVE_MAX_JOBS_PER_ROUND,
-  previousRounds = [],
-} = {}) {
-  const resolvedCoverage =
-    coverage ||
-    calculateResearchCoverage({ assessments, research, identity });
-  const resolvedGaps =
-    gaps ||
-    detectResearchGaps({
-      coverage: resolvedCoverage,
-      assessments,
-      research,
-    });
-
-  const meaningfulConflict = resolvedGaps.some(
-    (g) => g.conflictLevel === "meaningful"
-  );
-  if (
-    resolvedCoverage.weightedCoverage >= ADAPTIVE_TARGET_COVERAGE &&
-    resolvedCoverage.criticalFieldsBelowMinimum.length === 0 &&
-    !(resolvedCoverage.criticalFieldsMissingStopQuality || []).length &&
-    !meaningfulConflict
-  ) {
-    return [];
-  }
-  if (!resolvedGaps.length) return [];
-
-  const leadCharacters = softLeadCharacters(research, identity);
-  const series = seriesContext(identity);
-  const actionableGaps = resolvedGaps.filter((gap) =>
-    fieldStillNeedsFollowUp(gap, resolvedCoverage.fields?.[gap.field])
-  );
-  if (!actionableGaps.length) return [];
-
-  const groups = groupGaps(actionableGaps).sort(
-    (a, b) => b.priority - a.priority
-  );
-  const limit = Math.max(0, Number(maxJobs) || 0);
-
-  const priorStrategies = new Set(
-    (previousRounds || []).flatMap((r) =>
-      (r.jobs || []).map((j) => j.strategy).filter(Boolean)
-    )
-  );
-
-  const plannedSemanticPairingKeys = new Set();
-
-  return groups.slice(0, limit).map((group, i) => {
-    const usedBefore = priorStrategies.has(group.strategy);
-    const fieldNeeds = group.fields.map((field) =>
-      classifyFieldResearchNeed(resolvedCoverage.fields?.[field] || { field })
-    );
-    const retrievalMode = selectGroupRetrievalMode(fieldNeeds);
-    const preferredSourceRoles = unique(
-      fieldNeeds.flatMap((n) => n.preferredSourceRoles || [])
-    );
-    const targetFields = group.fields;
-    const romanceScope = selectRomanceScopeForJob({
-      seriesRomanceIdentity: research?.seriesRomanceIdentity,
-      strategy: group.strategy,
-      targetFields,
-      previousRounds,
-      plannedSemanticPairingKeys,
-    });
-    if (romanceScope) {
-      plannedSemanticPairingKeys.add(semanticPairingKey(romanceScope));
-    }
-    let userPrompt = buildUserPrompt({
-      strategy: group.strategy,
-      group,
-      identity,
-      leadCharacters,
-      series,
-    });
-    if (usedBefore) {
-      userPrompt += `
-
-En tidligere researchrunde søgte allerede på denne dynamik. Prioritér andre communities (Reddit, Goodreads-diskussioner, uafhængige blogs) og andre synonymer. Gentag ikke de samme katalog- eller synopsis-kilder.`;
-    }
-    const modeNote = retrievalModeInstruction(retrievalMode);
-    if (modeNote) userPrompt += `\n\n${modeNote}`;
-    const retrievalApproaches = buildRetrievalApproaches({
-      identity,
-      series,
-      leadCharacters,
-      targetFields: group.fields,
-      strategy: group.strategy,
-      purpose: "field",
-      retrievalMode,
-    });
-    return {
-      id: `followup-${group.strategy}-r${round}-${i + 1}`,
-      strategy: group.strategy,
-      round,
-      fields: group.fields,
-      targetFields: group.fields,
-      batchHint: group.batchHint,
-      priority: group.priority,
-      reasons: unique(group.gaps.flatMap((g) => g.reasons)),
-      leadCharacters,
-      series,
-      retrievalApproaches,
-      queryHints: flattenRetrievalApproaches(retrievalApproaches, retrievalMode),
-      userPrompt,
-      targetPhenomena: unique(group.gaps.flatMap((g) => g.targetPhenomena)),
-      previousStrategyUsed: usedBefore,
-      retrievalMode,
-      preferredSourceRoles,
-      fieldNeeds,
-      romanceScope: romanceScope ?? null,
-    };
-  });
 }
 
 export function summarizeAdaptiveIntelligence(result, { topN = 5 } = {}) {

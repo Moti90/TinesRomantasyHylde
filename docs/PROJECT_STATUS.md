@@ -2,51 +2,49 @@
 
 > **Role:** Operational checkpoint, not product authority  
 > **Authoritative direction:** See [`PRODUCT_ROADMAP.md`](./PRODUCT_ROADMAP.md)  
-> **Last updated:** 2026-09-12
+> **Last updated:** 2026-09-13
 
 This document tracks the repository's current implementation state. Update it when a bid is committed, blocked, superseded, or moves to the next roadmap phase.
 
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 5 Bid 5A (scoped coverage observability).
+- Current roadmap phase: Structure 5 Bid 5B (scoped gaps / planner / loop) — final review passed, awaiting local commit.
 - Structure 1–4 are committed and pushed.
-- Structure 4 commit: `24502c4` on `origin/adaptive-research`.
-- Structure 5 design decisions are locked.
-- Structure 5A final review passed.
-- Structure 5A is being locally committed in this checkpoint.
-- Structure 5A is **not** pushed.
-- Structure 5B (gaps/planner/loop) is the next bid and has not started.
+- Structure 5A is committed and pushed on `origin/adaptive-research` as `ddd8c1d` (`adaptive-v14` at commit time; superseded by Structure 5B `adaptive-v15`).
+- Structure 5 design decisions remain locked.
+- Structure 5B is implemented and independently reviewed locally (incl. mixed-round scoped progress, contribution-identity, and post-merge continuation intelligence) and **not** committed/pushed.
 - Structure 6 has not started.
 
-## Structure 4 status (committed and pushed)
+## Structure 5A status (pushed)
 
-Structure 4 pairing-aware subject binding is on `origin/adaptive-research` as `24502c4` (`adaptive-v13` at commit time; superseded by Structure 5A `adaptive-v14`).
+Structure 5A pairing-aware coverage observability is on `origin/adaptive-research` as `ddd8c1d`.
 
-## Structure 5A status (local commit checkpoint)
+## Structure 5B status (final review passed, local and uncommitted)
 
-Structure 5A adds additive pairing-aware coverage observability:
+Structure 5B adds scoped required-cell gaps, deterministic gap-to-job planning, and scoped loop continuation:
 
-- `coverage.scoped` with `scoped-coverage-v1` when `isRomanceScopePlanningReady`
-- required cells = eligible primary pairings × `ROMANCE_SCOPE_ELIGIBLE_FIELDS`
-- evidence-only formula (no global assessment leakage)
-- zero records still materialize required cells at score 0
-- deterministic source-identity dedup (`direct` > `supporting`, stable semantic tie-break; input order never wins)
-- fail-closed malformed records (no `identityKey` URL/id fallback in coverage)
-- observed ALT LI / secondary pairing / secondary member cells never lift primary required
-- no planner/gap/loop-stop / query / retrieval / storage / budget changes
-- `ADAPTIVE_VERSION = adaptive-v14`
-- `SCOPED_COVERAGE_VERSION = scoped-coverage-v1`
-- `adaptiveResearchLoop.js` is untouched
+- When `coverage.scoped.active`, eligible-field legacy gaps are replaced by one gap per uncovered required cell (observed cells never gap)
+- Canonical scoped gaps carry `romanceScope` resolved fail-closed from the unique eligible primary pairing (no null fabrication / reselection)
+- Planner bypasses weighted-coverage early return and `fieldStillNeedsFollowUp` for scoped gaps; groups by strategy + `semanticPairingKey` only
+- Same-round one-job-per-semantic-pairing; cross-round history via existing strategy + overlapping field + semantic key; exhausted scoped gaps get no unscoped substitute
+- `target_reached` blocked while required scoped cells remain uncovered; completion is `allRequiredCellsCovered` (average is diagnostics only)
+- Productive required scoped progress continues without synthesize/analyze when there is no relevant legacy evidence (scoped-only or mixed with field-irrelevant legacy drafts)
+- When that mixed path continues, `analyzeResearchNeeds` for continuation runs only after retained legacy drafts are merged into `research.sources` (scoped productivity still from required-cell before/after only)
+- `scopedOnlyRound` is truthful execution mix (scoped ∧ ¬legacy), not a shortcut for progress calculation
+- Required progress compares cellKey+sourceIdentity contributions (observability `scopedRequiredIdentities*` counts are contribution counts)
+- Round observability: `scopedRequiredIdentities*`, `scopedRequiredCoverage*`, `scopedRequiredCellsCovered*`, `scopedOnlyRound`, `scopedProductive`
+- `ADAPTIVE_VERSION = adaptive-v15`
+- `SCOPED_COVERAGE_VERSION = scoped-coverage-v1` (unchanged)
 
-### Verification results (2026-09-12 — final review corrections)
+### Verification results (2026-09-13, final-review correction 2)
 
-- Structure 5A focused tests: `27/27` pass (`test/series-romance-scoped-coverage.test.js`)
-- Structure 3.1–4 + 5A combined: `178/178` pass
-- Adaptive coverage/planner/loop suites: `82/82` pass
-- Full suite (`npm test`): `534/534` pass
+- Independent Structure 5A + 5B focused suite: `49/49` pass
+- Structure 5A + 5B focused (`field-coverage-observability` + `series-romance-structure-5b`): `38/38` pass
+- Adaptive planner/loop suites: `46/46` pass
+- Full suite (`npm test`): `556/556` pass
 - `git diff --check`: clean (CRLF normalization warnings only)
-- Final review passed; locally committed in this checkpoint; **not** pushed
+- Not committed; not pushed
 
 ## Open blockers
 
@@ -54,4 +52,4 @@ None.
 
 ## Next action
 
-Push Structure 5A when ready. Do not start Bid 5B until 5A is on the remote branch.
+Create the local Structure 5B commit, then push it as a normal fast-forward. Do not start Structure 6 in this bid.

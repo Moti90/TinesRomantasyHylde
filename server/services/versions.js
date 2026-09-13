@@ -15,8 +15,9 @@ export const DISCOVERY_PROMPT_VERSION = "discovery-v2";
  * adaptive-v12: scoped retrieval execution, sidecar storage (Structure 3.2).
  * adaptive-v13: pairing-aware subject binding on scoped retrieval (Structure 4).
  * adaptive-v14: pairing-aware scoped coverage observability (Structure 5A).
+ * adaptive-v15: scoped gaps, planner inheritance, scoped-only loop continuation (Structure 5B).
  */
-export const ADAPTIVE_VERSION = "adaptive-v14";
+export const ADAPTIVE_VERSION = "adaptive-v15";
 
 /** Structure 4 subject binding semantics for scopedRetrieval.records. */
 export const SUBJECT_BINDING_VERSION = "subject-binding-v1";

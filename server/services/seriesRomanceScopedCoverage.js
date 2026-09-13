@@ -1,8 +1,10 @@
 /**
- * Series Romance Structure 5A — pairing-aware scoped coverage observability.
+ * Series Romance Structure 5A/5B — pairing-aware scoped coverage observability
+ * plus pure required-cell progress helpers for Structure 5B loop continuation.
  *
  * Pure helpers. Additive coverage.scoped only.
- * Does not change planner, gaps, loop stop, retrieval, or legacy coverage.
+ * Gap/planner ownership stays in adaptiveResearch.js; this module exposes
+ * before/after required-cell comparison for the adaptive loop.
  */
 
 import { stableHash } from "./hash.js";
@@ -901,5 +903,98 @@ export function attachScopedCoverage(coverage, { research, seriesRomanceIdentity
   return {
     ...coverage,
     scoped,
+  };
+}
+
+/**
+ * Sorted unique source identities across required cells only.
+ * Prefer collectRequiredScopedContributionKeys for productivity deltas —
+ * the same identity may legitimately contribute to multiple cells.
+ */
+export function collectRequiredScopedIdentityKeys(scoped) {
+  const keys = new Set();
+  if (!scoped?.active) return [];
+  for (const cell of scoped.cells || []) {
+    if (cell?.requirement !== "required") continue;
+    for (const id of cell.sourceIdentityKeys || []) {
+      if (id) keys.add(id);
+    }
+  }
+  return [...keys].sort(compareAscii);
+}
+
+/**
+ * Deterministic required-cell evidence contributions: cellKey + sourceIdentityKey.
+ * Same source identity in two required cells yields two contribution keys.
+ */
+export function collectRequiredScopedContributionKeys(scoped) {
+  const keys = new Set();
+  if (!scoped?.active) return [];
+  for (const cell of scoped.cells || []) {
+    if (cell?.requirement !== "required") continue;
+    const cellKey = cell.key || "";
+    if (!cellKey) continue;
+    for (const id of cell.sourceIdentityKeys || []) {
+      if (id) keys.add(`${cellKey}\u0000${id}`);
+    }
+  }
+  return [...keys].sort(compareAscii);
+}
+
+export function summarizeScopedRequiredState(scoped) {
+  if (!scoped?.active) {
+    return {
+      contributionKeys: [],
+      requiredCoverage: 0,
+      cellsCovered: 0,
+    };
+  }
+  return {
+    contributionKeys: collectRequiredScopedContributionKeys(scoped),
+    requiredCoverage: Number(scoped.summary?.requiredCoverageAverage) || 0,
+    cellsCovered: Number(scoped.summary?.coveredCellCount) || 0,
+  };
+}
+
+/**
+ * Pure before/after comparison for required scoped cells.
+ * Contribution/coverage gain is order-invariant (set/scalar based).
+ *
+ * Observability fields scopedRequiredIdentities* count required-cell
+ * contributions (cellKey + sourceIdentityKey pairs), not unique source
+ * identities alone — so a source already present in cell A still counts
+ * when it newly contributes to required cell B.
+ */
+export function compareScopedRequiredProgress(beforeScoped, afterScoped) {
+  const before = summarizeScopedRequiredState(beforeScoped);
+  const after = summarizeScopedRequiredState(afterScoped);
+  const beforeSet = new Set(before.contributionKeys);
+  const added = after.contributionKeys.filter((key) => !beforeSet.has(key));
+  const coverageGain = after.requiredCoverage - before.requiredCoverage;
+  return {
+    scopedRequiredIdentitiesBefore: before.contributionKeys.length,
+    scopedRequiredIdentitiesAfter: after.contributionKeys.length,
+    scopedRequiredIdentitiesAdded: added.length,
+    scopedRequiredCoverageBefore: before.requiredCoverage,
+    scopedRequiredCoverageAfter: after.requiredCoverage,
+    scopedRequiredCoverageGain: coverageGain,
+    scopedRequiredCellsCoveredBefore: before.cellsCovered,
+    scopedRequiredCellsCoveredAfter: after.cellsCovered,
+    scopedProductive: added.length > 0 || coverageGain > 0,
+  };
+}
+
+export function emptyScopedRoundObservability() {
+  return {
+    scopedRequiredIdentitiesBefore: 0,
+    scopedRequiredIdentitiesAfter: 0,
+    scopedRequiredIdentitiesAdded: 0,
+    scopedRequiredCoverageBefore: 0,
+    scopedRequiredCoverageAfter: 0,
+    scopedRequiredCoverageGain: 0,
+    scopedRequiredCellsCoveredBefore: 0,
+    scopedRequiredCellsCoveredAfter: 0,
+    scopedOnlyRound: false,
+    scopedProductive: false,
   };
 }

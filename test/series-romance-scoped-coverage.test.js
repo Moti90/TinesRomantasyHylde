@@ -1074,8 +1074,8 @@ describe("seriesRomanceScopedCoverage determinism and legacy", () => {
 });
 
 describe("Structure 5A versions", () => {
-  it("ADAPTIVE_VERSION is adaptive-v14 and scoped-coverage-v1", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v14");
+  it("ADAPTIVE_VERSION is adaptive-v15 and scoped-coverage-v1", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v15");
     assert.equal(SCOPED_COVERAGE_VERSION, "scoped-coverage-v1");
   });
 });

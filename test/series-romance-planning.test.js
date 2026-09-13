@@ -679,13 +679,14 @@ describe("seriesRomancePlanning previous-round history", () => {
     assert.equal(attempted.size, 0);
   });
 
-  it("null scope forbruger ikke pairing-slot og exhaustion giver null", () => {
-    const first = buildRomanceScope(rotatingPairings().pairings[0], "rotating_couples");
-    const second = buildRomanceScope(rotatingPairings().pairings[1], "rotating_couples");
+  it("exhausted protective strategy leaves other strategies scoped; no unscoped protective substitute", () => {
+    const romance = rotatingPairings();
+    const first = buildRomanceScope(romance.pairings[0], "rotating_couples");
+    const second = buildRomanceScope(romance.pairings[1], "rotating_couples");
     const targetFields = [PROTECTIVE, BODYGUARD, THAD];
     const jobs = planJobs({
       fields: targetFields,
-      romance: rotatingPairings(),
+      romance,
       previousRounds: [
         {
           jobs: [
@@ -711,7 +712,15 @@ describe("seriesRomancePlanning previous-round history", () => {
         },
       ],
     });
-    assert.equal(jobs[0].romanceScope, null);
+    assert.equal(
+      jobs.some((j) => j.strategy === "hero_protective_dynamic"),
+      false
+    );
+    const otherScoped = jobs.filter((j) => j.romanceScope);
+    assert.ok(otherScoped.length >= 1);
+    assert.ok(
+      otherScoped.every((j) => j.strategy !== "hero_protective_dynamic")
+    );
   });
 
   it("previous [Protective], current [Protective, Bodyguard] udelukker pairing", () => {
@@ -985,8 +994,8 @@ describe("seriesRomancePlanning job shape and isolation", () => {
 });
 
 describe("seriesRomancePlanning regression and version", () => {
-  it("ADAPTIVE_VERSION === adaptive-v14", () => {
-    assert.equal(ADAPTIVE_VERSION, "adaptive-v14");
+  it("ADAPTIVE_VERSION === adaptive-v15", () => {
+    assert.equal(ADAPTIVE_VERSION, "adaptive-v15");
   });
 
   it("comparePairingSelection og pairingSelectionSortKey er stabile", () => {
