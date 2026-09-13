@@ -9,14 +9,14 @@ This document tracks the repository's current implementation state. Update it wh
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 6B independently final-reviewed and ready for commit; Structure 6 hard boundary follows.
+- Current roadmap phase: Structures 3–6 complete; hard research-architecture boundary reached.
 - Structure 1–4 are committed and pushed.
 - Structure 5A is committed and pushed on `origin/adaptive-research` as `ddd8c1d` (`adaptive-v14` at commit time; superseded by Structure 5B `adaptive-v15`).
 - Structure 5 design decisions remain locked.
 - Structure 5B is independently reviewed, committed, and pushed on `origin/adaptive-research` as `65232f9`.
 - Structure 6 product/scoring decisions are locked (see below).
 - Structure 6A is independently verified, committed, and pushed on `origin/adaptive-research` as `4c839f9` (status checkpoint commit `8354338`).
-- Structure 6B deterministic equal-book aggregation is implemented and independently verified locally on top of `8354338` — final correction 2 applied; not committed/pushed yet.
+- Structure 6B deterministic equal-book aggregation is independently verified, committed, and pushed on `origin/adaptive-research` as `120ef6e`.
 - No Structure 7+ work started.
 
 ## Structure 6 decisions (locked)
@@ -28,7 +28,7 @@ This document tracks the repository's current implementation state. Update it wh
 - `single_couple` and inactive legacy paths are deep-compatible no-ops.
 - No extra web search; no research budget/planner/gap/retrieval changes; no Structure 7+.
 
-## Structure 6B status (local, uncommitted)
+## Structure 6B status (pushed)
 
 Structure 6B adds deterministic equal-book series aggregation under `_analysisMeta.seriesAggregation`:
 
@@ -63,7 +63,7 @@ Structure 6B adds deterministic equal-book series aggregation under `_analysisMe
 - Full suite (`npm test`): `604/604` pass
 - `git diff --check`: clean (CRLF normalization warnings only)
 - Independent final review: no commit blockers found
-- Base: `8354338`; not committed / not pushed
+- Committed and pushed as `120ef6e` (`Add deterministic series romance aggregation`)
 
 ## Structure 6A status (pushed)
 
@@ -117,8 +117,8 @@ Structure 5B adds scoped required-cell gaps, deterministic gap-to-job planning, 
 
 ## Open blockers
 
-None for Structure 6B local final correction 2. Awaiting commit after review.
+None for Structure 6. Further research-engine work requires evidence from real failures or measurable product-quality problems.
 
 ## Next action
 
-Commit Structure 6B checkpoint when ready. After Structure 6 is complete, stop at the hard research-architecture boundary — do not start Structure 7+ unless product evidence requires it.
+Run a product/production-readiness checkpoint against the existing app and deployment path. Do not automatically create Structure 6.x or start Structure 7 without evidence that provenance safety is the next real blocker.
