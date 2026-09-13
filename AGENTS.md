@@ -14,11 +14,12 @@ Before any architecture review or implementation bid:
 
 Keep the roadmap stable. Record changing implementation progress, blockers, test results, and next actions in `docs/PROJECT_STATUS.md` instead.
 
-## Cursor CLI visibility
+## Product-owner approval gate
 
-When Codex delegates repository work to Cursor CLI:
+Before changing product behavior, architecture, user-visible UI, scoring semantics, or deployment behavior:
 
-1. Invoke Cursor through `scripts/run-cursor-live.ps1`.
-2. Write the exact prompt to a Git-ignored `tmp-*.txt` file before invoking the wrapper.
-3. Keep `.cursor-live/LIVE.md`, `PROMPT.md`, `RESPONSE.md`, and `EVENTS.jsonl` available for the user to inspect.
-4. Do not bypass the live wrapper unless it is unavailable; report that explicitly if it happens.
+1. Explain in plain Danish what the user will notice, what will remain unchanged, and the main tradeoffs.
+2. Obtain the user's explicit approval of that direction before implementation.
+3. Treat Cursor or other coding agents as implementation/review assistants only. They must not choose product direction or expand scope.
+4. Independently review delegated work against the approved direction, roadmap, repository state, and tests before accepting it.
+5. Stop and return to the user when implementation evidence requires a material product decision that was not approved.
