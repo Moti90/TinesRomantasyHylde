@@ -13,3 +13,12 @@ Before any architecture review or implementation bid:
    Defer it unless it is required by the current roadmap phase or a real regression/blocker.
 
 Keep the roadmap stable. Record changing implementation progress, blockers, test results, and next actions in `docs/PROJECT_STATUS.md` instead.
+
+## Cursor CLI visibility
+
+When Codex delegates repository work to Cursor CLI:
+
+1. Invoke Cursor through `scripts/run-cursor-live.ps1`.
+2. Write the exact prompt to a Git-ignored `tmp-*.txt` file before invoking the wrapper.
+3. Keep `.cursor-live/LIVE.md`, `PROMPT.md`, `RESPONSE.md`, and `EVENTS.jsonl` available for the user to inspect.
+4. Do not bypass the live wrapper unless it is unavailable; report that explicitly if it happens.

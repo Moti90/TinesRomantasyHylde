@@ -4,6 +4,7 @@ node_modules/
 uploads/
 *.log
 tmp-*.txt
+.cursor-live/
 _npm_bootstrap/
 
 # Hemmeligheder & lokale runtime-filer
