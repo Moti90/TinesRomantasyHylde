@@ -810,7 +810,7 @@ describe("Structure 6A scoped assessments", () => {
     assert.equal(l.inactive, true);
   });
 
-  it("preserves public/manual fields and does not create seriesAggregation", async () => {
+  it("preserves public/manual fields and attaches seriesAggregation without public mutation", async () => {
     const romance = rotatingIdentity();
     const record = makeBoundRecord({
       romance,
@@ -848,6 +848,13 @@ describe("Structure 6A scoped assessments", () => {
             })),
           },
         }),
+        aggregationDeps: {
+          loadLearnedTaste: () => ({
+            version: "learned-taste-v1",
+            scoredReviewCount: 0,
+            fieldPrefs: {},
+          }),
+        },
       },
     });
     assert.equal(result.analysis.row["Tine-score"], rowBefore["Tine-score"]);
@@ -861,7 +868,14 @@ describe("Structure 6A scoped assessments", () => {
       result.analysis.row["Tines egen vurdering"],
       rowBefore["Tines egen vurdering"]
     );
-    assert.equal(result.analysis.meta.seriesAggregation, undefined);
+    assert.ok(result.analysis.meta.seriesAggregation);
+    assert.equal(
+      result.analysis.meta.seriesAggregation.version,
+      "series-aggregation-v1"
+    );
+    assert.equal(result.analysis.meta.seriesAggregation.stale, undefined);
+    assert.equal(result.analysis.meta.seriesAggregation.generatedAt, undefined);
+    assert.equal(result.analysis.meta.seriesAggregation.modelRaw, undefined);
     assert.ok(result.analysis.meta.scopedAssessments);
     assert.equal(result.analysis.meta.scopedAssessments.generatedAt, undefined);
     assert.equal(result.analysis.meta.scopedAssessments.modelRaw, undefined);
@@ -1755,6 +1769,7 @@ describe("Structure 6A scoped assessments", () => {
     assert.equal(inactive.inactive, true);
     assert.equal(inactive.changed, true);
     assert.equal(inactive.analysis.meta.scopedAssessments, undefined);
+    assert.equal(inactive.analysis.meta.seriesAggregation, undefined);
     assert.equal(inactive.analysis.meta.scopedAssessmentInputTokens, undefined);
     assert.equal(inactive.analysis.meta.scopedAssessmentOutputTokens, undefined);
     assert.equal(

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dataPath } from "./paths.js";
-import { getTineFieldWeight } from "./decisionScores.js";
+import { getTineFieldWeight, SUBJECTIVE_KEYS } from "./decisionScores.js";
+import { stableHash } from "./hash.js";
 
 const LEARNED_PATH = dataPath("learned-taste.json");
 const REVIEWS_PATH = dataPath("tine-reviews.json");
@@ -186,25 +187,95 @@ function maxAbsDelta(strength) {
 }
 
 /**
- * Justér Indholdsmatch ud fra learned-taste.
- * Returnerer altid et score; delta=0 hvis for lidt data / Excel-låst håndteres af caller.
+ * Deterministic taste fingerprint for aggregation reuse.
+ * Excludes updatedAt and is independent of object key insertion order.
  */
-export function applyLearnedTasteAdjustment(row, baseScore) {
+export function buildTasteFingerprint(taste = null) {
+  const t = taste && typeof taste === "object" ? taste : EMPTY;
+  const fieldPrefs = {};
+  for (const key of Object.keys(t.fieldPrefs || {}).sort()) {
+    const pref = t.fieldPrefs[key];
+    if (!pref || typeof pref !== "object") continue;
+    fieldPrefs[key] = {
+      n: pref.n ?? null,
+      mean: pref.mean ?? null,
+      highMean: pref.highMean ?? null,
+      lowMean: pref.lowMean ?? null,
+      highN: pref.highN ?? null,
+      lowN: pref.lowN ?? null,
+      max: pref.max ?? null,
+    };
+  }
+  const sortCountMap = (map) => {
+    const out = {};
+    for (const key of Object.keys(map || {}).sort()) {
+      out[key] = map[key];
+    }
+    return out;
+  };
+  return stableHash({
+    version: t.version || EMPTY.version,
+    reviewCount: t.reviewCount || 0,
+    scoredReviewCount: t.scoredReviewCount || 0,
+    fieldPrefs,
+    positiveTags: sortCountMap(t.positiveTags),
+    negativeTags: sortCountMap(t.negativeTags),
+    reread: {
+      yes: t.reread?.yes || 0,
+      maybe: t.reread?.maybe || 0,
+      no: t.reread?.no || 0,
+    },
+  });
+}
+
+/**
+ * Field-pref iteration order for learned-taste scoring.
+ * - semantic: SUBJECTIVE_KEYS then remaining keys ASCII-sorted (Structure 6B).
+ * - legacy_insertion: Object key insertion order (pre-6B public API).
+ */
+function orderedFieldPrefKeys(fieldPrefs, fieldPrefOrder) {
+  const prefs = fieldPrefs || {};
+  if (fieldPrefOrder === "legacy_insertion") {
+    return Object.keys(prefs);
+  }
+  const known = new Set(SUBJECTIVE_KEYS);
+  return [
+    ...SUBJECTIVE_KEYS.filter((key) =>
+      Object.prototype.hasOwnProperty.call(prefs, key)
+    ),
+    ...Object.keys(prefs)
+      .filter((key) => !known.has(key))
+      .sort(),
+  ];
+}
+
+/**
+ * Shared learned-taste scoring core. Score math is identical for both orders;
+ * only reason (and floating accumulation) sequence follows fieldPrefOrder.
+ */
+function applyLearnedTasteAdjustmentCore(
+  row,
+  baseScore,
+  taste,
+  { fieldPrefOrder = "semantic" } = {}
+) {
   const base = Number(baseScore);
   if (Number.isNaN(base)) {
     return { score: baseScore, delta: 0, reasons: [], strength: 0 };
   }
 
-  const taste = loadLearnedTaste();
-  const strength = strengthFromCount(taste.scoredReviewCount || 0);
+  const profile = taste && typeof taste === "object" ? taste : EMPTY;
+  const strength = strengthFromCount(profile.scoredReviewCount || 0);
   if (!strength) {
     return { score: Math.round(base), delta: 0, reasons: [], strength: 0 };
   }
 
   let raw = 0;
   const reasons = [];
+  const fieldPrefs = profile.fieldPrefs || {};
 
-  for (const [key, pref] of Object.entries(taste.fieldPrefs || {})) {
+  for (const key of orderedFieldPrefKeys(fieldPrefs, fieldPrefOrder)) {
+    const pref = fieldPrefs[key];
     if (!pref || pref.n < 3) continue;
     const seriesVal = Number(row?.[key]);
     if (Number.isNaN(seriesVal)) continue;
@@ -234,7 +305,7 @@ export function applyLearnedTasteAdjustment(row, baseScore) {
   }
 
   // Tag-signal: bully
-  const bullyNeg = taste.negativeTags?.["Bully / nedladende MMC"] || 0;
+  const bullyNeg = profile.negativeTags?.["Bully / nedladende MMC"] || 0;
   if (bullyNeg >= 2) {
     const risk = String(row?.["Bully-risiko"] || "").toLowerCase();
     if (risk === "høj" || risk === "mellem") {
@@ -243,7 +314,7 @@ export function applyLearnedTasteAdjustment(row, baseScore) {
     }
   }
 
-  const spiceNeg = taste.negativeTags?.["For meget erotik ift. plot"] || 0;
+  const spiceNeg = profile.negativeTags?.["For meget erotik ift. plot"] || 0;
   if (spiceNeg >= 2) {
     const spice = Number(row?.["Spice/erotik (0-5)"]);
     const plot = Number(row?.["Episk plot (0-5)"]);
@@ -259,7 +330,40 @@ export function applyLearnedTasteAdjustment(row, baseScore) {
   const score = Math.max(0, Math.min(100, Math.round(base + delta)));
 
   const uniqueReasons = [...new Set(reasons)].slice(0, 3);
-  return { score, delta, reasons: uniqueReasons, strength, reviewCount: taste.scoredReviewCount };
+  return {
+    score,
+    delta,
+    reasons: uniqueReasons,
+    strength,
+    reviewCount: profile.scoredReviewCount,
+  };
+}
+
+/**
+ * Explicit-profile learned-taste adjustment (no disk I/O).
+ * Defaults to semantic field-pref ordering for Structure 6B determinism.
+ * Pass { fieldPrefOrder: "legacy_insertion" } to mirror pre-6B Object.entries order.
+ */
+export function applyLearnedTasteAdjustmentWithProfile(
+  row,
+  baseScore,
+  taste,
+  options = {}
+) {
+  return applyLearnedTasteAdjustmentCore(row, baseScore, taste, {
+    fieldPrefOrder: options.fieldPrefOrder ?? "semantic",
+  });
+}
+
+/**
+ * Justér Indholdsmatch ud fra learned-taste.
+ * Returnerer altid et score; delta=0 hvis for lidt data / Excel-låst håndteres af caller.
+ * Preserves legacy insertion-order reason sequencing from stored fieldPrefs.
+ */
+export function applyLearnedTasteAdjustment(row, baseScore) {
+  return applyLearnedTasteAdjustmentCore(row, baseScore, loadLearnedTaste(), {
+    fieldPrefOrder: "legacy_insertion",
+  });
 }
 
 export function formatLearnedTasteReason(adjustment, baseReason = "") {

@@ -31,6 +31,9 @@ export const SCOPED_ASSESSMENT_VERSION = "scoped-assessment-v1";
 /** Structure 6A scoped assessment model prompt contract. */
 export const SCOPED_ASSESSMENT_PROMPT_VERSION = "scoped-assessment-prompt-v1";
 
+/** Structure 6B deterministic equal-book series aggregation contract. */
+export const SERIES_AGGREGATION_VERSION = "series-aggregation-v1";
+
 /** Identity-search schema/prompt (Series Romance Structure 2). Not in research cache hash. */
 export const IDENTITY_RESOLUTION_VERSION = "identity-v2";
 

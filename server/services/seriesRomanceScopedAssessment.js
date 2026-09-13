@@ -31,6 +31,7 @@ import {
   estimateCostUsd,
 } from "./versions.js";
 import { tryExtractJson } from "./webResearch.js";
+import { attachSeriesAggregation } from "./seriesRomanceAggregation.js";
 
 export {
   SCOPED_ASSESSMENT_VERSION,
@@ -960,9 +961,60 @@ function applyScopedUsageToMeta(meta, scopedUsage) {
   };
 }
 
+function withSeriesAggregation(result, research, deps = {}) {
+  const scopedAssessmentsChanged = Boolean(result.changed);
+  const attach =
+    typeof deps.attachSeriesAggregation === "function"
+      ? deps.attachSeriesAggregation
+      : attachSeriesAggregation;
+  try {
+    const aggregationDeps =
+      deps.aggregationDeps && typeof deps.aggregationDeps === "object"
+        ? deps.aggregationDeps
+        : {};
+    const agg = attach({
+      research,
+      analysis: result.analysis,
+      deps: aggregationDeps,
+    });
+    return {
+      ...result,
+      analysis: agg.analysis,
+      changed: Boolean(result.changed || agg.changed),
+      scopedAssessmentsChanged,
+      aggregationChanged: Boolean(agg.changed),
+      aggregationReused: Boolean(agg.reused),
+      aggregationInactive: Boolean(agg.inactive),
+      aggregationError: false,
+    };
+  } catch {
+    // Aggregation must never break scoped finalization or leave a stale blob.
+    let nextAnalysis = result.analysis;
+    let aggregationChanged = false;
+    const meta = result.analysis?.meta;
+    if (meta && typeof meta === "object" && meta.seriesAggregation) {
+      const nextMeta = { ...meta };
+      delete nextMeta.seriesAggregation;
+      nextAnalysis = { ...result.analysis, meta: nextMeta };
+      aggregationChanged = true;
+    }
+    return {
+      ...result,
+      analysis: nextAnalysis,
+      changed: Boolean(result.changed || aggregationChanged),
+      scopedAssessmentsChanged,
+      aggregationChanged,
+      aggregationReused: false,
+      aggregationInactive: true,
+      aggregationError: true,
+    };
+  }
+}
+
 /**
  * Soft finalizer: never throws into the pipeline.
  * Inactive paths omit scopedAssessments (no inactive blob).
+ * Structure 6B aggregation attaches after scoped assessments settle.
  */
 export async function finalizeScopedAssessments({
   research = null,
@@ -973,19 +1025,24 @@ export async function finalizeScopedAssessments({
   const callModel = deps.callScopedAssessmentModel || defaultCallScopedAssessmentModel;
   const baseMeta = analysis?.meta ? defensiveCopy(analysis.meta) : {};
   if (!baseMeta || typeof baseMeta !== "object") {
-    return {
-      analysis,
-      changed: false,
-      modelCalls: 0,
-      modelAttempted: false,
-      reused: false,
-    };
+    return withSeriesAggregation(
+      {
+        analysis,
+        changed: false,
+        modelCalls: 0,
+        modelAttempted: false,
+        reused: false,
+      },
+      research,
+      deps
+    );
   }
 
   const existingScoped = baseMeta.scopedAssessments
     ? defensiveCopy(baseMeta.scopedAssessments)
     : null;
-  // Never keep stale seriesAggregation from speculative 6B experiments.
+  // When 6A regenerates, strip prior aggregation so 6B recomputes against fresh 6A.
+  // Reuse path returns the original analysis (aggregation preserved for 6B validation).
   if (baseMeta.seriesAggregation) {
     delete baseMeta.seriesAggregation;
   }
@@ -1010,23 +1067,32 @@ export async function finalizeScopedAssessments({
   if (!active) {
     if (existingScoped) {
       clearScopedAssessmentArtifacts(baseMeta);
-      return {
-        analysis: { ...analysis, meta: baseMeta },
-        changed: true,
+      if (baseMeta.seriesAggregation) delete baseMeta.seriesAggregation;
+      return withSeriesAggregation(
+        {
+          analysis: { ...analysis, meta: baseMeta },
+          changed: true,
+          modelCalls: 0,
+          modelAttempted: false,
+          reused: false,
+          inactive: true,
+        },
+        research,
+        deps
+      );
+    }
+    return withSeriesAggregation(
+      {
+        analysis,
+        changed: false,
         modelCalls: 0,
         modelAttempted: false,
         reused: false,
         inactive: true,
-      };
-    }
-    return {
-      analysis,
-      changed: false,
-      modelCalls: 0,
-      modelAttempted: false,
-      reused: false,
-      inactive: true,
-    };
+      },
+      research,
+      deps
+    );
   }
 
   const recordById = buildScopedAssessmentRecordIndex(research);
@@ -1044,14 +1110,18 @@ export async function finalizeScopedAssessments({
       inputFingerprint,
     })
   ) {
-    return {
-      analysis,
-      changed: false,
-      modelCalls: 0,
-      modelAttempted: false,
-      reused: true,
-      inactive: false,
-    };
+    return withSeriesAggregation(
+      {
+        analysis,
+        changed: false,
+        modelCalls: 0,
+        modelAttempted: false,
+        reused: true,
+        inactive: false,
+      },
+      research,
+      deps
+    );
   }
 
   const topology = romance?.topology || null;
@@ -1219,18 +1289,22 @@ export async function finalizeScopedAssessments({
     usage
   );
 
-  return {
-    analysis: {
-      ...analysis,
-      meta: nextMeta,
+  return withSeriesAggregation(
+    {
+      analysis: {
+        ...analysis,
+        meta: nextMeta,
+      },
+      changed: true,
+      modelCalls,
+      modelAttempted,
+      reused: false,
+      inactive: false,
+      scopedAssessments,
     },
-    changed: true,
-    modelCalls,
-    modelAttempted,
-    reused: false,
-    inactive: false,
-    scopedAssessments,
-  };
+    research,
+    deps
+  );
 }
 
 /**

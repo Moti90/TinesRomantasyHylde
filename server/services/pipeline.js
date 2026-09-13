@@ -414,8 +414,9 @@ function defensiveCopyAnalysisMeta(meta) {
 
 /**
  * Structure 6A pipeline seam for reused global analysis.
- * Backfills/persists missing scoped assessments without global reanalysis or
- * web search; preserves the early reuse response (no write) when 6A is fresh.
+ * Backfills/persists missing scoped assessments and/or series aggregation
+ * without global reanalysis or web search; preserves the early reuse response
+ * (no write) when both 6A and 6B are fresh.
  * Optional deps are test-only; production callers omit them.
  */
 export async function finalizeScopedOnReusedAnalysis({
@@ -436,6 +437,14 @@ export async function finalizeScopedOnReusedAnalysis({
     deps.scopedAssessmentDeps && typeof deps.scopedAssessmentDeps === "object"
       ? deps.scopedAssessmentDeps
       : {};
+  // Narrow DI: aggregationDeps may be provided alongside scopedAssessmentDeps.
+  if (
+    deps.aggregationDeps &&
+    typeof deps.aggregationDeps === "object" &&
+    !scopedDeps.aggregationDeps
+  ) {
+    scopedDeps.aggregationDeps = deps.aggregationDeps;
+  }
 
   const reusedWrapper = {
     reused: true,
@@ -451,7 +460,12 @@ export async function finalizeScopedOnReusedAnalysis({
     deps: scopedDeps,
   });
 
+  // Persist when 6A and/or 6B changed. Fresh 6A+6B → no-write early reuse.
   if (scopedFinal?.changed && scopedFinal.analysis?.meta) {
+    const scopedAssessmentsUpdated = Boolean(
+      scopedFinal.scopedAssessmentsChanged
+    );
+    const seriesAggregationUpdated = Boolean(scopedFinal.aggregationChanged);
     const nextRow = {
       ...existing,
       _research: research,
@@ -471,14 +485,28 @@ export async function finalizeScopedOnReusedAnalysis({
       ),
     };
     const series = upsert(nextRow);
+    let userMessage =
+      "Ingen ændringer i grundlaget — eksisterende analyse genbrugt.";
+    if (scopedAssessmentsUpdated && seriesAggregationUpdated) {
+      userMessage =
+        "Ingen ændringer i grundlaget — eksisterende analyse genbrugt (scoped assessments og series aggregation opdateret).";
+    } else if (scopedAssessmentsUpdated) {
+      userMessage =
+        "Ingen ændringer i grundlaget — eksisterende analyse genbrugt (scoped assessments opdateret).";
+    } else if (seriesAggregationUpdated) {
+      userMessage =
+        "Ingen ændringer i grundlaget — eksisterende analyse genbrugt (series aggregation opdateret).";
+    }
     return {
       row: nextRow,
       series,
       meta: {
         reused: true,
-        scopedAssessmentsUpdated: true,
-        userMessage:
-          "Ingen ændringer i grundlaget — eksisterende analyse genbrugt (scoped assessments opdateret).",
+        ...(scopedAssessmentsUpdated ? { scopedAssessmentsUpdated: true } : {}),
+        ...(seriesAggregationUpdated
+          ? { seriesAggregationUpdated: true }
+          : {}),
+        userMessage,
         researchCacheHit: true,
         webSearchUsed: false,
       },
