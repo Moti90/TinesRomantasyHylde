@@ -9,13 +9,13 @@ This document tracks the repository's current implementation state. Update it wh
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 6A scoped assessments independently final-reviewed and ready for commit; Structure 6B not started.
+- Current roadmap phase: Structure 6A pushed; Structure 6B deterministic equal-book aggregation is next.
 - Structure 1–4 are committed and pushed.
 - Structure 5A is committed and pushed on `origin/adaptive-research` as `ddd8c1d` (`adaptive-v14` at commit time; superseded by Structure 5B `adaptive-v15`).
 - Structure 5 design decisions remain locked.
 - Structure 5B is independently reviewed, committed, and pushed on `origin/adaptive-research` as `65232f9`.
 - Structure 6 product/scoring decisions are locked (see below).
-- Structure 6A is implemented and independently verified in the working tree on top of checkpoint `1c12294` (final-review correction 2 applied; awaiting commit).
+- Structure 6A is independently verified, committed, and pushed on `origin/adaptive-research` as `4c839f9`.
 - Structure 6B aggregation has not started.
 
 ## Structure 6 decisions (locked)
@@ -27,7 +27,7 @@ This document tracks the repository's current implementation state. Update it wh
 - `single_couple` and inactive legacy paths are deep-compatible no-ops.
 - No extra web search; no research budget/planner/gap/retrieval changes; no Structure 7+.
 
-## Structure 6A status (local, not committed)
+## Structure 6A status (pushed)
 
 Structure 6A adds pipeline-owned scoped pair/book/arc assessments under `_analysisMeta.scopedAssessments`:
 
@@ -62,7 +62,7 @@ Structure 6A adds pipeline-owned scoped pair/book/arc assessments under `_analys
 - Full suite (`npm test`): `583/583` pass
 - `git diff --check`: clean (CRLF normalization warnings only)
 - Independent final review: no commit blockers found
-- Not committed / not pushed (awaiting commit)
+- Committed and pushed as `4c839f9` (`Add scoped series romance assessments`)
 
 ## Structure 5A status (pushed)
 
@@ -96,8 +96,8 @@ Structure 5B adds scoped required-cell gaps, deterministic gap-to-job planning, 
 
 ## Open blockers
 
-None for Structure 6A final-review correction 2. Structure 6B remains the next implementation bid after 6A commit.
+None for Structure 6A. Structure 6B remains the next implementation bid.
 
 ## Next action
 
-Commit Structure 6A checkpoint. Do not start Structure 6B until 6A is accepted.
+Implement Structure 6B deterministic equal-book aggregation from the locked decisions. Do not change public scores or start Structure 7+.
