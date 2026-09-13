@@ -9,18 +9,18 @@ This document tracks the repository's current implementation state. Update it wh
 ## Current checkpoint
 
 - Expected development branch: `adaptive-research` (always verify before work).
-- Current roadmap phase: Structure 5 Bid 5B (scoped gaps / planner / loop) — final review passed, awaiting local commit.
+- Current roadmap phase: Structure 6 preparation (pair/book scoring and deterministic series aggregation).
 - Structure 1–4 are committed and pushed.
 - Structure 5A is committed and pushed on `origin/adaptive-research` as `ddd8c1d` (`adaptive-v14` at commit time; superseded by Structure 5B `adaptive-v15`).
 - Structure 5 design decisions remain locked.
-- Structure 5B is implemented and independently reviewed locally (incl. mixed-round scoped progress, contribution-identity, and post-merge continuation intelligence) and **not** committed/pushed.
-- Structure 6 has not started.
+- Structure 5B is independently reviewed, committed, and pushed on `origin/adaptive-research` as `65232f9`.
+- Structure 6 implementation has not started; the next bid is a read-only architecture review.
 
 ## Structure 5A status (pushed)
 
 Structure 5A pairing-aware coverage observability is on `origin/adaptive-research` as `ddd8c1d`.
 
-## Structure 5B status (final review passed, local and uncommitted)
+## Structure 5B status (pushed)
 
 Structure 5B adds scoped required-cell gaps, deterministic gap-to-job planning, and scoped loop continuation:
 
@@ -44,7 +44,7 @@ Structure 5B adds scoped required-cell gaps, deterministic gap-to-job planning, 
 - Adaptive planner/loop suites: `46/46` pass
 - Full suite (`npm test`): `556/556` pass
 - `git diff --check`: clean (CRLF normalization warnings only)
-- Not committed; not pushed
+- Committed and pushed as `65232f9` (`Use scoped romance coverage in adaptive planning`)
 
 ## Open blockers
 
@@ -52,4 +52,4 @@ None.
 
 ## Next action
 
-Create the local Structure 5B commit, then push it as a normal fast-forward. Do not start Structure 6 in this bid.
+Run a read-only Structure 6 architecture review before locking design decisions or changing code.
