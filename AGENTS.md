@@ -7,5 +7,9 @@ Before any architecture review or implementation bid:
 3. Read `docs/PROJECT_STATUS.md` for the current operational checkpoint.
 4. Verify the current branch, working tree, recent commits, and relevant code.
 5. If repository reality conflicts with the roadmap, report `ROADMAP CONFLICT` explicitly before proposing or making a roadmap change.
+6. For significant implementation bids, prefer:
+   review/decision lock → implementation → focused tests → full tests → checkpoint.
+7. Do not start unrelated architecture work merely because it is technically attractive.
+   Defer it unless it is required by the current roadmap phase or a real regression/blocker.
 
 Keep the roadmap stable. Record changing implementation progress, blockers, test results, and next actions in `docs/PROJECT_STATUS.md` instead.
