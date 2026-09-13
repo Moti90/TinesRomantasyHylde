@@ -16,8 +16,16 @@ import {
   getReferenceForSeries,
   isReferenceUnlocked,
 } from "./scoreReference.js";
+import {
+  finalizeScopedAssessments,
+  mergeScopedUsageIntoPipelineUsage,
+} from "./seriesRomanceScopedAssessment.js";
 
 const PRESERVE_KEYS = ["Tines score", "Tines egen vurdering", "Status"];
+
+function attachScopedUsageObservability(usage, analysisMeta) {
+  return mergeScopedUsageIntoPipelineUsage(usage, analysisMeta);
+}
 
 function mergePreserve(existing, row, { preserveGoodreads = true } = {}) {
   if (!existing) {
@@ -194,6 +202,18 @@ export async function analyzeNewSeries(opts) {
     }
   }
 
+  // Structure 6A: scoped assessments after final research + analysis.
+  try {
+    const scopedFinal = await finalizeScopedAssessments({
+      research,
+      analysis,
+      identity,
+    });
+    if (scopedFinal?.analysis) analysis = scopedFinal.analysis;
+  } catch (err) {
+    console.warn("Scoped assessments skipped:", err.message);
+  }
+
   progress("save", "Gemmer analysen");
   let row = analysis.row;
   row.Status = status;
@@ -205,7 +225,7 @@ export async function analyzeNewSeries(opts) {
   row = mergePreserve(existing, row, { preserveGoodreads: false });
   row = applyDecisionScoresToRow(row, analysis.meta).row;
 
-  const usage = {
+  let usage = {
     researchCacheHit,
     webSearchCalls: researchCacheHit ? 0 : research?.meta?.webSearchCalls || 0,
     researchTokens: {
@@ -220,6 +240,7 @@ export async function analyzeNewSeries(opts) {
       (researchCacheHit ? 0 : research?.meta?.estimatedCostUsd || 0) +
       (analysis.meta?.estimatedCostUsd || 0),
   };
+  usage = attachScopedUsageObservability(usage, analysis.meta);
 
   if (analysis.meta) {
     analysis.meta.researchCacheHit = researchCacheHit;
@@ -300,7 +321,7 @@ export async function reanalyzeSeries(name, { forceAnalysis = false } = {}) {
   );
   const mofibo = await checkMofibo(identity.title || name);
 
-  const analysis = await runHandbookAnalysis({
+  let analysis = await runHandbookAnalysis({
     research,
     catalog,
     mofibo,
@@ -312,22 +333,50 @@ export async function reanalyzeSeries(name, { forceAnalysis = false } = {}) {
   });
 
   if (analysis.reused && existing) {
-    return {
-      row: existing,
-      series: loadSeries(),
-      meta: {
-        reused: true,
-        userMessage: "Ingen ændringer i grundlaget — eksisterende analyse genbrugt.",
-        researchCacheHit: true,
-        webSearchUsed: false,
-      },
-    };
+    try {
+      return await finalizeScopedOnReusedAnalysis({
+        existing,
+        research,
+        identity,
+      });
+    } catch (err) {
+      console.warn("Scoped assessments skipped on reuse:", err.message);
+      return {
+        row: existing,
+        series: loadSeries(),
+        meta: {
+          reused: true,
+          userMessage:
+            "Ingen ændringer i grundlaget — eksisterende analyse genbrugt.",
+          researchCacheHit: true,
+          webSearchUsed: false,
+        },
+      };
+    }
+  }
+
+  try {
+    const scopedFinal = await finalizeScopedAssessments({
+      research,
+      analysis,
+      identity,
+    });
+    if (scopedFinal?.analysis) analysis = scopedFinal.analysis;
+  } catch (err) {
+    console.warn("Scoped assessments skipped:", err.message);
   }
 
   let row = mergePreserve(existing, analysis.row, { preserveGoodreads: true });
   row["Seriens navn"] = existing["Seriens navn"] || row["Seriens navn"];
   row["Goodreads-score"] = sanitizeGoodreadsScore(existing["Goodreads-score"]);
   row = applyDecisionScoresToRow(row, analysis.meta).row;
+
+  let usage = {
+    researchCacheHit,
+    webSearchCalls: 0,
+    webSearchUsed: false,
+  };
+  usage = attachScopedUsageObservability(usage, analysis.meta);
 
   const full = attachMeta(row, {
     research,
@@ -337,11 +386,7 @@ export async function reanalyzeSeries(name, { forceAnalysis = false } = {}) {
       webSearchUsed: false,
     },
     identity,
-    usage: {
-      researchCacheHit,
-      webSearchCalls: 0,
-      webSearchUsed: false,
-    },
+    usage,
   });
 
   const series = upsertSeries(full);
@@ -355,6 +400,103 @@ export async function reanalyzeSeries(name, { forceAnalysis = false } = {}) {
       webSearchUsed: false,
       foundation: analysis.meta?.foundation || null,
     },
+  };
+}
+
+function defensiveCopyAnalysisMeta(meta) {
+  if (!meta || typeof meta !== "object") return {};
+  try {
+    return JSON.parse(JSON.stringify(meta));
+  } catch {
+    return { ...(meta || {}) };
+  }
+}
+
+/**
+ * Structure 6A pipeline seam for reused global analysis.
+ * Backfills/persists missing scoped assessments without global reanalysis or
+ * web search; preserves the early reuse response (no write) when 6A is fresh.
+ * Optional deps are test-only; production callers omit them.
+ */
+export async function finalizeScopedOnReusedAnalysis({
+  existing,
+  research,
+  identity,
+  deps = {},
+} = {}) {
+  const finalizeScoped =
+    typeof deps.finalizeScopedAssessments === "function"
+      ? deps.finalizeScopedAssessments
+      : finalizeScopedAssessments;
+  const upsert =
+    typeof deps.upsertSeries === "function" ? deps.upsertSeries : upsertSeries;
+  const load =
+    typeof deps.loadSeries === "function" ? deps.loadSeries : loadSeries;
+  const scopedDeps =
+    deps.scopedAssessmentDeps && typeof deps.scopedAssessmentDeps === "object"
+      ? deps.scopedAssessmentDeps
+      : {};
+
+  const reusedWrapper = {
+    reused: true,
+    row: existing,
+    meta: defensiveCopyAnalysisMeta(existing._analysisMeta),
+    fallback: false,
+  };
+
+  const scopedFinal = await finalizeScoped({
+    research,
+    analysis: reusedWrapper,
+    identity,
+    deps: scopedDeps,
+  });
+
+  if (scopedFinal?.changed && scopedFinal.analysis?.meta) {
+    const nextRow = {
+      ...existing,
+      _research: research,
+      _analysisMeta: {
+        ...scopedFinal.analysis.meta,
+        researchCacheHit: true,
+        webSearchUsed: false,
+      },
+      _usage: attachScopedUsageObservability(
+        {
+          ...(existing._usage || {}),
+          researchCacheHit: true,
+          webSearchCalls: 0,
+          webSearchUsed: false,
+        },
+        scopedFinal.analysis.meta
+      ),
+    };
+    const series = upsert(nextRow);
+    return {
+      row: nextRow,
+      series,
+      meta: {
+        reused: true,
+        scopedAssessmentsUpdated: true,
+        userMessage:
+          "Ingen ændringer i grundlaget — eksisterende analyse genbrugt (scoped assessments opdateret).",
+        researchCacheHit: true,
+        webSearchUsed: false,
+      },
+      scopedFinal,
+    };
+  }
+
+  return {
+    row: existing,
+    series: load(),
+    meta: {
+      reused: true,
+      userMessage:
+        "Ingen ændringer i grundlaget — eksisterende analyse genbrugt.",
+      researchCacheHit: true,
+      webSearchUsed: false,
+    },
+    scopedFinal,
   };
 }
 
@@ -418,9 +560,27 @@ export async function refreshSeriesResearch(name) {
     }
   }
 
+  try {
+    const scopedFinal = await finalizeScopedAssessments({
+      research,
+      analysis,
+      identity,
+    });
+    if (scopedFinal?.analysis) analysis = scopedFinal.analysis;
+  } catch (err) {
+    console.warn("Scoped assessments skipped:", err.message);
+  }
+
   let row = mergePreserve(existing, analysis.row, { preserveGoodreads: false });
   row["Seriens navn"] = existing["Seriens navn"] || row["Seriens navn"];
   row = applyDecisionScoresToRow(row, analysis.meta).row;
+
+  let usage = {
+    researchCacheHit: false,
+    webSearchCalls: research?.meta?.webSearchCalls || 0,
+    webSearchUsed: true,
+  };
+  usage = attachScopedUsageObservability(usage, analysis.meta);
 
   const full = attachMeta(row, {
     research,
@@ -430,11 +590,7 @@ export async function refreshSeriesResearch(name) {
       webSearchUsed: true,
     },
     identity,
-    usage: {
-      researchCacheHit: false,
-      webSearchCalls: research?.meta?.webSearchCalls || 0,
-      webSearchUsed: true,
-    },
+    usage,
   });
 
   const series = upsertSeries(full);

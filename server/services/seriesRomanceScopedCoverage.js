@@ -135,7 +135,8 @@ function pairingSemanticKey(pairing) {
   });
 }
 
-function bookKey(book) {
+/** Shared canonical book-scope key (Structure 5/6). */
+export function scopedBookScopeKey(book) {
   if (!book || typeof book !== "object") return null;
   if (book.bookNumber != null && Number.isFinite(Number(book.bookNumber))) {
     return `book:${Number(book.bookNumber)}`;
@@ -144,11 +145,20 @@ function bookKey(book) {
   return title ? `title:${title}` : null;
 }
 
-function arcKey(arc) {
+/** Shared canonical arc-scope key (Structure 5/6). */
+export function scopedArcScopeKey(arc) {
   if (!arc || typeof arc !== "object") return null;
   if (arc.id) return `arc:${String(arc.id).toLowerCase()}`;
   if (arc.label) return `arcLabel:${String(arc.label).toLowerCase()}`;
   return null;
+}
+
+function bookKey(book) {
+  return scopedBookScopeKey(book);
+}
+
+function arcKey(arc) {
+  return scopedArcScopeKey(arc);
 }
 
 function memberKey(member) {
@@ -593,7 +603,11 @@ export function classifyBindingContribution(binding, field, romance) {
   return out;
 }
 
-function recordIsEligible(record, fingerprint) {
+/**
+ * Structure 5 eligibility gate for scoped coverage/assessment evidence.
+ * mixed/ambiguous/unresolved/invalid/stale records fail closed.
+ */
+export function isEligibleScopedCoverageRecord(record, fingerprint) {
   if (!record || typeof record !== "object") return false;
   if (!Array.isArray(record.targetFields)) return false;
   if (!record.source || typeof record.source !== "object") return false;
@@ -614,6 +628,10 @@ function recordIsEligible(record, fingerprint) {
   if (binding.identityFingerprint !== fingerprint) return false;
   if (binding.status !== "resolved") return false;
   return true;
+}
+
+function recordIsEligible(record, fingerprint) {
+  return isEligibleScopedCoverageRecord(record, fingerprint);
 }
 
 function adaptRecordSource(record) {

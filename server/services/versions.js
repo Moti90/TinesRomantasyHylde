@@ -25,6 +25,12 @@ export const SUBJECT_BINDING_VERSION = "subject-binding-v1";
 /** Structure 5A scoped coverage observability shape. */
 export const SCOPED_COVERAGE_VERSION = "scoped-coverage-v1";
 
+/** Structure 6A scoped pair/book/arc assessment contract. */
+export const SCOPED_ASSESSMENT_VERSION = "scoped-assessment-v1";
+
+/** Structure 6A scoped assessment model prompt contract. */
+export const SCOPED_ASSESSMENT_PROMPT_VERSION = "scoped-assessment-prompt-v1";
+
 /** Identity-search schema/prompt (Series Romance Structure 2). Not in research cache hash. */
 export const IDENTITY_RESOLUTION_VERSION = "identity-v2";
 
